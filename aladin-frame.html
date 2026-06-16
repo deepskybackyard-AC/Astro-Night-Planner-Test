@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Aladin Lite – Objektrahmung</title>
+  <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.min.css">
+  <style>
+    html,body,#aladin-lite-div{width:100%;height:100%;margin:0;overflow:hidden;background:#02060b}
+    #loading{position:absolute;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:9px;background:rgba(4,12,22,.9);color:#dcecff;font:14px system-ui,sans-serif;border:1px solid #29415f}
+    #error{display:none;position:absolute;z-index:30;inset:12px auto auto 12px;max-width:calc(100% - 24px);padding:10px 12px;border-radius:9px;background:#301315;color:#ffdce1;font:14px system-ui,sans-serif;border:1px solid #9d4343}
+  </style>
+</head>
+<body>
+  <div id="aladin-lite-div"></div>
+  <div id="loading">Himmelsbild wird auf das Objekt zentriert …</div>
+  <div id="error"></div>
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const ra = Number(params.get('ra'));
+      const dec = Number(params.get('dec'));
+      const fov = Math.max(0.02, Number(params.get('fov')) || 2);
+      const survey = params.get('survey') || 'P/DSS2/color';
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const fail = message => {
+        loading.style.display = 'none';
+        error.textContent = `Aladin Lite konnte nicht geladen werden: ${message}`;
+        error.style.display = 'block';
+      };
+      if (!Number.isFinite(ra) || !Number.isFinite(dec)) {
+        fail('Ungültige Objektkoordinaten.');
+        return;
+      }
+      const start = () => {
+        try {
+          const viewer = A.aladin('#aladin-lite-div', {
+            survey,
+            target: `${ra} ${dec}`,
+            fov,
+            projection: 'TAN',
+            cooFrame: 'ICRS',
+            showReticle: true,
+            showZoomControl: true,
+            showFullscreenControl: true,
+            showLayersControl: true,
+            showSimbadPointerControl: true,
+            showCooGridControl: true,
+            showShareControl: true,
+            showGotoControl: true
+          });
+          const recenter = () => {
+            try {
+              viewer.gotoRaDec(ra, dec);
+              viewer.setFoV(fov);
+              loading.style.display = 'none';
+            } catch (e) {
+              fail(e.message || String(e));
+            }
+          };
+          setTimeout(recenter, 150);
+          setTimeout(recenter, 650);
+        } catch (e) {
+          fail(e.message || String(e));
+        }
+      };
+      if (window.A && A.init && typeof A.init.then === 'function') {
+        A.init.then(start).catch(e => fail(e.message || String(e)));
+      } else if (window.A) {
+        start();
+      } else {
+        fail('Bibliothek nicht verfügbar.');
+      }
+    })();
+  </script>
+</body>
+</html>
