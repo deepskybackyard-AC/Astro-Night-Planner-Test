@@ -1,16 +1,48 @@
 <!doctype html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#07111f" />
-    <meta name="description" content="Astronomische Wetter- und Objektplanung ohne kostenpflichtige API." />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <title>Astro Night Planner</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#081321" />
+  <meta name="description" content="Astro Night Planner – mobile Planung für Astrofotografie, Wetter, Dämmerung, Mond, Objektwahl und Framing." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/build-config.js"></script>
+  <script>document.documentElement.dataset.environment=(window.ANP_BUILD&&window.ANP_BUILD.environment)||'prod';</script>
+  <title>Astro Night Planner 1.0</title>
+</head>
+<body>
+  <div id="environmentBadge" class="environment-badge" hidden></div>
+  <div id="updateBanner" class="update-banner" hidden>
+    <span>Eine neue App-Version ist verfügbar.</span>
+    <button id="reloadForUpdate" type="button">Jetzt aktualisieren</button>
+  </div>
+  <header class="app-header">
+    <div>
+      <div class="eyebrow">✦ Astrofotografie-Planung</div>
+      <h1>Astro Night Planner</h1>
+      <div class="version-line">Version <span id="headerVersion">1.0</span><span id="headerEnvironmentText" hidden></span> · lokales Profil: <strong id="headerProfileName">Standard</strong></div>
+    </div>
+    <div class="header-actions">
+      <select id="headerProfileSelect" aria-label="Aktives Benutzerprofil"></select>
+      <button id="installButton" type="button" hidden>App installieren</button>
+    </div>
+  </header>
+
+  <main id="app" class="app-shell" aria-live="polite">
+    <section id="loadingScreen" class="card loading-card">
+      <div class="spinner"></div>
+      <p>Planner wird vorbereitet …</p>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Hauptnavigation">
+    <button type="button" data-main-tab="plan" class="active">☾<span>Planung</span></button>
+    <button type="button" data-main-tab="settings">⚙<span>Einstellungen</span></button>
+  </nav>
+
+  <input id="fileImport" type="file" accept="application/json,.json" hidden />
+  <script src="assets/app.js" defer></script>
+</body>
 </html>

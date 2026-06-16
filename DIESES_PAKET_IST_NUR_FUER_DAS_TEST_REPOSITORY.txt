@@ -1,0 +1,4 @@
+ASTRO NIGHT PLANNER 1.0 – TESTVERSION
+
+Dieses Paket niemals in das Produktiv-Repository kopieren.
+Nach dem Deployment muss der Titel gelb hinterlegt sein und TESTVERSION anzeigen.

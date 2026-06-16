@@ -1,115 +1,38 @@
-# Astro Night Planner 0.9
+# Astro Night Planner 1.0 – TEST-Repository
 
-Eine installierbare, für Smartphones optimierte Web-App zur Planung von Deep-Sky-Aufnahmen. Sie verbindet Wettermodelle, Sonne/Mond, Dämmerungszeiten, vollständige Objektkataloge, persönliche Standorte und Horizontprofile sowie das Bildfeld eigener Kamera-/Teleskop-Kombinationen. Für diese Version sind weder ein kostenpflichtiger Dienst noch ein persönlicher API-Schlüssel erforderlich.
+Dieses Paket gehört **ausschließlich in das Test-Repository**.
 
-## Neu in Testversion Version 0.9
+Die Testfassung ist eindeutig erkennbar an:
 
-### Bestätigte Einstellungen statt Sofortübernahme
+- gelb hinterlegtem Titel **Astro Night Planner**,
+- sichtbarem Hinweis **TESTVERSION**,
+- Dokumenttitel „TESTVERSION – Astro Night Planner 1.0“,
+- eigener IndexedDB `astro-night-planner-test-v1`,
+- eigenem Service-Worker-Cache `astro-night-planner-test-*`.
 
-Die Rubriken **Allgemein**, **Aufnahmequalität**, **Gewichtung**, **Objektliste**, **Standortverhalten** und **Persönlicher Horizont** besitzen eigene Speichern- und Verwerfen-Schaltflächen. Ungespeicherte Änderungen werden sichtbar markiert und erst nach Bestätigung dauerhaft übernommen.
+## Installation
 
-### Aktive und temporäre Profile
+1. Das Test-Repository muss auf dem aktuellen Stand des Produktiv-Repositorys basieren.
+2. Den gesamten Inhalt dieses Pakets in das Stammverzeichnis des Test-Repositorys kopieren.
+3. Gleichnamige Dateien ersetzen.
+4. Den vorhandenen Ordner `src` einschließlich `src/data/catalog.generated.json` beibehalten.
+5. Commit und Push in den Branch `main` des Test-Repositorys.
+6. Nach dem GitHub-Pages-Deployment prüfen, ob der Titel gelb ist und **TESTVERSION** erscheint.
 
-- eigenes Feld **Aktiv** für Aufnahmequalitäts- und Darstellungsprofil
-- das Bearbeiten eines Profils aktiviert es nicht automatisch
-- temporäre Profilwahl direkt in der Planungsansicht
-- optionales **Als Standard übernehmen**
-- klare Trennung zwischen Aufnahme-Setup, Aufnahmequalitätsprofil, Bewertungsprofil und Darstellungsprofil
+## Enthalten
 
-### Präzisere Höhenanzeigen
+- lokale Benutzerprofile in IndexedDB
+- automatisch vorbelegtes Profil **Standard**
+- Profilverwaltung, Export, Import, Sicherung und Wiederherstellung
+- Dämmerung, Mond, persönliche Standorte und Horizont
+- Wettervergleich aus ICON, ECMWF IFS und GFS über Open-Meteo
+- Meteoblue-Kontrollansicht
+- bewertete, gefilterte und paginierte Deep-Sky-Objektliste
+- Mini-Höhenprofile passend zum gewählten Planungszeitraum
+- Ausrüstung, Bildfeld und Aladin-Lite-Rahmung
+- browserbasierte Hilfe und HTML-Handbuch
+- installierbare PWA mit Offline-App-Shell und Updatehinweis
 
-- die große Höhenkurve zeigt zu jeder Stundenmarke zusätzlich N, NO, O, SO, S, SW, W oder NW
-- das Mini-Höhenprofil zeigt den gesamten Zeitraum von Sonnenuntergang bis Sonnenaufgang
-- Dämmerungsphasen erscheinen in Grauabstufungen; je dunkler der Zeitraum, desto dunkler die Fläche
-- vertikale Dämmerungsgrenzen und der gewählte Planungszeitraum sind sichtbar
-- Start, Ende, Höchstpunkt und Mindesthöhe bleiben erhalten
+## Freigabe
 
-### Horizont und Bedienung
-
-- Horizontachsen und Eingabefelder zeigen zusätzlich Himmelsrichtungen
-- 0° = N, 45° = NO, 90° = O, 135° = SO, 180° = S, 225° = SW, 270° = W, 315° = NW
-- der Rotationsregler der Objektellipse ist kompakter und verbreitert die Rahmungsansicht nicht mehr
-- Gewichtungen werden nur noch als ganze Prozentwerte eingegeben
-
-## Bereits enthaltene Kernfunktionen
-
-- GPS, Ortssuche und direkte Koordinateneingabe
-- heutige Nacht plus sieben weitere Nächte
-- Sonnenuntergang, Dämmerungsgrenzen und Sonnenaufgang
-- Mondaufgang, Kulmination, maximale Höhe, Untergang und Beleuchtung
-- Wettervergleich aus DWD ICON, ECMWF IFS und NOAA GFS via Open-Meteo
-- stündliche Wettertabelle von Sonnenuntergang bis Sonnenaufgang
-- Meteoblue Astronomy Seeing als standardmäßig eingeklappte Kontrollansicht
-- Messier-, NGC-, IC-, Sharpless-2- und Abell-PN-Kataloge
-- wählbarer Planungszeitraum; Standard ist der nautische Zeitraum
-- persönliche Teleskope und Kameras
-- Bildfeld, Pixelmaßstab und interaktive Aladin-Lite-Rahmung
-- große Höhenkurve, gekoppelte Uhrzeit und persönliche Horizontansicht
-- PWA-Manifest und GitHub-Pages-Workflow
-
-## Integrierte Objektkataloge
-
-- Messier: 110 Objekte
-- NGC und IC aus OpenNGC
-- Sharpless 2: 313 Einträge
-- Abell-Katalog planetarischer Nebel: 83 Einträge
-- zusätzliche gebräuchliche Deep-Sky-Ziele
-
-Die Katalogdaten liegen lokal in der App. Fehlende Werte wie Magnitude, Flächenhelligkeit, Größe oder Positionswinkel werden nicht erfunden.
-
-## Lokal starten
-
-Voraussetzung: Node.js 22 oder neuer.
-
-```bash
-npm install
-npm run dev
-```
-
-## Prüfung und Produktions-Build
-
-```bash
-npm run check
-npm run build
-npm run preview
-```
-
-Der fertige Inhalt liegt in `dist/`.
-
-## Veröffentlichung über GitHub Pages
-
-1. Den Inhalt des Projektordners in das GitHub-Repository hochladen.
-2. Nach `main` committen.
-3. Unter **Settings → Pages → Build and deployment** als Quelle **GitHub Actions** wählen.
-4. `.github/workflows/deploy-pages.yml` baut und veröffentlicht die App automatisch.
-
-## Speicherung und spätere Synchronisierung
-
-Version 0.9 speichert Standorte, Horizontprofile, Ausrüstung, Grenzwerte, Gewichtungen und Anzeigeeinstellungen weiterhin im `localStorage` des jeweiligen Browsers. Das ist eine Übergangslösung.
-
-Für eine spätere Ausbaustufe vorgesehen:
-
-- Login pro Nutzer
-- zentrale, geräteübergreifende Speicherung
-- Synchronisierung von Teleskopen, Kameras, Standorten und Einstellungen
-- optionaler individueller nächtlicher Zeitrahmen
-
-## Datenquellen
-
-- Open-Meteo: Wetter, Geocoding und Geländehöhe
-- Astronomy Engine: lokale astronomische Berechnungen
-- Aladin Lite / CDS: interaktive Himmelsbilder
-- Meteoblue Astronomy Seeing Widget: zusätzliche Kontrollvorhersage, nicht Bestandteil des automatischen Modellkonsenses
-- OpenNGC: NGC-, IC- und Messier-Grunddaten
-- Sharpless / VizieR: Sharpless-2-Katalog
-- Abell-Katalog planetarischer Nebel
-
-Ausführliche Herkunfts- und Lizenzangaben stehen in `CATALOG_SOURCES.md`.
-
-## Fachliche Grenzen
-
-- Seeing und Transparenz sind Tendenzwerte von 0 bis 100, keine gemessenen Bogensekundenwerte.
-- Der Jetstream ist ein wichtiger Seeing-Indikator, aber keine vollständige Seeing-Prognose.
-- Windfarben sind keine Sicherheitsfreigabe.
-- Der Sensorrahmen ist ein geometrisch rechteckiges Bildschirm-Overlay; großflächige Himmelsprojektionen können davon abweichen.
-- Benutzerkonten und zentrale Synchronisierung sind noch nicht enthalten.
+Nach erfolgreichem Test wird **nicht dieses Paket** in Produktion übernommen. Dafür ist das separate Paket `astro-night-planner-v1.0-production-cumulative-update.zip` vorgesehen.
