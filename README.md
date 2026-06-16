@@ -2,7 +2,7 @@
 
 Eine installierbare, für Smartphones optimierte Web-App zur Planung von Deep-Sky-Aufnahmen. Sie verbindet Wettermodelle, Sonne/Mond, Dämmerungszeiten, vollständige Objektkataloge, persönliche Standorte und Horizontprofile sowie das Bildfeld eigener Kamera-/Teleskop-Kombinationen. Für diese Version sind weder ein kostenpflichtiger Dienst noch ein persönlicher API-Schlüssel erforderlich.
 
-## Neu in Version 0.9
+## Neu in Testversion Version 0.9
 
 ### Bestätigte Einstellungen statt Sofortübernahme
 
