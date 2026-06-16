@@ -36,3 +36,55 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:#071321
 @media(max-width:1100px){.framing-controls{grid-template-columns:repeat(2,minmax(160px,1fr))}.framing-time-control{grid-column:span 2}.object-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.object-detail-card{padding:12px}.object-detail-header{align-items:flex-start}.close-detail-button{width:100%}.framing-view{min-height:520px}.framing-view iframe{height:520px}.framing-controls{grid-template-columns:1fr}.framing-time-control{grid-column:auto}.large-altitude-chart,.large-horizon-chart,.settings-horizon-chart{min-width:820px}.object-chart-panel{overflow:auto}.object-detail-metrics{grid-template-columns:1fr}.weather-model-summary{text-align:left}.planning-window-toolbar label{max-width:none}}
 [hidden]{display:none!important}
+
+/* Version 1.0 – Korrekturrunde 3: synchronisierte Zeitsteuerung und Dämmerungslegende */
+.detail-time-controller{margin:12px 16px 4px;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:rgba(7,17,29,.76)}
+.detail-time-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.detail-time-head strong{display:block;font-size:1.04rem;margin-top:3px}.detail-time-actions{display:flex;align-items:end;justify-content:flex-end;gap:8px;flex-wrap:wrap}.detail-time-actions label{width:auto;min-width:116px}.detail-time-actions label.chip{min-width:0;align-self:center}.detail-time-actions input[type=time]{min-width:116px}.detail-time-slider{padding:0;margin-top:12px;cursor:pointer}.detail-time-limits{display:flex;justify-content:space-between;color:var(--muted);font-size:.76rem;margin-top:3px}
+.large-altitude-chart{cursor:crosshair;touch-action:none}.large-horizon-chart{touch-action:pan-x pan-y}
+.twilight-legend{display:flex;gap:9px 14px;align-items:center;flex-wrap:wrap;padding:11px 16px 4px;color:var(--muted);font-size:.78rem}.twilight-legend span{display:inline-flex;align-items:center;gap:6px}.twilight-legend i{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.16);display:inline-block}.legend-civil{background:#3a3227}.legend-nautical{background:#1b2a3d}.legend-astronomical{background:#142235}.legend-night{background:#08121f}.legend-selected{background:rgba(121,184,255,.28);border-color:#6fc9ff!important}.legend-current{background:#f0c75e;border-color:#fff0af!important}
+.hourly-altitude-strip{display:flex;gap:7px;overflow-x:auto;padding:10px 16px 16px;scrollbar-width:thin}.hourly-altitude-item{min-width:64px;display:grid;justify-items:center;gap:2px;padding:8px 7px;border:1px solid var(--line);border-radius:9px;background:#0b1929}.hourly-altitude-item strong{font-size:.78rem}.hourly-altitude-item span{color:var(--accent2);font-size:.82rem;font-weight:750}.hourly-altitude-item small{color:var(--muted);font-size:.7rem;font-weight:700}
+.meteoblue-external-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px;padding:16px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#10243a,#091827)}.meteoblue-actions{display:flex;gap:10px;flex-wrap:wrap}.meteoblue-actions .button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.button.primary{background:linear-gradient(#3986d9,#2563a5);border-color:#5da8f5}
+@media(max-width:720px){.detail-time-controller{margin:10px 10px 2px}.detail-time-head{display:block}.detail-time-actions{justify-content:flex-start;margin-top:10px}.detail-time-actions button{flex:1}.detail-time-actions label{flex:1}.twilight-legend{min-width:820px}.hourly-altitude-strip{min-width:820px}.meteoblue-actions{width:100%}.meteoblue-actions .button{width:100%}}
+
+
+/* Version 1.0 – Testkorrektur 4: animierte Wolkenkarte und Meteoblue-Widgets */
+.cloud-map-card details>summary,.meteoblue-card details>summary{cursor:pointer;font-weight:800}
+.cloud-map-toolbar{align-items:end}
+.cloud-map-toolbar label{min-width:180px}
+.cloud-map-summary .value{font-size:1.08rem}
+.cloud-map-stage{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#061321}
+#cloudMapCanvas{display:block;width:100%;height:auto;aspect-ratio:35/18;background:#061321}
+.cloud-map-legend{position:absolute;left:22px;bottom:18px;display:flex;align-items:center;gap:9px;padding:8px 11px;border:1px solid rgba(140,200,235,.28);border-radius:11px;background:rgba(3,12,20,.78);backdrop-filter:blur(5px);font-size:.76rem;color:#dcecff}
+.legend-gradient{width:170px;height:11px;border-radius:999px;border:1px solid rgba(255,255,255,.25)}
+.legend-gradient.clouds{background:linear-gradient(90deg,#071b2c,#506679,#dfe9f2)}
+.legend-gradient.uncertainty{background:linear-gradient(90deg,#36cf72,#e7d04d,#ef5b5b)}
+.rain-legend{color:#6fc9ff;font-weight:750}
+.cloud-map-movement{position:absolute;right:22px;bottom:18px;max-width:42%;padding:8px 11px;border:1px solid rgba(255,214,107,.35);border-radius:11px;background:rgba(3,12,20,.78);color:#ffe08a;font-size:.78rem;font-weight:700;text-align:right}
+.cloud-map-time-controls{display:grid;grid-template-columns:auto auto minmax(220px,1fr) auto;gap:10px;align-items:center}
+.cloud-map-time-controls input[type=range]{padding:0}
+.clear-window-notice strong{margin-right:6px}
+.location-comparison>summary{font-weight:750}
+.meteoblue-embed{position:relative;margin-top:12px;border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#09131b;min-height:560px}
+.meteoblue-frame{display:block;width:100%;height:680px;border:0;background:#09131b}
+.meteoblue-frame.seeing-frame{height:720px}
+.meteoblue-frame.map-frame{height:720px}
+.meteoblue-credit{padding-top:7px;text-align:right;font-size:.78rem}
+.meteoblue-credit a{color:var(--accent2)}
+.meteoblue-embed:fullscreen{background:#06101a;padding:0}
+.meteoblue-embed:fullscreen .meteoblue-frame{height:100vh}
+@media(max-width:900px){
+  .cloud-map-legend{position:static;border-radius:0;border-width:1px 0 0;justify-content:center;flex-wrap:wrap}
+  .cloud-map-movement{position:static;max-width:none;border-radius:0;border-width:1px 0 0;text-align:center}
+  .cloud-map-time-controls{grid-template-columns:1fr 1fr}
+  .cloud-map-time-controls input[type=range]{grid-column:1/-1;grid-row:1}
+  .meteoblue-frame,.meteoblue-frame.seeing-frame,.meteoblue-frame.map-frame{height:620px}
+}
+@media(max-width:560px){
+  .cloud-map-toolbar label{min-width:100%;width:100%}
+  .cloud-map-time-controls{grid-template-columns:1fr 1fr}
+  .cloud-map-time-controls button{width:100%}
+  .cloud-map-legend{font-size:.68rem}
+  .legend-gradient{width:110px}
+  .meteoblue-embed{min-height:500px}
+  .meteoblue-frame,.meteoblue-frame.seeing-frame,.meteoblue-frame.map-frame{height:540px}
+}

@@ -31,6 +31,27 @@ const WEATHER_VIEW_OPTIONS = [
   ['ecmwf','ECMWF IFS'],
   ['gfs','NOAA GFS'],
 ];
+const CLOUD_MAP_VIEW_OPTIONS = WEATHER_VIEW_OPTIONS;
+const CLOUD_MAP_LAYER_OPTIONS = [
+  ['cloud','Gesamtbewölkung'],
+  ['cloudLow','Tiefe Wolken'],
+  ['cloudMid','Mittlere Wolken'],
+  ['cloudHigh','Hohe Wolken'],
+];
+const CLOUD_MAP_MODE_OPTIONS = [
+  ['clouds','Wolkenverteilung'],
+  ['uncertainty','Modellabweichung'],
+];
+const CLOUD_MAP_GRID_OPTIONS = [
+  [5,'25 Kartenpunkte (sparsam)'],
+  [7,'49 Kartenpunkte (Standard)'],
+  [9,'81 Kartenpunkte (detailliert)'],
+];
+const CLOUD_MAP_RADIUS_OPTIONS = [
+  [60,'60 km'],
+  [120,'120 km (Standard)'],
+  [200,'200 km'],
+];
 const DISPLAY_COLUMNS = [
   ['score','Bewertung'],['name','Objekt / Typ / Katalog'],['maxAltitude','Maximalhöhe'],
   ['visibleHours','Sichtbarkeitsdauer'],['meridian','Meridian'],['framing','Framing'],['miniChart','Mini-Höhenprofil'],
@@ -53,6 +74,7 @@ function standardProfile(){
       windUnit:'kmh', activeWindProfile:'normal', windProfiles:deepClone(WIND_PROFILES),
       dew:{green:5,yellow:2}, jet:{green:36,yellow:72},
       weatherModels:{weights:{icon:40,ecmwf:40,gfs:20},defaultView:'consensus'},
+      cloudMap:{gridSize:7,radiusKm:120,defaultView:'consensus',defaultLayer:'cloud',defaultMode:'clouds',animationMs:900,syncTime:true,collapsed:false,meteoblueMapCollapsed:true},
       weights:{clouds:30,transparency:15,seeing:10,wind:10,dew:10,moon:10,altitude:10,duration:5},
       defaultPlanningWindow:'nautical', defaultLocationId:'loc-tuebingen', gpsBehavior:'last',
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
@@ -62,10 +84,13 @@ function standardProfile(){
       persistentStorageRequested:false
     },
     locations:[{id:'loc-tuebingen',name:'Tübingen',latitude:48.5216,longitude:9.0576,elevation:350,timezone:'Europe/Berlin',isDefault:true,
+      geonameId:2820860,country:'Deutschland',meteobluePath:'tübingen_deutschland_2820860',
       horizon:[0,0,0,0,0,0,0,0],obstacles:[]}], selectedLocationId:'loc-tuebingen',
     planning:{dateKey:'',planningWindow:'nautical',temporaryWindProfile:null,temporaryDisplayProfile:null,temporaryWeatherView:null,
+      temporaryCloudMapView:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,
       search:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,minMoonDistance:25,
-      minSize:0,maxSize:1200,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:0,frameRotation:0,timeFraction:.5},
+      minSize:0,maxSize:1200,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:0,frameRotation:0,timeFraction:.5,
+      detailTimeFraction:0,showGroundHorizon:true},
     ui:{mainTab:'plan',settingsTab:'equipment',scroll:{plan:0,settings:0}}
   };
 }
@@ -120,6 +145,16 @@ let draft;
 let catalog=[...BUILTIN_OBJECTS];
 let weatherModels=[];
 let weatherError='';
+let cloudMapData=null;
+let cloudMapError='';
+let cloudMapLoading=false;
+let cloudMapRequestId=0;
+let cloudMapAbortController=null;
+let cloudMapAnimationTimer=null;
+let cloudMapSaveTimer=null;
+let locationComparisonData=null;
+let locationComparisonLoading=false;
+let locationComparisonError='';
 let currentComputedObjects=[];
 let installPrompt=null;
 let currentMainTab='plan';
@@ -152,6 +187,7 @@ function normalizeProfile(p){
     ...(p.central?.weatherModels||{}),
     weights:{...base.central.weatherModels.weights,...(p.central?.weatherModels?.weights||{})}
   };
+  out.central.cloudMap={...base.central.cloudMap,...(p.central?.cloudMap||{})};
   out.central.weights={...base.central.weights,...(p.central?.weights||{})};
   out.central.listDisplay={...base.central.listDisplay,...(p.central?.listDisplay||{})};
   out.central.listDisplay.profiles={...deepClone(DISPLAY_PROFILES),...(p.central?.listDisplay?.profiles||{})};
@@ -224,7 +260,7 @@ function updateProfileSelectors(){
   select.innerHTML=profiles.sort((a,b)=>a.name.localeCompare(b.name,'de')).map(p=>`<option value="${esc(p.id)}" ${profile&&p.id===profile.id?'selected':''}>${esc(p.name)}</option>`).join('');
   document.getElementById('headerProfileName').textContent=profile?.name||'Standard';
 }
-async function switchMain(tab){scrollByTab[currentMainTab]=scrollY;currentMainTab=tab;profile.ui.mainTab=tab;await saveProfile();render();requestAnimationFrame(()=>scrollTo({top:scrollByTab[tab]||0,behavior:'instant'}));}
+async function switchMain(tab){scrollByTab[currentMainTab]=scrollY;if(tab!=='plan')stopCloudMapAnimation();currentMainTab=tab;profile.ui.mainTab=tab;await saveProfile();render();if(tab==='plan'&&!cloudMapData)fetchCloudMap();requestAnimationFrame(()=>scrollTo({top:scrollByTab[tab]||0,behavior:'instant'}));}
 
 function activeLocation(){return profile.locations.find(x=>x.id===profile.selectedLocationId)||profile.locations[0]||standardProfile().locations[0]}
 function activeScope(){return profile.equipment.telescopes.find(x=>x.id===profile.equipment.selectedTelescopeId)}
@@ -238,6 +274,27 @@ function addDays(key,n){const d=new Date(`${key}T12:00:00Z`);d.setUTCDate(d.getU
 function fmtDate(key,tz){return new Intl.DateTimeFormat('de-DE',{timeZone:tz,weekday:'short',day:'2-digit',month:'2-digit'}).format(new Date(`${key}T12:00:00Z`))}
 function fmtTime(date,tz){if(!date||isNaN(date))return'–';return new Intl.DateTimeFormat('de-DE',{timeZone:tz,hour:'2-digit',minute:'2-digit'}).format(date)}
 function fmtDateTime(date,tz){return new Intl.DateTimeFormat('de-DE',{timeZone:tz,day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date)}
+function clockInputValue(date,tz){
+  if(!date||isNaN(date))return'00:00';
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
+  const get=type=>parts.find(part=>part.type===type)?.value||'00';
+  return`${get('hour')}:${get('minute')}`;
+}
+function localMinuteOfDay(date,tz){
+  const [hour,minute]=clockInputValue(date,tz).split(':').map(Number);
+  return hour*60+minute;
+}
+function nearestFractionForClock(clock,start,end,tz){
+  const [hour,minute]=String(clock||'00:00').split(':').map(Number);
+  const target=hour*60+minute;
+  let bestTime=start.getTime(),bestDistance=Infinity;
+  for(let time=start.getTime();time<=end.getTime();time+=60000){
+    const value=localMinuteOfDay(new Date(time),tz);
+    const distance=Math.min(Math.abs(value-target),1440-Math.abs(value-target));
+    if(distance<bestDistance){bestDistance=distance;bestTime=time}
+  }
+  return clamp((bestTime-start.getTime())/Math.max(1,end-start),0,1);
+}
 
 function julian(date){return date.getTime()/86400000+2440587.5}
 function gmst(date){const d=julian(date)-2451545;return ((18.697374558+24.06570982441908*d)%24+24)%24}
@@ -374,6 +431,10 @@ function mergeCatalog(remote){const map=new Map();for(const o of [...remote,...B
 async function fetchWeather(){
   weatherError='';
   weatherModels=[];
+  cloudMapData=null;
+  cloudMapError='';
+  locationComparisonData=null;
+  locationComparisonError='';
   render();
   const loc=activeLocation();
   const vars='temperature_2m,dew_point_2m,relative_humidity_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,precipitation,wind_speed_10m,wind_gusts_10m,wind_speed_250hPa';
@@ -419,8 +480,252 @@ async function fetchWeather(){
   if(!weatherModels.length)weatherError='Keine Wettermodelle konnten geladen werden.';
   else if(failures.length)weatherError=`${failures.length} Wettermodell(e) derzeit nicht verfügbar.`;
   render();
+  fetchCloudMap();
 }
 
+function cloudMapSettings(source=profile){
+  const base=standardProfile().central.cloudMap;
+  return{...base,...(source?.central?.cloudMap||{})};
+}
+function currentCloudMapView(){
+  return profile.planning.temporaryCloudMapView||profile.central.cloudMap?.defaultView||'consensus';
+}
+function cloudMapRange(night){
+  const rawStart=night.sunset.getTime()-4*3600000;
+  const start=new Date(Math.floor(rawStart/3600000)*3600000);
+  return{start,end:new Date(start.getTime()+23*3600000),times:Array.from({length:24},(_,index)=>new Date(start.getTime()+index*3600000))};
+}
+function cloudMapGrid(loc,settings){
+  const size=clamp(Number(settings.gridSize)||7,5,9);
+  const radius=clamp(Number(settings.radiusKm)||120,40,250);
+  const latPerKm=1/111.32;
+  const lonPerKm=1/(111.32*Math.max(.2,Math.cos(toRad(loc.latitude))));
+  const points=[];
+  for(let y=0;y<size;y++){
+    const northKm=radius-(2*radius*y/(size-1));
+    for(let x=0;x<size;x++){
+      const eastKm=-radius+(2*radius*x/(size-1));
+      points.push({
+        x,y,
+        latitude:loc.latitude+northKm*latPerKm,
+        longitude:loc.longitude+eastKm*lonPerKm,
+        northKm,eastKm
+      });
+    }
+  }
+  return{size,radius,points};
+}
+function parseCloudApiTime(value){
+  const text=String(value||'');
+  return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(text)?text:`${text}Z`);
+}
+function nearestTimeIndex(times,target){
+  if(!times.length)return-1;
+  let lo=0,hi=times.length-1;
+  while(lo<hi){
+    const mid=Math.floor((lo+hi)/2);
+    if(times[mid]<target)lo=mid+1;else hi=mid;
+  }
+  if(lo>0&&Math.abs(times[lo-1]-target)<Math.abs(times[lo]-target))return lo-1;
+  return lo;
+}
+function cloudMapCacheKey(loc,settings){
+  return`cloud-map-v2:${selectedDateKey}:${loc.latitude.toFixed(3)}:${loc.longitude.toFixed(3)}:${settings.gridSize}:${settings.radiusKm}`;
+}
+async function fetchCloudModel(key,config,grid,frameTimes,signal){
+  const layerKeys=['cloud','cloudLow','cloudMid','cloudHigh','precip'];
+  const frames=frameTimes.map(()=>Object.fromEntries(layerKeys.map(layer=>[layer,new Array(grid.points.length).fill(NaN)])));
+  const chunkSize=40;
+  for(let offset=0;offset<grid.points.length;offset+=chunkSize){
+    const chunk=grid.points.slice(offset,offset+chunkSize);
+    const startDate=frameTimes[0].toISOString().slice(0,10);
+    const endDate=frameTimes.at(-1).toISOString().slice(0,10);
+    const url=new URL('https://api.open-meteo.com/v1/forecast');
+    url.search=new URLSearchParams({
+      latitude:chunk.map(point=>point.latitude.toFixed(4)).join(','),
+      longitude:chunk.map(point=>point.longitude.toFixed(4)).join(','),
+      hourly:'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation',
+      models:config.model,
+      timezone:'GMT',
+      start_date:startDate,
+      end_date:endDate
+    });
+    const response=await fetch(url,{signal});
+    if(!response.ok)throw new Error(`${config.name}: HTTP ${response.status}`);
+    const payload=await response.json();
+    const results=Array.isArray(payload)?payload:[payload];
+    for(let localIndex=0;localIndex<results.length;localIndex++){
+      const result=results[localIndex];
+      const pointIndex=offset+localIndex;
+      if(pointIndex>=grid.points.length||!result?.hourly?.time)continue;
+      const sourceTimes=result.hourly.time.map(value=>parseCloudApiTime(value).getTime());
+      frameTimes.forEach((frameTime,frameIndex)=>{
+        const sourceIndex=nearestTimeIndex(sourceTimes,frameTime.getTime());
+        const hourly=result.hourly;
+        frames[frameIndex].cloud[pointIndex]=Number(hourly.cloud_cover?.[sourceIndex]);
+        frames[frameIndex].cloudLow[pointIndex]=Number(hourly.cloud_cover_low?.[sourceIndex]);
+        frames[frameIndex].cloudMid[pointIndex]=Number(hourly.cloud_cover_mid?.[sourceIndex]);
+        frames[frameIndex].cloudHigh[pointIndex]=Number(hourly.cloud_cover_high?.[sourceIndex]);
+        frames[frameIndex].precip[pointIndex]=Number(hourly.precipitation?.[sourceIndex]);
+      });
+    }
+  }
+  return{key,name:config.name,frames};
+}
+async function fetchCloudMap(force=false){
+  if(!profile||currentMainTab!=='plan')return;
+  const requestId=++cloudMapRequestId;
+  const loc=activeLocation();
+  const settings=cloudMapSettings();
+  const night=nightData(selectedDateKey,loc);
+  const range=cloudMapRange(night);
+  const grid=cloudMapGrid(loc,settings);
+  const key=cloudMapCacheKey(loc,settings);
+  if(!force){
+    try{
+      const cached=await idbGet('cache',key);
+      if(cached?.value&&Date.now()-new Date(cached.updatedAt||0).getTime()<90*60000){
+        cloudMapData=cached.value;
+        cloudMapError='';
+        cloudMapLoading=false;
+        render();
+        return;
+      }
+    }catch(error){console.warn('Wolkenkarten-Cache nicht lesbar',error)}
+  }
+  cloudMapLoading=true;
+  cloudMapError='';
+  cloudMapData=null;
+  render();
+  cloudMapAbortController?.abort();
+  const controller=new AbortController();
+  cloudMapAbortController=controller;
+  try{
+    const settled=await Promise.allSettled(Object.entries(WEATHER_MODEL_CONFIG).map(([modelKey,config])=>fetchCloudModel(modelKey,config,grid,range.times,controller.signal)));
+    if(requestId!==cloudMapRequestId)return;
+    const models={};
+    settled.forEach(result=>{if(result.status==='fulfilled')models[result.value.key]=result.value});
+    const failures=settled.filter(result=>result.status==='rejected');
+    if(!Object.keys(models).length)throw new Error('Keine Wolkenkartendaten konnten geladen werden.');
+    cloudMapData={
+      key,locationId:loc.id,locationName:loc.name,latitude:loc.latitude,longitude:loc.longitude,
+      selectedDateKey,gridSize:grid.size,radiusKm:grid.radius,points:grid.points,times:range.times.map(time=>time.toISOString()),
+      models,updatedAt:new Date().toISOString()
+    };
+    cloudMapError=failures.length?`${failures.length} Modell(e) der Wolkenkarte derzeit nicht verfügbar.`:'';
+    try{await idbPut('cache',{key,value:cloudMapData,updatedAt:new Date().toISOString()})}catch(error){console.warn('Wolkenkarte konnte nicht zwischengespeichert werden',error)}
+  }catch(error){
+    if(requestId!==cloudMapRequestId)return;
+    cloudMapError=error?.message||'Wolkenkarte konnte nicht geladen werden.';
+  }finally{
+    if(requestId===cloudMapRequestId){cloudMapLoading=false;cloudMapAbortController=null;render()}
+  }
+}
+function cloudFrameValues(view,layer,frameIndex){
+  if(!cloudMapData)return{values:[],spread:[]};
+  const available=Object.entries(cloudMapData.models).filter(([,model])=>model?.frames?.[frameIndex]);
+  if(view!=='consensus'){
+    const model=cloudMapData.models[view];
+    const values=model?.frames?.[frameIndex]?.[layer]||[];
+    return{values,spread:new Array(values.length).fill(0)};
+  }
+  const weights=profile.central.weatherModels?.weights||{};
+  const count=cloudMapData.points.length;
+  const values=new Array(count).fill(NaN);
+  const spread=new Array(count).fill(NaN);
+  for(let index=0;index<count;index++){
+    const entries=available.map(([key,model])=>({value:Number(model.frames[frameIndex][layer]?.[index]),weight:Number(weights[key]||0)})).filter(entry=>Number.isFinite(entry.value));
+    if(!entries.length)continue;
+    const positive=entries.filter(entry=>entry.weight>0);
+    const weightedEntries=positive.length?positive:entries.map(entry=>({...entry,weight:1}));
+    const weightSum=weightedEntries.reduce((sum,entry)=>sum+entry.weight,0);
+    const mean=weightedEntries.reduce((sum,entry)=>sum+entry.value*entry.weight,0)/weightSum;
+    values[index]=mean;
+    spread[index]=Math.sqrt(weightedEntries.reduce((sum,entry)=>sum+Math.pow(entry.value-mean,2)*entry.weight,0)/weightSum);
+  }
+  return{values,spread};
+}
+function cloudFrameStats(view,layer,frameIndex){
+  const data=cloudFrameValues(view,layer,frameIndex);
+  const finite=data.values.filter(Number.isFinite);
+  const spreads=data.spread.filter(Number.isFinite);
+  const center=Math.floor((cloudMapData?.points.length||1)/2);
+  return{
+    ...data,
+    average:finite.length?finite.reduce((a,b)=>a+b,0)/finite.length:NaN,
+    center:Number(data.values[center]),
+    uncertainty:spreads.length?spreads.reduce((a,b)=>a+b,0)/spreads.length:NaN
+  };
+}
+function estimateCloudMovement(view,layer,frameIndex){
+  if(!cloudMapData||frameIndex>=cloudMapData.times.length-1)return null;
+  const now=cloudFrameValues(view,layer,frameIndex).values;
+  const next=cloudFrameValues(view,layer,frameIndex+1).values;
+  const centroid=values=>{
+    let sum=0,x=0,y=0;
+    values.forEach((value,index)=>{
+      const weight=Math.max(0,(Number(value)||0)-15);
+      if(!weight)return;
+      const point=cloudMapData.points[index];
+      sum+=weight;x+=point.eastKm*weight;y+=point.northKm*weight;
+    });
+    return sum?{x:x/sum,y:y/sum,sum}:null;
+  };
+  const a=centroid(now),b=centroid(next);
+  if(!a||!b)return null;
+  const dx=b.x-a.x,dy=b.y-a.y,distance=Math.hypot(dx,dy);
+  if(distance<1)return{distance,dx,dy,azimuth:NaN,direction:'kaum Bewegung',cardinal:'–'};
+  const azimuth=(toDeg(Math.atan2(dx,dy))+360)%360;
+  return{distance,dx,dy,azimuth,direction:`Richtung ${cardinal(azimuth)}`,cardinal:cardinal(azimuth)};
+}
+function findClearWindow(night){
+  const range=cloudMapRange(night);
+  const rows=weatherRowsForWindow({start:range.start,end:new Date(range.end.getTime()+3600000)},'consensus');
+  if(!rows.length)return null;
+  const acceptable=row=>Number(row.cloud)<=35&&Number(row.cloudHigh)<=45&&Number(row.precip)<=.2&&Number(row.transparency)>=55;
+  const segments=[];
+  let current=[];
+  rows.forEach(row=>{
+    if(acceptable(row))current.push(row);
+    else if(current.length){segments.push(current);current=[]}
+  });
+  if(current.length)segments.push(current);
+  let best=segments.filter(segment=>segment.length>=2).sort((a,b)=>b.length-a.length||weatherHourScore(b[0])-weatherHourScore(a[0]))[0];
+  if(!best){
+    const sorted=rows.slice().sort((a,b)=>(a.cloud+a.cloudHigh*.35)-(b.cloud+b.cloudHigh*.35));
+    if(!sorted.length)return null;
+    const first=sorted[0];
+    return{start:first.time,end:new Date(first.time.getTime()+3600000),hours:1,quality:'kurz',averageCloud:first.cloud};
+  }
+  return{
+    start:best[0].time,
+    end:new Date(best.at(-1).time.getTime()+3600000),
+    hours:best.length,
+    quality:best.length>=4?'gut':'begrenzt',
+    averageCloud:best.reduce((sum,row)=>sum+Number(row.cloud||0),0)/best.length
+  };
+}
+function updateLinkedTimeDisplays(time){
+  if(!profile.central.cloudMap?.syncTime)return;
+  const loc=activeLocation();
+  const night=nightData(selectedDateKey,loc);
+  const windowRange=planningWindow(night,profile.planning.planningWindow);
+  profile.planning.detailTimeFraction=clamp((time-night.sunset)/(night.sunrise-night.sunset),0,1);
+  profile.planning.timeFraction=clamp((time-windowRange.start)/(windowRange.end-windowRange.start),0,1);
+  document.querySelectorAll('[data-detail-time-range]').forEach(element=>element.value=String(profile.planning.detailTimeFraction*1000));
+  document.querySelectorAll('[data-detail-time-input]').forEach(element=>element.value=clockInputValue(time,loc.timezone));
+  document.querySelectorAll('[data-detail-time-label]').forEach(element=>element.textContent=`${fmtDateTime(time,loc.timezone)} · Aufnahmezeit`);
+  document.querySelectorAll('.large-altitude-chart,.large-horizon-chart').forEach(canvas=>canvas.dataset.currentTime=String(time.getTime()));
+  const framing=document.getElementById('framingTime');
+  if(framing)framing.value=String(profile.planning.timeFraction*100);
+  const framingLabel=document.getElementById('framingTimeValue');
+  if(framingLabel)framingLabel.textContent=fmtTime(time,loc.timezone);
+  drawLargeCharts();
+}
+function scheduleCloudMapProfileSave(){
+  clearTimeout(cloudMapSaveTimer);
+  cloudMapSaveTimer=setTimeout(()=>saveProfile(),500);
+}
 function render(){
   document.querySelectorAll('[data-main-tab]').forEach(button=>button.classList.toggle('active',button.dataset.mainTab===currentMainTab));
   document.getElementById('headerProfileName').textContent=profile.name;
@@ -428,6 +733,7 @@ function render(){
   bindRendered();
   drawMiniCharts();
   drawLargeCharts();
+  drawCloudMap();
   drawSettingsHorizonCharts();
   layoutFramingOverlays();
   window.setTimeout(layoutFramingOverlays,80);
@@ -470,12 +776,6 @@ function renderPlan(){
         <button id="weatherRefresh">Wetter aktualisieren</button>
       </div>
       <div class="date-buttons">${keys.map((key,index)=>`<button data-date="${key}" class="${key===selectedDateKey?'active':''}">${index===0?'Heute':index===1?'Morgen':`+${index}`}<br><span class="small">${fmtDate(key,loc.timezone)}</span></button>`).join('')}</div>
-      <div class="toolbar planning-window-toolbar">
-        <label>Planungszeitraum
-          <select id="planningWindowTop">${planningWindowOptions(profile.planning.planningWindow)}</select>
-        </label>
-        <div class="small muted">Die Auswahl steuert Objektbewertung, Sichtbarkeitsdauer, Wetterbewertung sowie die Höhenprofile.</div>
-      </div>
       <div class="grid four" style="margin-top:14px">
         <div class="metric"><div class="label">Sonnenuntergang</div><div class="value">${fmtTime(night.sunset,loc.timezone)}</div></div>
         <div class="metric"><div class="label">Gewählter Zeitraum</div><div class="value">${fmtTime(windowRange.start,loc.timezone)}–${fmtTime(windowRange.end,loc.timezone)}</div><div class="small muted">${windowRange.label}</div></div>
@@ -492,6 +792,9 @@ function renderPlan(){
     <section class="card">
       <div class="section-title-row"><h2>Profile für diese Planung</h2><span class="small muted">Temporäre Auswahl überschreibt den Standard nicht.</span></div>
       <div class="toolbar">
+        <label>Planungszeitraum
+          <select id="planningWindowTop">${planningWindowOptions(profile.planning.planningWindow)}</select>
+        </label>
         <label>Aufnahmequalitätsprofil
           <select id="planWindProfile"><option value="">Standard: ${esc(profile.central.windProfiles[profile.central.activeWindProfile].name)}</option>${Object.entries(profile.central.windProfiles).map(([key,value])=>`<option value="${key}" ${profile.planning.temporaryWindProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select>
         </label>
@@ -505,9 +808,10 @@ function renderPlan(){
         </label>
         <button id="makeWeatherDefault" ${!profile.planning.temporaryWeatherView?'disabled':''}>Als Standard übernehmen</button>
       </div>
-      <div class="small muted" style="margin-top:8px">Aktuell: ${esc(weatherViewLabel(currentWeather))}</div>
+      <div class="small muted" style="margin-top:8px">Der Planungszeitraum steuert Objektbewertung, Sichtbarkeitsdauer, Wetterbewertung und Höhenprofile. Wetterdarstellung aktuell: ${esc(weatherViewLabel(currentWeather))}</div>
     </section>
     ${renderWeather(windowRange,weather,loc,night)}
+    ${renderCloudMap(windowRange,loc,night)}
     ${renderMeteoblue(loc)}
     <section class="card">
       <div class="section-title-row"><h2>Objektauswahl</h2><span class="muted">${objects.length} Treffer aus ${catalog.length} Katalogobjekten</span></div>
@@ -567,7 +871,7 @@ function objectCell(column,item,loc,windowRange,night){
     case'visibleHours':return`<td>${fmt(stats.visibleHours,1)} h</td>`;
     case'meridian':return`<td>${fmtTime(stats.meridian,loc.timezone)}<br><span class="small muted">${fmt(stats.maxAltitude)}°</span></td>`;
     case'framing':return`<td><button data-frame-object="${esc(object.id)}">Rahmung · ${item.fit}</button></td>`;
-    case'miniChart':return`<td><canvas class="mini-chart" width="230" height="92" data-points="${encodeURIComponent(JSON.stringify(stats.points.map(point=>[point.t.getTime(),point.alt])))}" data-start="${windowRange.start.getTime()}" data-end="${windowRange.end.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-min-alt="${profile.planning.minAltitude}"></canvas></td>`;
+    case'miniChart':return`<td><canvas class="mini-chart" width="230" height="92" data-points="${encodeURIComponent(JSON.stringify(stats.points.map(point=>[point.t.getTime(),point.alt])))}" data-start="${windowRange.start.getTime()}" data-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-min-alt="${profile.planning.minAltitude}"></canvas></td>`;
     case'bestTime':return`<td>${fmtTime(stats.bestTime,loc.timezone)}</td>`;
     case'moonDistance':return`<td>${fmt(stats.moonDistance)}°</td>`;
     case'weather':return`<td>${weatherModels.length?esc(weatherViewLabel()):'–'}</td>`;
@@ -576,6 +880,62 @@ function objectCell(column,item,loc,windowRange,night){
     case'filters':return`<td>${esc((object.recommendedFilters||[]).join(', ')||'–')}</td>`;
     default:return'<td>–</td>';
   }
+}
+
+function detailTimeState(o,night,loc){
+  const fraction=clamp(Number(profile.planning.detailTimeFraction)||0,0,1);
+  const time=new Date(night.sunset.getTime()+(night.sunrise-night.sunset)*fraction);
+  const altitudeValue=altitude(o.raHours,o.decDeg,time,loc.latitude,loc.longitude);
+  const azimuthValue=azimuth(o.raHours,o.decDeg,time,loc.latitude,loc.longitude);
+  return{fraction,time,altitude:altitudeValue,azimuth:azimuthValue};
+}
+function hourlyObjectSamples(o,night,loc){
+  const samples=[];
+  let previousKey='';
+  for(let time=night.sunset.getTime();time<=night.sunrise.getTime();time+=60000){
+    const date=new Date(time);
+    const clock=clockInputValue(date,loc.timezone);
+    if(clock.endsWith(':00')&&clock!==previousKey){
+      const altitudeValue=altitude(o.raHours,o.decDeg,date,loc.latitude,loc.longitude);
+      const azimuthValue=azimuth(o.raHours,o.decDeg,date,loc.latitude,loc.longitude);
+      samples.push({time,clock,altitude:altitudeValue,azimuth:azimuthValue});
+      previousKey=clock;
+    }
+  }
+  return samples;
+}
+function renderDetailTimeControls(o,night,loc,variant='altitude'){
+  const state=detailTimeState(o,night,loc);
+  const points=objectStats(o,{start:night.sunset,end:night.sunrise},loc,profile.planning.minAltitude).points.map(point=>[
+    point.t.getTime(),Number(point.alt.toFixed(3)),Number(point.az.toFixed(3))
+  ]);
+  return`<div class="detail-time-controller" data-detail-time-controller data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-timezone="${esc(loc.timezone)}" data-points="${encodeURIComponent(JSON.stringify(points))}">
+    <div class="detail-time-head">
+      <div><div class="eyebrow">Gewählte Aufnahmezeit</div><strong data-detail-time-label>${fmtDateTime(state.time,loc.timezone)}</strong><div class="small muted" data-detail-time-position>Höhe ${fmt(state.altitude)}° · Azimut ${fmt(state.azimuth)}° (${cardinal(state.azimuth)})</div></div>
+      <div class="detail-time-actions">
+        <button type="button" data-detail-time-step="-15">−15 min</button>
+        <label>Uhrzeit<input type="time" data-detail-time-clock value="${clockInputValue(state.time,loc.timezone)}"></label>
+        <button type="button" data-detail-time-step="15">+15 min</button>
+        ${variant==='horizon'?`<label class="chip"><input type="checkbox" data-detail-ground-toggle ${profile.planning.showGroundHorizon!==false?'checked':''}>Boden/Horizont anzeigen</label>`:''}
+      </div>
+    </div>
+    <input class="detail-time-slider" type="range" min="0" max="1000" step="1" value="${Math.round(state.fraction*1000)}" data-detail-time-slider aria-label="Zeit zwischen Sonnenuntergang und Sonnenaufgang">
+    <div class="detail-time-limits"><span>${fmtTime(night.sunset,loc.timezone)}</span><span>${fmtTime(night.sunrise,loc.timezone)}</span></div>
+  </div>`;
+}
+function renderTwilightLegend(){
+  return`<div class="twilight-legend" aria-label="Legende der Dämmerungsphasen">
+    <span><i class="legend-civil"></i>Bürgerliche Dämmerung</span>
+    <span><i class="legend-nautical"></i>Nautische Dämmerung</span>
+    <span><i class="legend-astronomical"></i>Astronomische Dämmerung</span>
+    <span><i class="legend-night"></i>Astronomische Nacht</span>
+    <span><i class="legend-selected"></i>Gewählter Planungszeitraum</span>
+    <span><i class="legend-current"></i>Gewählte Aufnahmezeit</span>
+  </div>`;
+}
+function renderHourlyAltitudeStrip(o,night,loc){
+  const samples=hourlyObjectSamples(o,night,loc);
+  return`<div class="hourly-altitude-strip" aria-label="Objekthöhe je voller Stunde">${samples.map(sample=>`<div class="hourly-altitude-item"><strong>${esc(sample.clock)}</strong><span>${fmt(sample.altitude)}°</span><small>${cardinal(sample.azimuth)}</small></div>`).join('')}</div>`;
 }
 function renderObjectDetails(o,windowRange,loc,night){
   const fullNight={start:night.sunset,end:night.sunrise};
@@ -596,6 +956,7 @@ function renderObjectDetails(o,windowRange,loc,night){
     azimuth:Number(item.azimuth)||0,
     altitude:Number(item.altitude)||0
   }));
+  const detailTime=detailTimeState(o,night,loc);
   return`<div class="object-detail-card" id="objectDetail-${esc(o.id)}">
     <div class="object-detail-header">
       <div><div class="eyebrow">Objektdetails</div><h2>${esc(o.id)} · ${esc(o.name)}</h2></div>
@@ -610,7 +971,8 @@ function renderObjectDetails(o,windowRange,loc,night){
     ${renderFraming(o,windowRange,loc)}
     <details class="object-chart-panel" ${profile.central.detailPanels?.altitudeCollapsed?'':'open'}>
       <summary>Höhenkurve</summary>
-      <div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Ergänzend zur Uhrzeit wird die Himmelsrichtung angezeigt.</div>
+      <div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Schieberegler, Uhrzeitfeld, Kurvenklick und Horizontansicht verwenden dieselbe Aufnahmezeit.</div>
+      ${renderDetailTimeControls(o,night,loc,'altitude')}
       <canvas class="large-altitude-chart" width="1400" height="430"
         data-points="${encodeURIComponent(JSON.stringify(altitudePoints))}"
         data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}"
@@ -618,16 +980,21 @@ function renderObjectDetails(o,windowRange,loc,night){
         data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}"
         data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}"
         data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}"
+        data-current-time="${detailTime.time.getTime()}"
         data-min-alt="${profile.planning.minAltitude}" data-timezone="${esc(loc.timezone)}"></canvas>
+      ${renderTwilightLegend()}
+      ${renderHourlyAltitudeStrip(o,night,loc)}
     </details>
     <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}>
       <summary>Horizontansicht</summary>
-      <div class="chart-description">Objektbahn und persönlicher Horizont. Azimut wird sowohl in Grad als auch mit N, NO, O, SO, S, SW, W und NW beschriftet.</div>
+      <div class="chart-description">Objektbahn und persönlicher Horizont. Die gewählte Aufnahmezeit ist mit der Höhenkurve synchronisiert; Azimut wird in Grad und als Himmelsrichtung beschriftet.</div>
+      ${renderDetailTimeControls(o,night,loc,'horizon')}
       <canvas class="large-horizon-chart" width="1400" height="430"
         data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}"
         data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}"
         data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}"
         data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}"
+        data-current-time="${detailTime.time.getTime()}" data-show-ground="${profile.planning.showGroundHorizon!==false}"
         data-timezone="${esc(loc.timezone)}"></canvas>
     </details>
   </div>`;
@@ -703,6 +1070,108 @@ function renderWeather(windowRange,summary,loc,night){
     </details>
   </section>`;
 }
+
+function renderCloudMap(windowRange,loc,night){
+  const settings=cloudMapSettings();
+  const view=currentCloudMapView();
+  const layer=profile.planning.cloudMapLayer||settings.defaultLayer||'cloud';
+  const mode=profile.planning.cloudMapMode||settings.defaultMode||'clouds';
+  const frameCount=cloudMapData?.times?.length||24;
+  const frameIndex=clamp(Number(profile.planning.cloudMapFrame)||0,0,Math.max(0,frameCount-1));
+  const time=cloudMapData?.times?.[frameIndex]?new Date(cloudMapData.times[frameIndex]):cloudMapRange(night).times[frameIndex];
+  const stats=cloudMapData?cloudFrameStats(view,layer,frameIndex):null;
+  const movement=cloudMapData?estimateCloudMovement(view,layer,frameIndex):null;
+  const clearWindow=findClearWindow(night);
+  const viewOptions=CLOUD_MAP_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${view===key?'selected':''}>${esc(label)}</option>`).join('');
+  const layerOptions=CLOUD_MAP_LAYER_OPTIONS.map(([key,label])=>`<option value="${key}" ${layer===key?'selected':''}>${esc(label)}</option>`).join('');
+  const modeOptions=CLOUD_MAP_MODE_OPTIONS.map(([key,label])=>`<option value="${key}" ${mode===key?'selected':''}>${esc(label)}</option>`).join('');
+  const status=cloudMapError?`<div class="notice warn">${esc(cloudMapError)}</div>`:'';
+  const clearText=clearWindow
+    ? `${fmtTime(clearWindow.start,loc.timezone)}–${fmtTime(clearWindow.end,loc.timezone)} · ${fmt(clearWindow.hours,0)} h · Ø ${fmt(clearWindow.averageCloud)} % Wolken`
+    : 'Kein ausreichend klares Fenster in den betrachteten 24 Stunden gefunden.';
+  const compareRows=locationComparisonData?.rows||[];
+  return`<section class="card cloud-map-card">
+    <div class="section-title-row">
+      <div><div class="eyebrow">Animierte 24-Stunden-Prognose</div><h2>Astro-Wolkenmodell rund um ${esc(loc.name)}</h2><div class="small muted">Gewichteter Konsens oder Einzelmodell · Gesamt-, tiefe, mittlere und hohe Wolken</div></div>
+      <button id="cloudMapReload">${cloudMapLoading?'Lädt …':'Wolkenkarte aktualisieren'}</button>
+    </div>
+    ${status}
+    <details id="cloudMapDetails" ${settings.collapsed?'':'open'}>
+      <summary>Wolkenbewegung und Modellabweichung anzeigen</summary>
+      <div class="toolbar cloud-map-toolbar" style="margin-top:12px">
+        <label>Darstellung
+          <select id="cloudMapView">${viewOptions}</select>
+        </label>
+        <button id="makeCloudMapDefault" ${view===settings.defaultView?'disabled':''}>Als Standard übernehmen</button>
+        <label>Wolkenschicht
+          <select id="cloudMapLayer">${layerOptions}</select>
+        </label>
+        <label>Kartenmodus
+          <select id="cloudMapMode">${modeOptions}</select>
+        </label>
+        <label class="chip"><input id="cloudMapSyncTime" type="checkbox" ${settings.syncTime?'checked':''}>Zeit mit Objektgrafiken koppeln</label>
+      </div>
+      <div class="grid four cloud-map-summary" style="margin-top:12px">
+        <div class="metric"><div class="label">Kartenzeit</div><div class="value" id="cloudMapTimeLabel">${fmtDateTime(time,loc.timezone)}</div></div>
+        <div class="metric"><div class="label">Am Standort</div><div class="value" id="cloudMapCenterValue">${stats?`${fmt(stats.center)} %`:'–'}</div></div>
+        <div class="metric"><div class="label">Kartenmittel</div><div class="value" id="cloudMapAverageValue">${stats?`${fmt(stats.average)} %`:'–'}</div></div>
+        <div class="metric"><div class="label">Modellabweichung</div><div class="value" id="cloudMapSpreadValue">${stats?`${fmt(stats.uncertainty,1)} %-Punkte`:'–'}</div></div>
+      </div>
+      <div class="notice good clear-window-notice" style="margin-top:12px">
+        <strong>Nächstes klares Fenster:</strong> ${esc(clearText)}
+      </div>
+      ${cloudMapLoading&&!cloudMapData?`<div class="loading-card"><div class="spinner"></div><p>${settings.gridSize*settings.gridSize} Kartenpunkte für drei Wettermodelle werden geladen …</p></div>`:
+      cloudMapData?`<div class="cloud-map-stage" style="margin-top:12px">
+        <canvas id="cloudMapCanvas" width="1400" height="720" aria-label="Wolkenkarte für ${esc(loc.name)}"></canvas>
+        <div class="cloud-map-legend" id="cloudMapLegend"></div>
+        <div class="cloud-map-movement" id="cloudMapMovement">${movement?`Geschätzte Verlagerung: ${esc(movement.direction)} · ${fmt(movement.distance,0)} km/h`:'Geschätzte Verlagerung: nicht zuverlässig ableitbar'}</div>
+      </div>`:`<div class="notice warn" style="margin-top:12px">Noch keine Wolkenkartendaten vorhanden. Bitte „Wolkenkarte aktualisieren“ wählen.</div>`}
+      <div class="cloud-map-time-controls" style="margin-top:12px">
+        <button id="cloudMapPrev" aria-label="Eine Stunde zurück">−1 h</button>
+        <button id="cloudMapPlay">${cloudMapAnimationTimer?'Pause':'▶ Abspielen'}</button>
+        <input id="cloudMapTime" type="range" min="0" max="${Math.max(0,frameCount-1)}" step="1" value="${frameIndex}" ${cloudMapData?'':'disabled'}>
+        <button id="cloudMapNext" aria-label="Eine Stunde vor">+1 h</button>
+      </div>
+      <div class="small muted" style="margin-top:8px">
+        ${cloudMapData?`${cloudMapData.gridSize*cloudMapData.gridSize} Kartenpunkte · Radius ${cloudMapData.radiusKm} km · ${Object.values(cloudMapData.models).map(model=>esc(model.name)).join(', ')}`:`Geplante Auflösung: ${settings.gridSize*settings.gridSize} Kartenpunkte · Radius ${settings.radiusKm} km`}
+        · Werte werden im Browser zwischengespeichert.
+      </div>
+      <details class="location-comparison" style="margin-top:14px">
+        <summary>Gespeicherte Standorte vergleichen</summary>
+        <div class="section-title-row" style="margin-top:10px"><div class="small muted">Der Vergleich lädt nur Punktprognosen und verbraucht deutlich weniger Daten als die Wolkenkarte.</div><button id="loadLocationComparison">${locationComparisonLoading?'Lädt …':'Vergleich laden'}</button></div>
+        ${locationComparisonError?`<div class="notice warn">${esc(locationComparisonError)}</div>`:''}
+        ${compareRows.length?`<div class="weather-scroll"><table class="weather-table"><thead><tr><th>Standort</th><th>Ø Wolken</th><th>Bestes Fenster</th><th>Modellstreuung</th></tr></thead><tbody>${compareRows.map(row=>`<tr><td>${esc(row.name)}</td><td>${fmt(row.cloud)} %</td><td>${esc(row.window)}</td><td>${fmt(row.spread,1)} %-Punkte</td></tr>`).join('')}</tbody></table></div>`:'<div class="small muted" style="margin-top:8px">Noch kein Standortvergleich geladen.</div>'}
+      </details>
+    </details>
+  </section>`;
+}
+
+function meteoblueSlugPart(value){
+  return String(value||'').trim().toLocaleLowerCase('de').replace(/[’']/g,'').replace(/[^a-z0-9\u00c0-\u024f]+/gi,'-').replace(/^-+|-+$/g,'');
+}
+function meteoblueLocationInfo(loc){
+  const geonameId=Number(loc.geonameId)||(/tübingen/i.test(loc.name)?2820860:0);
+  let path=loc.meteobluePath||'';
+  if(!path&&geonameId){
+    const city=String(loc.name||'').split(',')[0].trim();
+    const country=loc.country||String(loc.name||'').split(',').at(-1)||'Deutschland';
+    const citySlug=meteoblueSlugPart(city),countrySlug=meteoblueSlugPart(country);
+    if(citySlug&&countrySlug)path=`${citySlug}_${countrySlug}_${geonameId}`;
+  }
+  const encodedPath=path?path.split('_').map(encodeURIComponent).join('_'):'';
+  const fixed=Boolean(encodedPath);
+  const seeingWidget=fixed?`https://www.meteoblue.com/de/wetter/widget/seeing/${encodedPath}?geoloc=fixed&noground=0`:'https://www.meteoblue.com/de/wetter/widget/seeing?geoloc=detect&noground=0';
+  const seeingPage=fixed?`https://www.meteoblue.com/de/wetter/outdoorsports/seeing/${encodedPath}`:'https://www.meteoblue.com/de/wetter/outdoorsports/seeing';
+  const mapBase=fixed?`https://www.meteoblue.com/de/wetter/maps/widget/${encodedPath}`:'https://www.meteoblue.com/de/wetter/maps/widget';
+  const mapParams=new URLSearchParams({
+    windAnimation:'1',gust:'1',satellite:'1',cloudsAndPrecipitation:'1',temperature:'1',sunshine:'1',extremeForecastIndex:'1',
+    geoloc:fixed?'fixed':'detect',tempunit:'C',windunit:'km%2Fh',lengthunit:'metric',zoom:'6',autowidth:'auto'
+  });
+  const mapWidget=`${mapBase}?${mapParams.toString()}`;
+  const mapPage=fixed?`https://www.meteoblue.com/de/wetter/maps/${encodedPath}`:'https://www.meteoblue.com/de/wetter/maps';
+  return{fixed,seeingWidget,seeingPage,mapWidget,mapPage};
+}
+
 function renderFraming(o,windowRange,loc){
   const setup=fov();
   const aspect=2.15;
@@ -738,7 +1207,41 @@ function renderFraming(o,windowRange,loc){
     </div>
   </section>`;
 }
-function renderMeteoblue(loc){const q=encodeURIComponent(`${loc.name} ${loc.latitude},${loc.longitude}`);return`<section class="card"><details ${profile.central.meteoblueCollapsed?'':'open'} id="meteoblueDetails"><summary><strong>Meteoblue Astronomy Seeing</strong> · unabhängige Kontrollvorhersage</summary><div class="notice" style="margin-top:12px">Meteoblue wird bewusst nicht in die automatische Modellbewertung eingerechnet.</div><iframe title="Meteoblue Astronomy Seeing" src="https://www.meteoblue.com/de/wetter/outdoorsports/seeing/${q}" style="width:100%;height:720px;border:0;border-radius:12px;margin-top:12px;background:white"></iframe></details></section>`}
+function renderMeteoblue(loc){
+  const urls=meteoblueLocationInfo(loc);
+  const mapCollapsed=profile.central.cloudMap?.meteoblueMapCollapsed!==false;
+  const locationText=urls.fixed?loc.name:'automatische Meteoblue-Standorterkennung';
+  return`<section class="card meteoblue-card">
+    <details ${profile.central.meteoblueCollapsed?'':'open'} id="meteoblueDetails">
+      <summary><strong>Meteoblue Astronomy Seeing</strong> · unabhängige Kontrollvorhersage</summary>
+      <div class="notice" style="margin-top:12px">Diese Kontrollvorhersage wird nicht in den automatischen Modellkonsens eingerechnet. Standort: <strong>${esc(locationText)}</strong>.</div>
+      <div class="meteoblue-actions" style="margin-top:10px">
+        <button data-meteoblue-fullscreen="meteoblueSeeingWrap">⛶ Großansicht</button>
+        <a class="button primary" href="${urls.seeingPage}" target="_blank" rel="noopener noreferrer">Bei Meteoblue öffnen</a>
+      </div>
+      <div class="meteoblue-embed" id="meteoblueSeeingWrap">
+        <iframe class="meteoblue-frame seeing-frame" title="Meteoblue Astronomy Seeing für ${esc(loc.name)}" src="${urls.seeingWidget}" loading="lazy"
+          allow="geolocation" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <div class="meteoblue-credit"><a href="${urls.seeingPage}" target="_blank" rel="noopener noreferrer">meteoblue</a></div>
+    </details>
+  </section>
+  <section class="card meteoblue-card">
+    <details ${mapCollapsed?'':'open'} id="meteoblueMapDetails">
+      <summary><strong>Meteoblue Wetterkarten</strong> · zusätzliche Live-, Radar-, Satelliten- und Modellansicht</summary>
+      <div class="notice" style="margin-top:12px">Zusätzliche unabhängige Karte mit Windanimation, Böen, Satellit, Wolken und Niederschlag, Temperatur, Sonnenscheindauer und Extremprognose.</div>
+      <div class="meteoblue-actions" style="margin-top:10px">
+        <button data-meteoblue-fullscreen="meteoblueMapWrap">⛶ Großansicht</button>
+        <a class="button primary" href="${urls.mapPage}" target="_blank" rel="noopener noreferrer">Wetterkarten bei Meteoblue öffnen</a>
+      </div>
+      <div class="meteoblue-embed meteoblue-map-embed" id="meteoblueMapWrap">
+        <iframe class="meteoblue-frame map-frame" title="Meteoblue Wetterkarten für ${esc(loc.name)}" src="${urls.mapWidget}" loading="lazy"
+          allow="geolocation" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <div class="meteoblue-credit"><a href="${urls.mapPage}" target="_blank" rel="noopener noreferrer">meteoblue</a></div>
+    </details>
+  </section>`
+}
 
 function renderSettings(){return`<div data-page="settings"><section class="card"><div class="section-title-row"><div><h2>Einstellungen</h2><div class="muted">Lokales Profil „${esc(profile.name)}“ · Speicherung in IndexedDB</div></div>${renderProfileBar()}</div><div class="settings-tabs" style="margin-top:16px">${[['equipment','Ausrüstung'],['central','Zentrale Einstellungen'],['locations','Standorte & Horizont'],['info','Info']].map(([k,n])=>`<button data-settings-tab="${k}" class="${currentSettingsTab===k?'active':''} ${dirtySections.has(k)?'dirty-dot':''}">${n}</button>`).join('')}</div></section><section class="settings-section ${currentSettingsTab==='equipment'?'active':''}">${renderEquipment()}</section><section class="settings-section ${currentSettingsTab==='central'?'active':''}">${renderCentral()}</section><section class="settings-section ${currentSettingsTab==='locations'?'active':''}">${renderLocations()}</section><section class="settings-section ${currentSettingsTab==='info'?'active':''}">${renderInfo()}</section></div>`}
 function renderProfileBar(){return`<div class="profile-bar"><select id="settingsProfileSelect">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===profile.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button id="newProfile">Neu</button><button id="duplicateProfile">Duplizieren</button><button id="renameProfile">Umbenennen</button><button id="deleteProfile" class="danger" ${profiles.length===1?'disabled':''}>Löschen</button></div>`}
@@ -774,6 +1277,24 @@ function renderCentral(){
       <div class="notice good">In der Planung kann temporär auf ein einzelnes Modell umgeschaltet und die Auswahl dort als neuer Standard übernommen werden.</div>
     </div>
     <div class="section-title-row" style="margin-top:14px"><span class="save-state">${dirtySections.has('weatherModels')?'Ungespeicherte Änderungen':'Gespeichert'}</span><button data-save-section="weatherModels" class="primary" ${weatherTotal!==100?'disabled':''}>Wettermodelle speichern</button></div>
+  </div>
+  <div class="card">
+    <div class="section-title-row"><div><h2>Wolkenkarte und Datenmenge</h2><div class="small muted">Auflösung, Kartenausschnitt und Standarddarstellung der animierten 24-Stunden-Wolkenprognose</div></div><span class="save-state">${dirtySections.has('cloudMap')?'Ungespeicherte Änderungen':'Gespeichert'}</span></div>
+    <div class="grid three">
+      <label>Kartenpunkte<select id="cloudMapGridSize">${CLOUD_MAP_GRID_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.gridSize)===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+      <label>Kartenradius<select id="cloudMapRadius">${CLOUD_MAP_RADIUS_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.radiusKm)===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+      <label>Animationsgeschwindigkeit<select id="cloudMapAnimationMs">${[[1400,'langsam'],[900,'normal'],[550,'schnell']].map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.animationMs)===value?'selected':''}>${label} (${value} ms)</option>`).join('')}</select></label>
+      <label>Standard-Modellansicht<select id="defaultCloudMapView">${CLOUD_MAP_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultView===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+      <label>Standard-Wolkenschicht<select id="defaultCloudMapLayer">${CLOUD_MAP_LAYER_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultLayer===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+      <label>Standard-Kartenmodus<select id="defaultCloudMapMode">${CLOUD_MAP_MODE_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultMode===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+    </div>
+    <div class="grid three" style="margin-top:12px">
+      <label class="chip"><input id="cloudMapSyncDefault" type="checkbox" ${c.cloudMap?.syncTime?'checked':''}>Kartenzeit mit Höhenkurve, Horizont und Framing koppeln</label>
+      <label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label>
+      <label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label>
+    </div>
+    <div class="notice" style="margin-top:12px">25 Punkte benötigen je Aktualisierung drei kompakte Modellabfragen, 49 Punkte meist sechs und 81 Punkte bis zu neun Teilabfragen. Daten werden 90 Minuten im Browser zwischengespeichert. Standard: 49 Punkte in einem Radius von 120 km.</div>
+    <div class="section-title-row" style="margin-top:14px"><span></span><button data-save-section="cloudMap" class="primary">Wolkenkarte speichern</button></div>
   </div>
   <div class="card">
     <div class="section-title-row"><h2>Deep-Sky-Gewichtung</h2><span class="weight-total ${total===100?'ok':'error'}">Summe: ${total} %</span></div>
@@ -843,11 +1364,11 @@ function renderInfo(){
   return`<div class="card"><h2>Astro Night Planner 1.0</h2><p>Stabile, installierbare PWA für Nachtplanung, astronomisches Wetter, Mond und Dämmerung, Deep-Sky-Auswahl, persönliche Ausrüstung, Standorte, Horizont und Rahmung.</p><div class="storage-status"><div class="metric"><div class="label">Umgebung</div><div class="value">${ENV==='prod'?'Produktion':'Test'}</div></div><div class="metric"><div class="label">Datenbank</div><div class="value small">${DB_NAME}</div></div><div class="metric"><div class="label">Version</div><div class="value">${APP_VERSION}</div></div></div></div>
   <div class="card"><h2>Profile, Sicherung und Wiederherstellung</h2><div class="data-actions"><button id="exportProfile">Aktuelles Profil exportieren</button><button id="exportAll">Komplette Sicherung exportieren</button><button id="importProfile">Profil/Sicherung importieren</button><button id="requestPersistence">Persistenten Speicher anfordern</button></div><div id="storageMessage" class="notice" style="margin-top:12px">Die Daten liegen lokal im Browser. Test- und Produktivversion verwenden getrennte Datenbanken und Caches.</div></div>
   <div class="card help-article"><h2>Browserbasierte Hilfe</h2><div class="help-toc"><a href="#help-plan">Planung</a><a href="#help-weather">Wetter</a><a href="#help-objects">Objektliste</a><a href="#help-framing">Rahmung</a><a href="#help-horizon">Horizont</a><a href="#help-profiles">Profile & Sicherung</a><a href="docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html" target="_blank">Handbuch öffnen</a></div>
-  <section id="help-plan"><h3>Planung</h3><p>Wähle Standort, Datum und Planungszeitraum direkt in der Planungsansicht. Die Auswahl steuert Objektbewertung, Wetterbewertung und sämtliche Höhenprofile. Der unter „Zentrale Einstellungen“ gespeicherte Standard wird unmittelbar auf die Planung angewendet.</p></section>
-  <section id="help-weather"><h3>Wetter</h3><p>Der Standard „Modellkonsens“ bildet je Prognosestunde einen gewichteten Wert aus DWD ICON, ECMWF IFS und NOAA GFS. Die Gewichte werden unter „Zentrale Einstellungen → Wettermodelle“ festgelegt. In der Planung kann vorübergehend auf ein einzelnes Modell umgeschaltet und diese Auswahl als Standard gespeichert werden. Meteoblue steht direkt unter den übrigen Wetterdaten als unabhängige Kontrollansicht.</p></section>
-  <section id="help-objects"><h3>Objektliste und Details</h3><p>Ein Klick auf eine beliebige freie Stelle einer Objektzeile öffnet die Details unmittelbar unter dieser Zeile. Mit „Details schließen“ oder einem erneuten Klick auf dieselbe Zeile wird die Ansicht geschlossen. Höhenkurve und Horizontansicht sind auf- und zuklappbar; ihr initialer Zustand wird in den zentralen Anzeigeeinstellungen festgelegt.</p></section>
+  <section id="help-plan"><h3>Planung</h3><p>Wähle Standort und Datum; der Planungszeitraum steht in der Rubrik „Profile für diese Planung“. Die Auswahl steuert Objektbewertung, Wetterbewertung und sämtliche Höhenprofile. Der unter „Zentrale Einstellungen“ gespeicherte Standard wird unmittelbar auf die Planung angewendet.</p></section>
+  <section id="help-weather"><h3>Wetter und Wolkenkarten</h3><p>Der Standard „Modellkonsens“ bildet je Prognosestunde einen gewichteten Wert aus DWD ICON, ECMWF IFS und NOAA GFS. Die Gewichte werden unter „Zentrale Einstellungen → Wettermodelle“ festgelegt. Die animierte 24-Stunden-Wolkenkarte zeigt Gesamtbewölkung sowie tiefe, mittlere und hohe Wolken wahlweise als Konsens oder Einzelmodell. Der Modus „Modellabweichung“ macht unterschiedliche Prognosen sichtbar. Kartenpunkte, Radius, Animation und Standarddarstellung werden unter „Zentrale Einstellungen → Wolkenkarte und Datenmenge“ festgelegt. Meteoblue Astronomy Seeing und die Meteoblue-Wetterkarten sind zusätzlich als unabhängige eingebettete Kontrollquellen verfügbar.</p></section>
+  <section id="help-objects"><h3>Objektliste und Details</h3><p>Ein Klick auf eine beliebige freie Stelle einer Objektzeile öffnet die Details unmittelbar unter dieser Zeile. Mit „Details schließen“ oder einem erneuten Klick auf dieselbe Zeile wird die Ansicht geschlossen. Höhenkurve und Horizontansicht sind auf- und zuklappbar; ihr initialer Zustand wird in den zentralen Anzeigeeinstellungen festgelegt. Beide Ansichten besitzen synchronisierte Zeitregler. Die Höhenkurve enthält eine Dämmerungslegende sowie stündliche Höhe und Himmelsrichtung.</p></section>
   <section id="help-framing"><h3>Rahmung</h3><p>Aladin Lite wird auf die Koordinaten des gewählten Objekts zentriert und so gezoomt, dass Setup-Rahmen beziehungsweise Objektgröße sichtbar sind. Setup-Rahmen und Objektellipse lassen sich unabhängig ein- oder ausblenden und getrennt rotieren.</p></section>
-  <section id="help-horizon"><h3>Persönlicher Horizont</h3><p>Unter „Standorte & Horizont“ zeigt eine Vorschaugrafik den aus den acht Richtungswerten und den Hindernissen entstehenden Horizont. Große Höhen- und Horizontgrafiken beschriften den Azimut sowohl in Grad als auch mit N, NO, O, SO, S, SW, W und NW.</p></section>
+  <section id="help-horizon"><h3>Persönlicher Horizont</h3><p>Unter „Standorte & Horizont“ zeigt eine Vorschaugrafik den aus den acht Richtungswerten und den Hindernissen entstehenden Horizont. Große Höhen- und Horizontgrafiken beschriften den Azimut sowohl in Grad als auch mit N, NO, O, SO, S, SW, W und NW. In der Horizontansicht kann Boden/Horizont ein- und ausgeblendet werden.</p></section>
   <section id="help-profiles"><h3>Profile und Datensicherung</h3><p>Jedes lokale Benutzerprofil enthält Ausrüstung, Standorte, Horizont, Filter, Wettermodellgewichte, Darstellungsprofile und Anzeigeoptionen. Exportiere regelmäßig eine vollständige Sicherung.</p></section></div>`;
 }
 
@@ -959,9 +1480,184 @@ function bindRendered(){
   });
   bindPlanProfiles();
   bindFraming();
+  bindDetailTimeControls();
   bindDetails();
+  bindCloudMap();
+  bindMeteobluePanels();
   bindSettings();
 }
+
+function stopCloudMapAnimation(){
+  if(cloudMapAnimationTimer){clearInterval(cloudMapAnimationTimer);cloudMapAnimationTimer=null}
+  const button=document.getElementById('cloudMapPlay');
+  if(button)button.textContent='▶ Abspielen';
+}
+function applyCloudMapFrame(index,persist=true){
+  if(!cloudMapData)return;
+  const max=cloudMapData.times.length-1;
+  const value=clamp(Math.round(Number(index)||0),0,max);
+  profile.planning.cloudMapFrame=value;
+  const slider=document.getElementById('cloudMapTime');
+  if(slider)slider.value=String(value);
+  const time=new Date(cloudMapData.times[value]);
+  updateCloudMapReadouts();
+  drawCloudMap();
+  updateLinkedTimeDisplays(time);
+  if(persist)scheduleCloudMapProfileSave();
+}
+function updateCloudMapReadouts(){
+  if(!cloudMapData)return;
+  const view=currentCloudMapView();
+  const layer=profile.planning.cloudMapLayer||cloudMapSettings().defaultLayer;
+  const index=clamp(Number(profile.planning.cloudMapFrame)||0,0,cloudMapData.times.length-1);
+  const time=new Date(cloudMapData.times[index]);
+  const stats=cloudFrameStats(view,layer,index);
+  const movement=estimateCloudMovement(view,layer,index);
+  const loc=activeLocation();
+  const set=(id,text)=>{const element=document.getElementById(id);if(element)element.textContent=text};
+  set('cloudMapTimeLabel',fmtDateTime(time,loc.timezone));
+  set('cloudMapCenterValue',`${fmt(stats.center)} %`);
+  set('cloudMapAverageValue',`${fmt(stats.average)} %`);
+  set('cloudMapSpreadValue',`${fmt(stats.uncertainty,1)} %-Punkte`);
+  set('cloudMapMovement',movement?`Geschätzte Verlagerung: ${movement.direction} · ${fmt(movement.distance,0)} km/h`:'Geschätzte Verlagerung: nicht zuverlässig ableitbar');
+}
+async function fetchLocationComparison(){
+  if(!profile.locations?.length)return;
+  locationComparisonLoading=true;locationComparisonError='';locationComparisonData=null;render();
+  try{
+    const locations=profile.locations.slice(0,20);
+    const activeNight=nightData(selectedDateKey,activeLocation());
+    const range=cloudMapRange(activeNight);
+    const modelResults={};
+    for(const [modelKey,config] of Object.entries(WEATHER_MODEL_CONFIG)){
+      const url=new URL('https://api.open-meteo.com/v1/forecast');
+      url.search=new URLSearchParams({
+        latitude:locations.map(location=>Number(location.latitude).toFixed(4)).join(','),
+        longitude:locations.map(location=>Number(location.longitude).toFixed(4)).join(','),
+        hourly:'cloud_cover,cloud_cover_high,precipitation',
+        models:config.model,timezone:'GMT',
+        start_date:range.start.toISOString().slice(0,10),
+        end_date:range.end.toISOString().slice(0,10)
+      });
+      const response=await fetch(url);
+      if(!response.ok)throw new Error(`${config.name}: HTTP ${response.status}`);
+      const payload=await response.json();
+      modelResults[modelKey]=Array.isArray(payload)?payload:[payload];
+    }
+    const weights=profile.central.weatherModels.weights;
+    const rows=locations.map((location,locationIndex)=>{
+      const hourlyFrames=range.times.map(frameTime=>{
+        const values=[];
+        for(const [modelKey] of Object.entries(WEATHER_MODEL_CONFIG)){
+          const result=modelResults[modelKey]?.[locationIndex];
+          if(!result?.hourly?.time)continue;
+          const times=result.hourly.time.map(value=>parseCloudApiTime(value).getTime());
+          const sourceIndex=nearestTimeIndex(times,frameTime.getTime());
+          values.push({
+            cloud:Number(result.hourly.cloud_cover?.[sourceIndex]),
+            high:Number(result.hourly.cloud_cover_high?.[sourceIndex]),
+            precip:Number(result.hourly.precipitation?.[sourceIndex]),
+            weight:Number(weights[modelKey]||0)
+          });
+        }
+        const positive=values.filter(item=>item.weight>0);
+        const weightedValues=positive.length?positive:values.map(item=>({...item,weight:1}));
+        const sum=weightedValues.reduce((acc,item)=>acc+item.weight,0)||1;
+        const weighted=key=>weightedValues.reduce((acc,item)=>acc+Number(item[key]||0)*item.weight,0)/sum;
+        const mean=weighted('cloud');
+        const spread=Math.sqrt(weightedValues.reduce((acc,item)=>acc+Math.pow(item.cloud-mean,2)*item.weight,0)/sum);
+        return{time:frameTime,cloud:mean,high:weighted('high'),precip:weighted('precip'),spread};
+      });
+      let bestStart=-1,bestLength=0,currentStart=-1;
+      hourlyFrames.forEach((frame,index)=>{
+        const good=frame.cloud<=35&&frame.high<=45&&frame.precip<=.2;
+        if(good&&currentStart<0)currentStart=index;
+        if((!good||index===hourlyFrames.length-1)&&currentStart>=0){
+          const end=good&&index===hourlyFrames.length-1?index+1:index;
+          const length=end-currentStart;
+          if(length>bestLength){bestLength=length;bestStart=currentStart}
+          currentStart=-1;
+        }
+      });
+      const window=bestStart>=0
+        ?`${fmtTime(hourlyFrames[bestStart].time,location.timezone)}–${fmtTime(new Date(hourlyFrames[Math.min(hourlyFrames.length-1,bestStart+bestLength-1)].time.getTime()+3600000),location.timezone)}`
+        :'kein klares 2-h-Fenster';
+      return{
+        name:location.name,
+        cloud:hourlyFrames.reduce((sum,frame)=>sum+frame.cloud,0)/hourlyFrames.length,
+        spread:hourlyFrames.reduce((sum,frame)=>sum+frame.spread,0)/hourlyFrames.length,
+        window
+      };
+    }).sort((a,b)=>a.cloud-b.cloud);
+    locationComparisonData={rows,updatedAt:new Date().toISOString()};
+  }catch(error){locationComparisonError=error?.message||'Standortvergleich konnte nicht geladen werden.'}
+  finally{locationComparisonLoading=false;render()}
+}
+function bindCloudMap(){
+  document.getElementById('cloudMapReload')?.addEventListener('click',()=>fetchCloudMap(true));
+  const view=document.getElementById('cloudMapView');
+  if(view)view.onchange=async()=>{
+    profile.planning.temporaryCloudMapView=view.value;
+    await saveProfile();
+    updateCloudMapReadouts();drawCloudMap();
+  };
+  document.getElementById('makeCloudMapDefault')?.addEventListener('click',async()=>{
+    profile.central.cloudMap.defaultView=currentCloudMapView();
+    profile.planning.temporaryCloudMapView=null;
+    draft=deepClone(profile);
+    await saveProfile();render();
+  });
+  const layer=document.getElementById('cloudMapLayer');
+  if(layer)layer.onchange=async()=>{
+    profile.planning.cloudMapLayer=layer.value;
+    await saveProfile();updateCloudMapReadouts();drawCloudMap();
+  };
+  const mode=document.getElementById('cloudMapMode');
+  if(mode)mode.onchange=async()=>{
+    profile.planning.cloudMapMode=mode.value;
+    await saveProfile();drawCloudMap();
+  };
+  const sync=document.getElementById('cloudMapSyncTime');
+  if(sync)sync.onchange=async()=>{
+    profile.central.cloudMap.syncTime=sync.checked;
+    draft=deepClone(profile);
+    await saveProfile();
+    if(sync.checked&&cloudMapData)applyCloudMapFrame(profile.planning.cloudMapFrame,false);
+  };
+  const slider=document.getElementById('cloudMapTime');
+  if(slider){
+    slider.oninput=()=>applyCloudMapFrame(slider.value,false);
+    slider.onchange=()=>applyCloudMapFrame(slider.value,true);
+  }
+  document.getElementById('cloudMapPrev')?.addEventListener('click',()=>applyCloudMapFrame((Number(profile.planning.cloudMapFrame)||0)-1));
+  document.getElementById('cloudMapNext')?.addEventListener('click',()=>applyCloudMapFrame((Number(profile.planning.cloudMapFrame)||0)+1));
+  document.getElementById('cloudMapPlay')?.addEventListener('click',()=>{
+    if(cloudMapAnimationTimer){stopCloudMapAnimation();return}
+    const button=document.getElementById('cloudMapPlay');
+    if(button)button.textContent='Pause';
+    const interval=Number(cloudMapSettings().animationMs)||900;
+    cloudMapAnimationTimer=setInterval(()=>{
+      if(!cloudMapData){stopCloudMapAnimation();return}
+      const next=((Number(profile.planning.cloudMapFrame)||0)+1)%cloudMapData.times.length;
+      applyCloudMapFrame(next,false);
+    },interval);
+  });
+  document.getElementById('loadLocationComparison')?.addEventListener('click',fetchLocationComparison);
+  const details=document.getElementById('cloudMapDetails');
+  if(details)details.ontoggle=()=>{profile.central.cloudMap.collapsed=!details.open;draft=deepClone(profile);scheduleCloudMapProfileSave()};
+}
+function bindMeteobluePanels(){
+  document.querySelectorAll('[data-meteoblue-fullscreen]').forEach(button=>button.onclick=()=>{
+    const element=document.getElementById(button.dataset.meteoblueFullscreen);
+    if(!element)return;
+    if(document.fullscreenElement)document.exitFullscreen?.();else element.requestFullscreen?.();
+  });
+  const seeing=document.getElementById('meteoblueDetails');
+  if(seeing)seeing.ontoggle=()=>{profile.central.meteoblueCollapsed=!seeing.open;draft=deepClone(profile);scheduleCloudMapProfileSave()};
+  const map=document.getElementById('meteoblueMapDetails');
+  if(map)map.ontoggle=()=>{profile.central.cloudMap.meteoblueMapCollapsed=!map.open;draft=deepClone(profile);scheduleCloudMapProfileSave()};
+}
+
 function bindPlanProfiles(){
   const wind=document.getElementById('planWindProfile');
   const display=document.getElementById('planDisplayProfile');
@@ -1048,7 +1744,81 @@ function bindFraming(){
   bindRange('objectRotation','objectRotation',1,'objectRotationValue');
   bindRange('framingTime','timeFraction',.01,'framingTimeValue','');
 }
-function bindDetails(){const f=document.getElementById('filterDetails');if(f)f.ontoggle=async()=>{profile.central.collapsed.filters=!f.open;await saveProfile()};const w=document.getElementById('weatherDetails');if(w)w.ontoggle=async()=>{profile.central.collapsed.weather=!w.open;await saveProfile()};const m=document.getElementById('meteoblueDetails');if(m)m.ontoggle=async()=>{profile.central.meteoblueCollapsed=!m.open;await saveProfile();draft=deepClone(profile)}}
+
+function nearestDetailPoint(points,time){
+  return points.reduce((best,point)=>Math.abs(point[0]-time)<Math.abs(best[0]-time)?point:best,points[0]);
+}
+function applyDetailTimeFraction(value,{persist=false}={}){
+  const fraction=clamp(Number(value)||0,0,1);
+  profile.planning.detailTimeFraction=fraction;
+  const controllers=[...document.querySelectorAll('[data-detail-time-controller]')];
+  controllers.forEach(controller=>{
+    const start=Number(controller.dataset.start),end=Number(controller.dataset.end),timezone=controller.dataset.timezone;
+    const time=start+(end-start)*fraction;
+    const points=decodeCanvasData(controller.dataset.points);
+    const nearest=points.length?nearestDetailPoint(points,time):null;
+    const slider=controller.querySelector('[data-detail-time-slider]');
+    const clock=controller.querySelector('[data-detail-time-clock]');
+    if(slider)slider.value=String(Math.round(fraction*1000));
+    if(clock)clock.value=clockInputValue(new Date(time),timezone);
+    const label=controller.querySelector('[data-detail-time-label]');
+    const position=controller.querySelector('[data-detail-time-position]');
+    if(label)label.textContent=fmtDateTime(new Date(time),timezone);
+    if(position&&nearest)position.textContent=`Höhe ${fmt(nearest[1])}° · Azimut ${fmt(nearest[2])}° (${cardinal(nearest[2])})`;
+  });
+  document.querySelectorAll('.large-altitude-chart,.large-horizon-chart').forEach(canvas=>{
+    const controller=controllers[0];
+    if(controller){
+      const start=Number(controller.dataset.start),end=Number(controller.dataset.end);
+      canvas.dataset.currentTime=String(start+(end-start)*fraction);
+    }
+  });
+  drawLargeCharts();
+  if(persist)saveProfile();
+}
+function bindDetailTimeControls(){
+  document.querySelectorAll('[data-detail-time-slider]').forEach(slider=>{
+    slider.addEventListener('input',()=>applyDetailTimeFraction(Number(slider.value)/1000));
+    slider.addEventListener('change',()=>applyDetailTimeFraction(Number(slider.value)/1000,{persist:true}));
+  });
+  document.querySelectorAll('[data-detail-time-step]').forEach(button=>button.addEventListener('click',()=>{
+    const controller=button.closest('[data-detail-time-controller]');
+    const start=Number(controller.dataset.start),end=Number(controller.dataset.end);
+    const delta=Number(button.dataset.detailTimeStep)*60000/Math.max(1,end-start);
+    applyDetailTimeFraction((Number(profile.planning.detailTimeFraction)||0)+delta,{persist:true});
+  }));
+  document.querySelectorAll('[data-detail-time-clock]').forEach(input=>input.addEventListener('change',()=>{
+    const controller=input.closest('[data-detail-time-controller]');
+    const start=new Date(Number(controller.dataset.start)),end=new Date(Number(controller.dataset.end));
+    applyDetailTimeFraction(nearestFractionForClock(input.value,start,end,controller.dataset.timezone),{persist:true});
+  }));
+  document.querySelectorAll('[data-detail-ground-toggle]').forEach(input=>input.addEventListener('change',()=>{
+    profile.planning.showGroundHorizon=input.checked;
+    document.querySelectorAll('[data-detail-ground-toggle]').forEach(other=>other.checked=input.checked);
+    document.querySelectorAll('.large-horizon-chart').forEach(canvas=>canvas.dataset.showGround=String(input.checked));
+    drawLargeCharts();
+    saveProfile();
+  }));
+  document.querySelectorAll('.large-altitude-chart').forEach(canvas=>{
+    let dragging=false;
+    const update=event=>{
+      const rect=canvas.getBoundingClientRect();
+      const internalX=(event.clientX-rect.left)/Math.max(1,rect.width)*canvas.width;
+      const marginLeft=62,plotWidth=canvas.width-62-22;
+      applyDetailTimeFraction((internalX-marginLeft)/Math.max(1,plotWidth));
+    };
+    canvas.addEventListener('pointerdown',event=>{dragging=true;canvas.setPointerCapture?.(event.pointerId);update(event)});
+    canvas.addEventListener('pointermove',event=>{if(dragging)update(event)});
+    canvas.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;canvas.releasePointerCapture?.(event.pointerId);applyDetailTimeFraction(profile.planning.detailTimeFraction,{persist:true})});
+    canvas.addEventListener('pointercancel',()=>{dragging=false});
+  });
+}
+function bindDetails(){
+  const f=document.getElementById('filterDetails');if(f)f.ontoggle=async()=>{profile.central.collapsed.filters=!f.open;await saveProfile()};
+  const w=document.getElementById('weatherDetails');if(w)w.ontoggle=async()=>{profile.central.collapsed.weather=!w.open;await saveProfile()};
+  const m=document.getElementById('meteoblueDetails');if(m)m.ontoggle=async()=>{profile.central.meteoblueCollapsed=!m.open;await saveProfile();draft=deepClone(profile)};
+  document.querySelectorAll('.object-chart-panel').forEach(panel=>panel.addEventListener('toggle',()=>{if(panel.open)requestAnimationFrame(drawLargeCharts)}));
+}
 function bindSettings(){
   document.querySelectorAll('[data-settings-tab]').forEach(b=>b.onclick=async()=>{currentSettingsTab=b.dataset.settingsTab;profile.ui.settingsTab=currentSettingsTab;await saveProfile();render()});
   const ps=document.getElementById('settingsProfileSelect');if(ps)ps.onchange=()=>{document.getElementById('headerProfileSelect').value=ps.value;document.getElementById('headerProfileSelect').dispatchEvent(new Event('change'))};
@@ -1092,6 +1862,15 @@ function bindCentralDraft(){
     render();
   });
   set('defaultWeatherView',element=>draft.central.weatherModels.defaultView=element.value,'weatherModels');
+  set('cloudMapGridSize',element=>draft.central.cloudMap.gridSize=Number(element.value),'cloudMap');
+  set('cloudMapRadius',element=>draft.central.cloudMap.radiusKm=Number(element.value),'cloudMap');
+  set('cloudMapAnimationMs',element=>draft.central.cloudMap.animationMs=Number(element.value),'cloudMap');
+  set('defaultCloudMapView',element=>draft.central.cloudMap.defaultView=element.value,'cloudMap');
+  set('defaultCloudMapLayer',element=>draft.central.cloudMap.defaultLayer=element.value,'cloudMap');
+  set('defaultCloudMapMode',element=>draft.central.cloudMap.defaultMode=element.value,'cloudMap');
+  set('cloudMapSyncDefault',element=>draft.central.cloudMap.syncTime=element.checked,'cloudMap');
+  set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
+  set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
     dirtySections.add('weights');
@@ -1160,6 +1939,8 @@ function bindLocationDraft(){
     location().latitude=position.coords.latitude;
     location().longitude=position.coords.longitude;
     location().elevation=position.coords.altitude||location().elevation;
+    delete location().geonameId;
+    delete location().meteobluePath;
     dirtySections.add('locations');
     render();
   },error=>alert(`GPS nicht verfügbar: ${error.message}`)));
@@ -1171,7 +1952,14 @@ function bindLocationDraft(){
       const json=await response.json();
       const result=json.results?.[0];
       if(!result)throw new Error('Kein Treffer');
-      Object.assign(location(),{name:`${result.name}${result.admin1?`, ${result.admin1}`:''}`,latitude:result.latitude,longitude:result.longitude,elevation:result.elevation||0,timezone:result.timezone||'Europe/Berlin'});
+      const country=result.country||result.country_code||'';
+      const cityName=result.name||name;
+      Object.assign(location(),{
+        name:`${cityName}${result.admin1?`, ${result.admin1}`:''}`,
+        latitude:result.latitude,longitude:result.longitude,elevation:result.elevation||0,timezone:result.timezone||'Europe/Berlin',
+        geonameId:result.id||undefined,country,
+        meteobluePath:result.id?`${meteoblueSlugPart(cityName)}_${meteoblueSlugPart(country||'Deutschland')}_${result.id}`:undefined
+      });
       dirtySections.add('locations');
       render();
     }catch(error){alert(error.message)}
@@ -1214,7 +2002,17 @@ async function saveDraftSection(section){
     if(total!==100){alert('Die Gewichtung der Wettermodelle muss exakt 100 % ergeben.');return}
     profile.central.weatherModels=deepClone(draft.central.weatherModels);
     profile.planning.temporaryWeatherView=null;
+    profile.planning.temporaryCloudMapView=null;
     dirtySections.delete('weatherModels');
+  }
+  if(section==='cloudMap'){
+    profile.central.cloudMap=deepClone(draft.central.cloudMap);
+    profile.planning.temporaryCloudMapView=null;
+    profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;
+    profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;
+    profile.planning.cloudMapFrame=0;
+    cloudMapData=null;
+    dirtySections.delete('cloudMap');
   }
   if(section==='weights'){
     const total=Object.values(draft.central.weights).reduce((sum,value)=>sum+Number(value),0);
@@ -1244,7 +2042,8 @@ async function saveDraftSection(section){
   await saveProfile();
   draft=deepClone(profile);
   render();
-  if(section==='locations')fetchWeather();
+  if(section==='locations'||section==='weatherModels')fetchWeather();
+  else if(section==='cloudMap')fetchCloudMap(true);
 }
 
 async function createProfile(){const name=prompt('Name des neuen Profils:','Neues Profil');if(!name)return;const p=standardProfile();p.id=uid('profile');p.name=name.trim();await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;draft=deepClone(p);await setActiveProfile(p.id);updateProfileSelectors();render()}
@@ -1256,7 +2055,140 @@ function downloadJson(name,data){const blob=new Blob([JSON.stringify(data,null,2
 function safeName(s){return s.toLowerCase().replace(/[^a-z0-9äöüß]+/gi,'-').replace(/^-|-$/g,'')}
 async function handleImportFile(){const file=importInput.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.kind==='astro-night-planner-backup'&&Array.isArray(data.profiles)){if(!confirm(`${data.profiles.length} Profile aus der Sicherung wiederherstellen? Gleichnamige IDs werden überschrieben.`))return;for(const p of data.profiles)await idbPut('profiles',normalizeProfile(p));profiles=await idbAll('profiles');profile=normalizeProfile(profiles.find(x=>x.id===data.activeProfileId)||profiles[0]);await setActiveProfile(profile.id)}else{const raw=data.profile||data;if(!raw.name)throw new Error('Kein gültiges Profil');const p=normalizeProfile(raw);if(profiles.some(x=>x.id===p.id))p.id=uid('profile');await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;await setActiveProfile(p.id)}draft=deepClone(profile);dirtySections.clear();updateProfileSelectors();render();alert('Import erfolgreich.')}catch(e){alert(`Import fehlgeschlagen: ${e.message}`)}finally{importInput.value=''}}
 
-function drawMiniCharts(){document.querySelectorAll('.mini-chart').forEach(canvas=>{const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;const points=JSON.parse(decodeURIComponent(canvas.dataset.points));const start=Number(canvas.dataset.start),end=Number(canvas.dataset.end),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),minAlt=Number(canvas.dataset.minAlt);ctx.clearRect(0,0,w,h);const x=t=>(t-start)/(end-start)*w,y=a=>h-8-clamp(a,0,90)/90*(h-16);ctx.fillStyle='#263343';ctx.fillRect(0,0,w,h);const band=(s,e,fill)=>{ctx.fillStyle=fill;ctx.fillRect(clamp(x(s),0,w),0,clamp(x(e),0,w)-clamp(x(s),0,w),h)};band(nautS,nautE,'#1b2735');band(astroS,astroE,'#101924');for(const t of [nautS,astroS,astroE,nautE]){ctx.beginPath();ctx.strokeStyle='#73849a';ctx.setLineDash([3,3]);ctx.moveTo(x(t),0);ctx.lineTo(x(t),h);ctx.stroke()}ctx.setLineDash([5,4]);ctx.strokeStyle='#d7ad47';ctx.beginPath();ctx.moveTo(0,y(minAlt));ctx.lineTo(w,y(minAlt));ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#7ec1ff';ctx.lineWidth=2;ctx.beginPath();points.forEach(([t,a],i)=>i?ctx.lineTo(x(t),y(a)):ctx.moveTo(x(t),y(a)));ctx.stroke();const max=points.reduce((m,p)=>p[1]>m[1]?p:m,points[0]);ctx.fillStyle='#f0c75e';ctx.beginPath();ctx.arc(x(max[0]),y(max[1]),3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aabbd0';ctx.font='10px sans-serif';ctx.fillText('0°',2,h-2);ctx.fillText('90°',2,10)})}
+
+function cloudMapInterpolated(values,size,gx,gy){
+  const x0=clamp(Math.floor(gx),0,size-1),y0=clamp(Math.floor(gy),0,size-1);
+  const x1=Math.min(size-1,x0+1),y1=Math.min(size-1,y0+1);
+  const fx=gx-x0,fy=gy-y0;
+  const v00=Number(values[y0*size+x0]),v10=Number(values[y0*size+x1]),v01=Number(values[y1*size+x0]),v11=Number(values[y1*size+x1]);
+  const vals=[v00,v10,v01,v11].filter(Number.isFinite);
+  if(!vals.length)return NaN;
+  const safe=value=>Number.isFinite(value)?value:vals.reduce((a,b)=>a+b,0)/vals.length;
+  const top=safe(v00)*(1-fx)+safe(v10)*fx;
+  const bottom=safe(v01)*(1-fx)+safe(v11)*fx;
+  return top*(1-fy)+bottom*fy;
+}
+function cloudMapColor(value,layer,mode){
+  if(!Number.isFinite(value))return'rgba(0,0,0,0)';
+  if(mode==='uncertainty'){
+    const t=clamp(value/30,0,1);
+    const hue=120*(1-t);
+    return`hsla(${hue},78%,52%,${.22+.68*t})`;
+  }
+  const t=clamp(value/100,0,1);
+  const hues={cloud:210,cloudLow:184,cloudMid:214,cloudHigh:270};
+  const hue=hues[layer]??210;
+  const light=28+58*t;
+  const saturation=layer==='cloud'?18:58;
+  return`hsla(${hue},${saturation}%,${light}%,${.18+.8*t})`;
+}
+function drawCloudMap(){
+  const canvas=document.getElementById('cloudMapCanvas');
+  if(!canvas||!cloudMapData)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const view=currentCloudMapView();
+  const layer=profile.planning.cloudMapLayer||cloudMapSettings().defaultLayer;
+  const mode=profile.planning.cloudMapMode||cloudMapSettings().defaultMode;
+  const frameIndex=clamp(Number(profile.planning.cloudMapFrame)||0,0,cloudMapData.times.length-1);
+  const frame=cloudFrameValues(view,layer,frameIndex);
+  const drawValues=mode==='uncertainty'?frame.spread:frame.values;
+  const precip=cloudFrameValues(view,'precip',frameIndex).values;
+  const size=cloudMapData.gridSize;
+  const map={x:88,y:54,w:W-176,h:H-126};
+  ctx.clearRect(0,0,W,H);
+  const background=ctx.createLinearGradient(0,0,0,H);
+  background.addColorStop(0,'#071624');background.addColorStop(1,'#03101b');
+  ctx.fillStyle=background;ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.beginPath();ctx.roundRect(map.x,map.y,map.w,map.h,18);ctx.clip();
+  ctx.fillStyle='#071b2c';ctx.fillRect(map.x,map.y,map.w,map.h);
+  const step=7;
+  for(let py=0;py<map.h;py+=step){
+    const gy=(py/map.h)*(size-1);
+    for(let px=0;px<map.w;px+=step){
+      const gx=(px/map.w)*(size-1);
+      const value=cloudMapInterpolated(drawValues,size,gx,gy);
+      ctx.fillStyle=cloudMapColor(value,layer,mode);
+      ctx.fillRect(map.x+px,map.y+py,step+1,step+1);
+    }
+  }
+  // Niederschlag als zusätzliche blaue Schraffur
+  if(mode==='clouds'){
+    ctx.globalAlpha=.7;
+    for(let py=0;py<map.h;py+=14){
+      const gy=(py/map.h)*(size-1);
+      for(let px=0;px<map.w;px+=14){
+        const gx=(px/map.w)*(size-1);
+        const value=cloudMapInterpolated(precip,size,gx,gy);
+        if(value>.15){
+          ctx.strokeStyle=`rgba(55,170,255,${clamp(value/3,.15,.85)})`;
+          ctx.lineWidth=2;
+          ctx.beginPath();ctx.moveTo(map.x+px,map.y+py);ctx.lineTo(map.x+px-7,map.y+py+11);ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha=1;
+  }
+  // Distanzringe und Kartenraster
+  ctx.strokeStyle='rgba(135,190,225,.22)';ctx.lineWidth=1;
+  for(let i=1;i<4;i++){
+    ctx.beginPath();ctx.ellipse(map.x+map.w/2,map.y+map.h/2,map.w*i/8,map.h*i/8,0,0,Math.PI*2);ctx.stroke();
+  }
+  for(let i=0;i<size;i++){
+    const x=map.x+map.w*i/(size-1),y=map.y+map.h*i/(size-1);
+    ctx.beginPath();ctx.moveTo(x,map.y);ctx.lineTo(x,map.y+map.h);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(map.x,y);ctx.lineTo(map.x+map.w,y);ctx.stroke();
+  }
+  ctx.restore();
+  ctx.strokeStyle='rgba(95,190,240,.72)';ctx.lineWidth=2;ctx.strokeRect(map.x,map.y,map.w,map.h);
+  // Standortmarker
+  const cx=map.x+map.w/2,cy=map.y+map.h/2;
+  ctx.fillStyle='#ffd66b';ctx.strokeStyle='#06111b';ctx.lineWidth=5;
+  ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#ffd66b';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-22,cy);ctx.lineTo(cx+22,cy);ctx.moveTo(cx,cy-22);ctx.lineTo(cx,cy+22);ctx.stroke();
+  // Bewegungsrichtung
+  const movement=estimateCloudMovement(view,layer,frameIndex);
+  if(movement&&Number.isFinite(movement.azimuth)&&movement.distance>=1){
+    const length=clamp(60+movement.distance*2,70,170);
+    const angle=toRad(movement.azimuth);
+    const dx=Math.sin(angle)*length,dy=-Math.cos(angle)*length;
+    ctx.strokeStyle='#ffcf5b';ctx.fillStyle='#ffcf5b';ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx,cy+dy);ctx.stroke();
+    const head=14,headAngle=Math.atan2(dy,dx);
+    ctx.beginPath();ctx.moveTo(cx+dx,cy+dy);
+    ctx.lineTo(cx+dx-head*Math.cos(headAngle-.55),cy+dy-head*Math.sin(headAngle-.55));
+    ctx.lineTo(cx+dx-head*Math.cos(headAngle+.55),cy+dy-head*Math.sin(headAngle+.55));ctx.closePath();ctx.fill();
+  }
+  // Beschriftung
+  ctx.fillStyle='#dcecff';ctx.font='700 26px system-ui';ctx.textAlign='center';
+  ctx.fillText('N',W/2,34);ctx.fillText('S',W/2,H-16);
+  ctx.textAlign='left';ctx.fillText('W',30,H/2);ctx.textAlign='right';ctx.fillText('O',W-30,H/2);
+  ctx.textAlign='left';ctx.font='600 20px system-ui';ctx.fillStyle='#b9d3e8';
+  ctx.fillText(`${cloudMapData.locationName} · Radius ${cloudMapData.radiusKm} km`,map.x,map.y-16);
+  ctx.textAlign='right';
+  ctx.fillText(`${weatherViewLabel(view)} · ${CLOUD_MAP_LAYER_OPTIONS.find(item=>item[0]===layer)?.[1]||layer}`,map.x+map.w,map.y-16);
+  ctx.textAlign='center';ctx.font='700 22px system-ui';ctx.fillStyle='#ffe08a';
+  ctx.fillText(cloudMapData.locationName,cx,cy+44);
+  // Werte an Stützpunkten
+  ctx.font='600 14px system-ui';
+  cloudMapData.points.forEach((point,index)=>{
+    const x=map.x+map.w*point.x/(size-1),y=map.y+map.h*point.y/(size-1);
+    const value=drawValues[index];
+    if(!Number.isFinite(value))return;
+    ctx.fillStyle='rgba(3,12,20,.66)';ctx.beginPath();ctx.arc(x,y,15,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#eef8ff';ctx.fillText(String(Math.round(value)),x,y+5);
+  });
+  const legend=document.getElementById('cloudMapLegend');
+  if(legend){
+    legend.innerHTML=mode==='uncertainty'
+      ?'<span>geringe Abweichung</span><div class="legend-gradient uncertainty"></div><span>starke Abweichung</span>'
+      :'<span>klar 0 %</span><div class="legend-gradient clouds"></div><span>bedeckt 100 %</span><span class="rain-legend">╱ Niederschlag</span>';
+  }
+}
+
+function drawMiniCharts(){document.querySelectorAll('.mini-chart').forEach(canvas=>{const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;const points=JSON.parse(decodeURIComponent(canvas.dataset.points));const start=Number(canvas.dataset.start),end=Number(canvas.dataset.end),civilS=Number(canvas.dataset.civilStart),civilE=Number(canvas.dataset.civilEnd),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),minAlt=Number(canvas.dataset.minAlt);ctx.clearRect(0,0,w,h);const x=t=>(t-start)/(end-start)*w,y=a=>h-8-clamp(a,0,90)/90*(h-16);ctx.fillStyle='#3a3227';ctx.fillRect(0,0,w,h);const band=(s,e,fill)=>{const left=clamp(x(s),0,w),right=clamp(x(e),0,w);if(right<=left)return;ctx.fillStyle=fill;ctx.fillRect(left,0,right-left,h)};band(civilS,civilE,'#1b2a3d');band(nautS,nautE,'#142235');band(astroS,astroE,'#08121f');for(const t of [civilS,nautS,astroS,astroE,nautE,civilE]){ctx.beginPath();ctx.strokeStyle='#73849a';ctx.setLineDash([3,3]);ctx.moveTo(x(t),0);ctx.lineTo(x(t),h);ctx.stroke()}ctx.setLineDash([5,4]);ctx.strokeStyle='#d7ad47';ctx.beginPath();ctx.moveTo(0,y(minAlt));ctx.lineTo(w,y(minAlt));ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#7ec1ff';ctx.lineWidth=2;ctx.beginPath();points.forEach(([t,a],i)=>i?ctx.lineTo(x(t),y(a)):ctx.moveTo(x(t),y(a)));ctx.stroke();const max=points.reduce((m,p)=>p[1]>m[1]?p:m,points[0]);ctx.fillStyle='#f0c75e';ctx.beginPath();ctx.arc(x(max[0]),y(max[1]),3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aabbd0';ctx.font='10px sans-serif';ctx.fillText('0°',2,h-2);ctx.fillText('90°',2,10)})}
 
 function decodeCanvasData(value,fallback=[]){
   try{return JSON.parse(decodeURIComponent(value||''))}catch{return fallback}
@@ -1265,7 +2197,7 @@ function decodeCanvasData(value,fallback=[]){
 function chartPalette(){
   return{
     background:'#07111d',grid:'#263a51',text:'#a9bdd2',accent:'#6fc9ff',accent2:'#4ad18b',
-    selected:'rgba(121,184,255,.13)',civil:'#1b2a3d',nautical:'#142235',astronomical:'#0b1727',
+    selected:'rgba(121,184,255,.13)',civil:'#3a3227',nautical:'#1b2a3d',astronomical:'#142235',night:'#08121f',
     warning:'#f0c75e',danger:'#f17070',horizonFill:'rgba(74,209,139,.14)'
   };
 }
@@ -1286,6 +2218,8 @@ function drawLargeCharts(){
     context.clearRect(0,0,width,height);
     context.fillStyle=palette.background;
     context.fillRect(0,0,width,height);
+    context.fillStyle=palette.civil;
+    context.fillRect(margin.left,margin.top,plotW,plotH);
     const band=(bandStart,bandEnd,fill)=>{
       const left=clamp(x(Number(bandStart)),margin.left,margin.left+plotW);
       const right=clamp(x(Number(bandEnd)),margin.left,margin.left+plotW);
@@ -1293,9 +2227,9 @@ function drawLargeCharts(){
       context.fillStyle=fill;
       context.fillRect(left,margin.top,right-left,plotH);
     };
-    band(canvas.dataset.civilStart,canvas.dataset.civilEnd,palette.civil);
-    band(canvas.dataset.nautStart,canvas.dataset.nautEnd,palette.nautical);
-    band(canvas.dataset.astroStart,canvas.dataset.astroEnd,palette.astronomical);
+    band(canvas.dataset.civilStart,canvas.dataset.civilEnd,palette.nautical);
+    band(canvas.dataset.nautStart,canvas.dataset.nautEnd,palette.astronomical);
+    band(canvas.dataset.astroStart,canvas.dataset.astroEnd,palette.night);
     band(selectedStart,selectedEnd,palette.selected);
     context.strokeStyle=palette.accent;
     context.lineWidth=2;
@@ -1367,6 +2301,18 @@ function drawLargeCharts(){
     context.textAlign='left';
     context.textBaseline='bottom';
     context.fillText(`Maximum ${fmt(maxPoint[1])}° · ${fmtTime(new Date(maxPoint[0]),canvas.dataset.timezone)} · ${cardinal(maxPoint[2])}`,x(maxPoint[0])+10,y(maxPoint[1])-7);
+    const currentTime=clamp(Number(canvas.dataset.currentTime)||start,start,end);
+    const currentPoint=nearestDetailPoint(points,currentTime);
+    context.strokeStyle=palette.warning;
+    context.lineWidth=2;
+    context.setLineDash([5,4]);
+    context.beginPath();context.moveTo(x(currentTime),margin.top);context.lineTo(x(currentTime),margin.top+plotH);context.stroke();
+    context.setLineDash([]);
+    context.fillStyle=palette.warning;
+    context.beginPath();context.arc(x(currentTime),y(currentPoint[1]),7,0,Math.PI*2);context.fill();
+    context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
+    context.fillStyle='#fff2bd';context.textAlign=x(currentTime)>margin.left+plotW*.72?'right':'left';context.textBaseline='bottom';
+    context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentPoint[1])}° · ${cardinal(currentPoint[2])}`,x(currentTime)+(x(currentTime)>margin.left+plotW*.72?-10:10),y(currentPoint[1])-10);
     context.strokeStyle='#38516d';
     context.lineWidth=1;
     context.strokeRect(margin.left,margin.top,plotW,plotH);
@@ -1411,7 +2357,8 @@ function drawHorizonChart(canvas,withTrack=false){
     context.fillText(direction,px,margin.top+plotH+8);
     context.fillStyle=palette.text;context.fillText(`${azimuthValue}°`,px,margin.top+plotH+31);
   });
-  if(horizon.length){
+  const showGround=canvas.dataset.showGround!=='false';
+  if(showGround&&horizon.length){
     context.beginPath();
     context.moveTo(x(horizon[0][0]),y(0));
     horizon.forEach(point=>context.lineTo(x(point[0]),y(point[1])));
@@ -1425,7 +2372,7 @@ function drawHorizonChart(canvas,withTrack=false){
     horizon.forEach((point,index)=>index?context.lineTo(x(point[0]),y(point[1])):context.moveTo(x(point[0]),y(point[1])));
     context.stroke();
   }
-  obstacles.forEach(obstacle=>{
+  if(showGround)obstacles.forEach(obstacle=>{
     const center=((Number(obstacle.azimuth)%360)+360)%360;
     const halfWidth=6;
     const left=center-halfWidth,right=center+halfWidth;
@@ -1464,6 +2411,15 @@ function drawHorizonChart(canvas,withTrack=false){
       });
       context.stroke();
     }
+    const currentTime=clamp(Number(canvas.dataset.currentTime)||track[0][2],track[0][2],track[track.length-1][2]);
+    const currentPoint=nearestDetailPoint(track.map(point=>[point[2],point[1],point[0]]),currentTime);
+    const currentAzimuth=currentPoint[2],currentAltitude=currentPoint[1];
+    context.strokeStyle='#d8ecff';context.lineWidth=2;
+    context.beginPath();context.moveTo(x(currentAzimuth)-12,y(currentAltitude));context.lineTo(x(currentAzimuth)+12,y(currentAltitude));context.moveTo(x(currentAzimuth),y(currentAltitude)-12);context.lineTo(x(currentAzimuth),y(currentAltitude)+12);context.stroke();
+    context.fillStyle=palette.warning;context.beginPath();context.arc(x(currentAzimuth),y(currentAltitude),7,0,Math.PI*2);context.fill();
+    context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
+    context.fillStyle='#fff2bd';context.textAlign=currentAzimuth>280?'right':'left';context.textBaseline='bottom';
+    context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)} (${fmt(currentAzimuth)}°)`,x(currentAzimuth)+(currentAzimuth>280?-12:12),y(currentAltitude)-12);
   }
   context.strokeStyle='#38516d';
   context.lineWidth=1;

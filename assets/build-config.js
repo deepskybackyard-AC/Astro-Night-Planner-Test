@@ -3,9 +3,9 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.0.0-test.2',
+  appVersion: '1.0.0-test.4',
   release: '1.0',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'TESTVERSION – Astro Night Planner 1.0 (Korrektur 2)'
+  documentTitle: 'TESTVERSION – Astro Night Planner 1.0 (Korrektur 4)'
 });

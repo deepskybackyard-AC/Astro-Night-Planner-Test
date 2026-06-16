@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.2",
+  "version": "1.0.0-test.4",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 2,
   "releasedAt": "2026-06-16",
-  "notes": "Korrekturrunde 2: Objektzeilen-Details, Diagramme, Framing, Wetterkonsens und Horizonteditor."
+  "notes": "Korrekturrunde 4: wieder eingebettetes Meteoblue Astronomy Seeing, zusätzliche Meteoblue-Wetterkarte, animierte 24-Stunden-Wolkenkarte mit Modellkonsens, Einzelmodellen, Modellabweichung, Standortvergleich und wählbarer Datenmenge."
 }
