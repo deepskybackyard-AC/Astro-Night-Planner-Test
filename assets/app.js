@@ -65,16 +65,17 @@ const DISPLAY_PROFILES = {
 
 function standardProfile(){
   return {
-    id:'standard', name:'Standard', schemaVersion:2, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+    id:'standard', name:'Standard', schemaVersion:3, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
     equipment:{
       telescopes:[{id:'scope-askar200',name:'Askar 200 mm',focalLength:200,aperture:50}], selectedTelescopeId:'scope-askar200',
-      cameras:[{id:'cam-qhy268m',name:'QHY268M',sensorWidth:23.45,sensorHeight:15.7,pixelSize:3.76}], selectedCameraId:'cam-qhy268m'
+      cameras:[{id:'cam-qhy268m',name:'QHY268M',sensorWidth:23.45,sensorHeight:15.7,pixelSize:3.76}], selectedCameraId:'cam-qhy268m',
+      mounts:[{id:'mount-standard',name:'Parallaktische Montierung',type:'Parallaktisch',maxPayloadKg:null}], selectedMountId:'mount-standard'
     },
     central:{
       windUnit:'kmh', activeWindProfile:'normal', windProfiles:deepClone(WIND_PROFILES),
       dew:{green:5,yellow:2}, jet:{green:36,yellow:72},
       weatherModels:{weights:{icon:40,ecmwf:40,gfs:20},defaultView:'consensus'},
-      cloudMap:{gridSize:7,radiusKm:120,defaultView:'consensus',defaultLayer:'cloud',defaultMode:'clouds',animationMs:900,syncTime:true,collapsed:false,meteoblueMapCollapsed:true},
+      cloudMap:{gridSize:7,radiusKm:120,defaultView:'consensus',defaultLayer:'cloud',defaultMode:'clouds',animationMs:900,collapsed:false,meteoblueMapCollapsed:true},
       weights:{clouds:30,transparency:15,seeing:10,wind:10,dew:10,moon:10,altitude:10,duration:5},
       defaultPlanningWindow:'nautical', defaultLocationId:'loc-tuebingen', gpsBehavior:'last',
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
@@ -83,10 +84,10 @@ function standardProfile(){
       collapsed:{weather:false,meteoblue:true,filters:false,framing:false},
       persistentStorageRequested:false
     },
-    locations:[{id:'loc-tuebingen',name:'Tübingen',latitude:48.5216,longitude:9.0576,elevation:350,timezone:'Europe/Berlin',isDefault:true,
+    locations:[{id:'loc-tuebingen',name:'Tübingen',latitude:48.5216,longitude:9.0576,elevation:341,timezone:'Europe/Berlin',isDefault:true,
       geonameId:2820860,country:'Deutschland',meteobluePath:'tübingen_deutschland_2820860',
-      horizon:[0,0,0,0,0,0,0,0],obstacles:[]}], selectedLocationId:'loc-tuebingen',
-    planning:{dateKey:'',planningWindow:'nautical',temporaryWindProfile:null,temporaryDisplayProfile:null,temporaryWeatherView:null,
+      horizon:[0,0,0,0,0,0,0,0],horizonProfile:Array(73).fill(0),obstacles:[]}], selectedLocationId:'loc-tuebingen',
+    planning:{dateKey:'',locationId:null,planningWindow:'nautical',temporaryWindProfile:null,temporaryDisplayProfile:null,temporaryWeatherView:null,
       temporaryCloudMapView:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,
       search:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,minMoonDistance:25,
       minSize:0,maxSize:1200,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:0,frameRotation:0,timeFraction:.5,
@@ -164,6 +165,12 @@ let page=1;
 let scrollByTab={plan:0,settings:0};
 let dirtySections=new Set();
 let swRegistration=null;
+let saveFeedbackSections=new Set();
+let horizonUndoStack=[];
+let backupInProgress=false;
+let backupConfig={enabled:false,afterSave:true,daily:true,keep:10,reminderDays:7,lastSuccessAt:null,lastError:'',lastDailyDate:null,targetName:'',permission:'none'};
+let backupDraft=deepClone(backupConfig);
+let storageInfo={persistent:null,usage:null,quota:null,fileSystemSupported:typeof window.showDirectoryPicker==='function',handleAvailable:false,permission:'none'};
 
 function openDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains('profiles'))d.createObjectStore('profiles',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});if(!d.objectStoreNames.contains('cache'))d.createObjectStore('cache',{keyPath:'key'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 function idb(store,mode='readonly'){return db.transaction(store,mode).objectStore(store)}
@@ -171,6 +178,86 @@ function idbGet(store,key){return new Promise((resolve,reject)=>{const r=idb(sto
 function idbAll(store){return new Promise((resolve,reject)=>{const r=idb(store).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
 function idbPut(store,value){return new Promise((resolve,reject)=>{const r=idb(store,'readwrite').put(value);r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error)})}
 function idbDelete(store,key){return new Promise((resolve,reject)=>{const r=idb(store,'readwrite').delete(key);r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error)})}
+async function metaValue(key,fallback=null){const entry=await idbGet('meta',key);return entry?.value??fallback}
+async function setMetaValue(key,value){await idbPut('meta',{key,value})}
+function formatBytes(value){if(!Number.isFinite(value))return'–';const units=['B','KB','MB','GB'];let number=value,index=0;while(number>=1024&&index<units.length-1){number/=1024;index++}return`${number.toFixed(index?1:0)} ${units[index]}`}
+function backupFileStamp(date=new Date()){return date.toISOString().replace(/[:.]/g,'-').slice(0,19)}
+async function buildBackupPayload(){return{kind:'astro-night-planner-backup',appVersion:APP_VERSION,environment:ENV,exportedAt:new Date().toISOString(),profiles:await idbAll('profiles'),activeProfileId:profile?.id||null,backupSchemaVersion:3,backupSettings:{afterSave:Boolean(backupConfig.afterSave),daily:Boolean(backupConfig.daily),keep:Number(backupConfig.keep)||10,reminderDays:Number(backupConfig.reminderDays)||7}}}
+async function getBackupDirectoryHandle(){return metaValue('backupDirectoryHandle',null)}
+async function fileHandlePermission(handle,{request=false}={}){
+  if(!handle)return'none';
+  try{
+    let permission=await handle.queryPermission?.({mode:'readwrite'})||'prompt';
+    if(permission!=='granted'&&request&&handle.requestPermission)permission=await handle.requestPermission({mode:'readwrite'});
+    return permission;
+  }catch{return'denied'}
+}
+async function refreshStorageInfo(){
+  storageInfo.fileSystemSupported=typeof window.showDirectoryPicker==='function';
+  try{storageInfo.persistent=await navigator.storage?.persisted?.()??null}catch{storageInfo.persistent=null}
+  try{const estimate=await navigator.storage?.estimate?.();storageInfo.usage=estimate?.usage??null;storageInfo.quota=estimate?.quota??null}catch{storageInfo.usage=null;storageInfo.quota=null}
+  const handle=await getBackupDirectoryHandle();
+  storageInfo.handleAvailable=Boolean(handle);
+  storageInfo.permission=await fileHandlePermission(handle);
+  if(handle?.name&&!backupConfig.targetName)backupConfig.targetName=handle.name;
+}
+async function saveBackupConfig(){await setMetaValue('backupConfig',deepClone(backupConfig))}
+async function writeJsonFile(directoryHandle,name,data){
+  const fileHandle=await directoryHandle.getFileHandle(name,{create:true});
+  const writable=await fileHandle.createWritable();
+  await writable.write(JSON.stringify(data,null,2));
+  await writable.close();
+}
+async function rotateBackupFiles(directoryHandle,keep){
+  if(!directoryHandle?.entries||keep<1)return;
+  const names=[];
+  for await(const [name,entry]of directoryHandle.entries()){
+    if(entry.kind==='file'&&/^astro-night-planner-\d{4}-\d{2}-\d{2}T/.test(name)&&name.endsWith('.json'))names.push(name);
+  }
+  names.sort().reverse();
+  for(const name of names.slice(keep))await directoryHandle.removeEntry(name).catch(()=>{});
+}
+async function performExternalBackup({requestPermission=false,forceDated=false,manualFallback=false}={}){
+  if(backupInProgress)return false;
+  backupInProgress=true;
+  try{
+    const payload=await buildBackupPayload();
+    const handle=await getBackupDirectoryHandle();
+    if(!handle){
+      if(manualFallback){downloadJson(`astro-night-planner-sicherung-${new Date().toISOString().slice(0,10)}.json`,payload);return true}
+      throw new Error('Kein externer Sicherungsordner ausgewählt.');
+    }
+    const permission=await fileHandlePermission(handle,{request:requestPermission});
+    storageInfo.permission=permission;
+    if(permission!=='granted')throw new Error(permission==='denied'?'Der Zugriff auf den Sicherungsordner wurde verweigert.':'Der Sicherungsordner muss erneut freigegeben werden.');
+    const now=new Date(),today=now.toISOString().slice(0,10);
+    await writeJsonFile(handle,'astro-night-planner-aktuell.json',payload);
+    if(forceDated||backupConfig.daily&&backupConfig.lastDailyDate!==today){
+      await writeJsonFile(handle,`astro-night-planner-${backupFileStamp(now)}.json`,payload);
+      backupConfig.lastDailyDate=today;
+      await rotateBackupFiles(handle,clamp(Number(backupConfig.keep)||10,1,50));
+    }
+    backupConfig.lastSuccessAt=now.toISOString();backupConfig.lastError='';backupConfig.targetName=handle.name||backupConfig.targetName;backupConfig.permission='granted';
+    await saveBackupConfig();backupDraft=deepClone(backupConfig);await refreshStorageInfo();
+    return true;
+  }catch(error){
+    backupConfig.lastError=error?.message||String(error);backupConfig.permission=storageInfo.permission||'none';
+    await saveBackupConfig().catch(()=>{});backupDraft=deepClone(backupConfig);
+    return false;
+  }finally{backupInProgress=false}
+}
+async function maybeAutomaticBackup(reason='daily'){
+  if(!backupConfig.enabled)return false;
+  const now=Date.now();
+  const dailyDue=!backupConfig.lastSuccessAt||now-new Date(backupConfig.lastSuccessAt).getTime()>=24*3600000;
+  if(reason==='settings'&&backupConfig.afterSave)return performExternalBackup();
+  if(reason==='daily'&&backupConfig.daily&&dailyDue)return performExternalBackup();
+  return false;
+}
+function backupAgeText(){
+  if(!backupConfig.lastSuccessAt)return'Noch keine Sicherung erstellt';
+  return new Intl.DateTimeFormat('de-DE',{dateStyle:'medium',timeStyle:'short'}).format(new Date(backupConfig.lastSuccessAt));
+}
 async function saveProfile(p=profile){p.updatedAt=new Date().toISOString();await idbPut('profiles',deepClone(p));profiles=await idbAll('profiles');updateProfileSelectors();}
 async function setActiveProfile(id){await idbPut('meta',{key:'activeProfileId',value:id});}
 
@@ -178,6 +265,10 @@ function normalizeProfile(p){
   const base=standardProfile();
   const out={...base,...p};
   out.equipment={...base.equipment,...(p.equipment||{})};
+  out.equipment.telescopes=Array.isArray(p.equipment?.telescopes)&&p.equipment.telescopes.length?p.equipment.telescopes:base.equipment.telescopes;
+  out.equipment.cameras=Array.isArray(p.equipment?.cameras)&&p.equipment.cameras.length?p.equipment.cameras:base.equipment.cameras;
+  out.equipment.mounts=Array.isArray(p.equipment?.mounts)&&p.equipment.mounts.length?p.equipment.mounts:base.equipment.mounts;
+  if(!out.equipment.selectedMountId||!out.equipment.mounts.some(item=>item.id===out.equipment.selectedMountId))out.equipment.selectedMountId=out.equipment.mounts[0]?.id||'';
   out.central={...base.central,...(p.central||{})};
   out.central.windProfiles={...deepClone(WIND_PROFILES),...(p.central?.windProfiles||{})};
   out.central.dew={...base.central.dew,...(p.central?.dew||{})};
@@ -193,12 +284,19 @@ function normalizeProfile(p){
   out.central.listDisplay.profiles={...deepClone(DISPLAY_PROFILES),...(p.central?.listDisplay?.profiles||{})};
   out.central.detailPanels={...base.central.detailPanels,...(p.central?.detailPanels||{})};
   out.central.collapsed={...base.central.collapsed,...(p.central?.collapsed||{})};
-  out.locations=(p.locations?.length?p.locations:base.locations).map(x=>({
-    ...x,
-    horizon:Array.isArray(x.horizon)&&x.horizon.length===8?x.horizon:[0,0,0,0,0,0,0,0],
-    obstacles:(x.obstacles||[]).map(o=>({...o}))
-  }));
+  out.locations=(p.locations?.length?p.locations:base.locations).map(x=>{
+    const horizon=Array.isArray(x.horizon)&&x.horizon.length===8?x.horizon.map(value=>clamp(Number(value)||0,0,90)):[0,0,0,0,0,0,0,0];
+    let horizonProfile=Array.isArray(x.horizonProfile)&&x.horizonProfile.length===73
+      ?x.horizonProfile.map(value=>clamp(Number(value)||0,0,90))
+      :Array.from({length:73},(_,index)=>{
+        const position=index*5/45,lower=Math.floor(position)%8,upper=(lower+1)%8,fraction=position-Math.floor(position);
+        return horizon[lower]*(1-fraction)+horizon[upper]*fraction;
+      });
+    horizonProfile[72]=horizonProfile[0];
+    return{...x,horizon,horizonProfile,obstacles:(x.obstacles||[]).map(o=>({...o}))};
+  });
   out.planning={...base.planning,...(p.planning||{})};
+  if(out.planning.locationId&&!out.locations.some(item=>item.id===out.planning.locationId))out.planning.locationId=null;
   out.ui={...base.ui,...(p.ui||{})};
   out.schemaVersion=base.schemaVersion;
   return out;
@@ -218,10 +316,14 @@ async function init(){
   if(ENV==='test')badge.textContent=BUILD.badgeText || 'TESTVERSION';
   db=await openDb(); profiles=(await idbAll('profiles')).map(normalizeProfile);
   if(!profiles.length){const p=standardProfile();await idbPut('profiles',p);profiles=[p];}
+  const storedBackupConfig=await metaValue('backupConfig',null);
+  backupConfig={...backupConfig,...(storedBackupConfig||{})};backupDraft=deepClone(backupConfig);
   const active=await idbGet('meta','activeProfileId'); profile=profiles.find(x=>x.id===active?.value)||profiles.find(x=>x.id==='standard')||profiles[0];
   await setActiveProfile(profile.id); draft=deepClone(profile); currentMainTab=profile.ui?.mainTab||'plan'; currentSettingsTab=profile.ui?.settingsTab||'equipment';
   selectedDateKey=profile.planning.dateKey||dateKeyFor(new Date(),activeLocation().timezone); page=profile.planning.page||1;
+  await refreshStorageInfo();
   updateProfileSelectors(); bindGlobal(); render(); registerPwa(); loadCatalog(); fetchWeather();
+  window.setTimeout(()=>maybeAutomaticBackup('daily'),1200);
 }
 
 function bindGlobal(){
@@ -262,9 +364,10 @@ function updateProfileSelectors(){
 }
 async function switchMain(tab){scrollByTab[currentMainTab]=scrollY;if(tab!=='plan')stopCloudMapAnimation();currentMainTab=tab;profile.ui.mainTab=tab;await saveProfile();render();if(tab==='plan'&&!cloudMapData)fetchCloudMap();requestAnimationFrame(()=>scrollTo({top:scrollByTab[tab]||0,behavior:'instant'}));}
 
-function activeLocation(){return profile.locations.find(x=>x.id===profile.selectedLocationId)||profile.locations[0]||standardProfile().locations[0]}
+function activeLocation(){const id=profile.planning?.locationId||profile.central?.defaultLocationId||profile.selectedLocationId;return profile.locations.find(x=>x.id===id)||profile.locations[0]||standardProfile().locations[0]}
 function activeScope(){return profile.equipment.telescopes.find(x=>x.id===profile.equipment.selectedTelescopeId)}
 function activeCamera(){return profile.equipment.cameras.find(x=>x.id===profile.equipment.selectedCameraId)}
+function activeMount(){return profile.equipment.mounts?.find(x=>x.id===profile.equipment.selectedMountId)}
 function fov(){const s=activeScope(),c=activeCamera();if(!s||!c||!s.focalLength)return null;return {width:57.2958*c.sensorWidth/s.focalLength,height:57.2958*c.sensorHeight/s.focalLength,pixelScale:206.265*c.pixelSize/s.focalLength}}
 function esc(v){return String(v??'').replace(/[&<>"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
 function fmt(v,d=0){return Number.isFinite(v)?Number(v).toFixed(d):'–'}
@@ -308,7 +411,9 @@ function findCrossings(start,end,loc,threshold,fn=sunAltitude){const step=5*6000
 function nightData(key,loc){const center=new Date(`${key}T12:00:00Z`),start=new Date(center.getTime()-2*3600000),end=new Date(center.getTime()+26*3600000);const cross=t=>findCrossings(start,end,loc,t);const c0=cross(-.833),c6=cross(-6),c12=cross(-12),c18=cross(-18);const desc=a=>a.find(x=>x.descending)?.time,asc=a=>[...a].reverse().find(x=>!x.descending)?.time;const sunset=desc(c0)||new Date(`${key}T18:00:00Z`),sunrise=asc(c0)||new Date(sunset.getTime()+12*3600000);const moonFn=(date,l)=>{const c=moonCoords(date);return altitude(c.raHours,c.decDeg,date,l.latitude,l.longitude)};const mc=findCrossings(sunset,sunrise,loc,0,moonFn);let moonMax=-90,moonTransit=null;for(let t=sunset.getTime();t<=sunrise.getTime();t+=10*60000){const a=moonFn(new Date(t),loc);if(a>moonMax){moonMax=a;moonTransit=new Date(t)}}return{sunset,sunrise,civilDusk:desc(c6)||sunset,civilDawn:asc(c6)||sunrise,nauticalDusk:desc(c12)||desc(c6)||sunset,nauticalDawn:asc(c12)||asc(c6)||sunrise,astronomicalDusk:desc(c18)||desc(c12)||sunset,astronomicalDawn:asc(c18)||asc(c12)||sunrise,moonrise:mc.find(x=>!x.descending)?.time,moonset:mc.find(x=>x.descending)?.time,moonTransit,moonMaxAltitude:moonMax,moonIllumination:moonIllumination(new Date((sunset.getTime()+sunrise.getTime())/2))}}
 function planningWindow(night,key){switch(key){case'sunset':return{start:night.sunset,end:night.sunrise,label:'Sonnenuntergang bis Sonnenaufgang'};case'civil':return{start:night.civilDusk,end:night.civilDawn,label:'Bürgerliche Nacht'};case'astronomicalTwilight':return{start:night.nauticalDusk,end:night.nauticalDawn,label:'Nautische und astronomische Nacht'};case'astronomicalNight':return{start:night.astronomicalDusk,end:night.astronomicalDawn,label:'Astronomische Nacht'};default:return{start:night.nauticalDusk,end:night.nauticalDawn,label:'Nautischer Planungszeitraum'}}}
 function angularSeparation(aRa,aDec,bRa,bDec){const a=toRad(aRa*15),b=toRad(bRa*15),da=toRad(aDec),db=toRad(bDec);return toDeg(Math.acos(clamp(Math.sin(da)*Math.sin(db)+Math.cos(da)*Math.cos(db)*Math.cos(a-b),-1,1)))}
-function horizonAt(loc,az){const arr=loc.horizon||[0,0,0,0,0,0,0,0];const pos=((az%360)+360)%360/45;const i=Math.floor(pos)%8,j=(i+1)%8,f=pos-Math.floor(pos);return arr[i]*(1-f)+arr[j]*f}
+function horizonAt(loc,az){const normalized=((az%360)+360)%360;if(Array.isArray(loc.horizonProfile)&&loc.horizonProfile.length===73){const pos=normalized/5,i=Math.floor(pos),j=Math.min(72,i+1),f=pos-i;return Number(loc.horizonProfile[i]||0)*(1-f)+Number(loc.horizonProfile[j]||0)*f}const arr=loc.horizon||[0,0,0,0,0,0,0,0];const pos=normalized/45;const i=Math.floor(pos)%8,j=(i+1)%8,f=pos-Math.floor(pos);return arr[i]*(1-f)+arr[j]*f}
+function ensureHorizonProfile(loc){if(Array.isArray(loc.horizonProfile)&&loc.horizonProfile.length===73)return loc.horizonProfile;const arr=Array.isArray(loc.horizon)&&loc.horizon.length===8?loc.horizon:[0,0,0,0,0,0,0,0];loc.horizonProfile=Array.from({length:73},(_,index)=>{const position=index*5/45,lower=Math.floor(position)%8,upper=(lower+1)%8,fraction=position-Math.floor(position);return Number(arr[lower]||0)*(1-fraction)+Number(arr[upper]||0)*fraction});loc.horizonProfile[72]=loc.horizonProfile[0];return loc.horizonProfile}
+function syncCardinalHorizon(loc){const profileValues=ensureHorizonProfile(loc);loc.horizon=Array.from({length:8},(_,index)=>Number(profileValues[index*9]||0));profileValues[72]=profileValues[0]}
 function objectStats(obj,window,loc,minAlt){const points=[];let max=-90,best=window.start,visibleMs=0;const count=49;for(let i=0;i<count;i++){const t=new Date(window.start.getTime()+(window.end-window.start)*i/(count-1));const alt=altitude(obj.raHours,obj.decDeg,t,loc.latitude,loc.longitude);const az=azimuth(obj.raHours,obj.decDeg,t,loc.latitude,loc.longitude);const effectiveMin=Math.max(minAlt,horizonAt(loc,az));points.push({t,alt,az});if(alt>max){max=alt;best=t}if(i&&alt>=effectiveMin)visibleMs+=(window.end-window.start)/(count-1)}const moon=moonCoords(best);const moonAlt=altitude(moon.raHours,moon.decDeg,best,loc.latitude,loc.longitude);return{points,maxAltitude:max,bestTime:best,visibleHours:visibleMs/3600000,meridian:best,moonDistance:angularSeparation(obj.raHours,obj.decDeg,moon.raHours,moon.decDeg),moonAltitude:moonAlt}}
 
 function currentWindProfile(){return profile.planning.temporaryWindProfile||profile.central.activeWindProfile}
@@ -355,14 +460,19 @@ function weatherRowsForWindow(windowRange,view=currentWeatherView()){
   });
 }
 function enrichWeatherRow(row){
-  const cloud=Number.isFinite(row.cloud)?row.cloud:0;
+  const cloud=clamp(Number.isFinite(row.cloud)?row.cloud:0,0,100);
   const visibility=Number.isFinite(row.visibility)?row.visibility:0;
   const wind=Number.isFinite(row.wind)?row.wind:0;
   const high=Number.isFinite(row.cloudHigh)?row.cloudHigh:0;
+  const atmosphericTransparency=clamp((visibility/24000)*100,0,100);
+  const cloudTransmission=Math.pow(clamp(1-cloud/100,0,1),.8);
+  const effectiveTransparency=clamp(atmosphericTransparency*cloudTransmission,0,100);
   return {
     ...row,
     dewGap:Number.isFinite(row.temperature)&&Number.isFinite(row.dewPoint)?row.temperature-row.dewPoint:NaN,
-    transparency:clamp((visibility/24000)*100-cloud*.45,0,100),
+    atmosphericTransparency,
+    effectiveTransparency,
+    transparency:effectiveTransparency,
     seeing:clamp(82-wind*2.1-high*.12,0,100)
   };
 }
@@ -412,6 +522,7 @@ function weatherForWindow(windowRange,view=currentWeatherView()){
   const visibility=avg('visibility');
   const wind=windFromKmh(windKmh),gust=windFromKmh(gustKmh),jet=windFromKmh(jetKmh);
   const transparency=avg('transparency');
+  const atmosphericTransparency=avg('atmosphericTransparency');
   const seeing=avg('seeing');
   const thresholds=windThresholds();
   const windScore=Math.min(
@@ -419,7 +530,7 @@ function weatherForWindow(windowRange,view=currentWeatherView()){
     gust<thresholds.gustGreen?100:gust<=thresholds.gustYellow?60:20
   );
   const dewScore=dewGap>profile.central.dew.green?100:dewGap>=profile.central.dew.yellow?55:15;
-  return{rows,cloud,wind,gust,jet,windKmh,gustKmh,jetKmh,dewGap,visibility,transparency,seeing,windScore,dewScore,view};
+  return{rows,cloud,wind,gust,jet,windKmh,gustKmh,jetKmh,dewGap,visibility,transparency,atmosphericTransparency,seeing,windScore,dewScore,view};
 }
 function scoreObject(obj,stats,weather,window,night){const w=profile.central.weights;const duration=Math.max(.1,(window.end-window.start)/3600000);const altitudeScore=clamp((stats.maxAltitude-15)/60*100,0,100),durationScore=clamp(stats.visibleHours/duration*100,0,100);const moonPenalty=stats.moonAltitude<=0?100:clamp((stats.moonDistance-15)/75*100,0,100)*(1-night.moonIllumination/180);const cloud=weather?100-weather.cloud:55,trans=weather?weather.transparency:55,seeing=weather?weather.seeing:55,wind=weather?weather.windScore:55,dew=weather?weather.dewScore:55;const total=w.clouds*cloud+w.transparency*trans+w.seeing*seeing+w.wind*wind+w.dew*dew+w.moon*moonPenalty+w.altitude*altitudeScore+w.duration*durationScore;return clamp(total/100,0,100)}
 function scoreClass(v){return v>=70?'good':v>=45?'warn':'bad'}
@@ -678,50 +789,6 @@ function estimateCloudMovement(view,layer,frameIndex){
   const azimuth=(toDeg(Math.atan2(dx,dy))+360)%360;
   return{distance,dx,dy,azimuth,direction:`Richtung ${cardinal(azimuth)}`,cardinal:cardinal(azimuth)};
 }
-function findClearWindow(night){
-  const range=cloudMapRange(night);
-  const rows=weatherRowsForWindow({start:range.start,end:new Date(range.end.getTime()+3600000)},'consensus');
-  if(!rows.length)return null;
-  const acceptable=row=>Number(row.cloud)<=35&&Number(row.cloudHigh)<=45&&Number(row.precip)<=.2&&Number(row.transparency)>=55;
-  const segments=[];
-  let current=[];
-  rows.forEach(row=>{
-    if(acceptable(row))current.push(row);
-    else if(current.length){segments.push(current);current=[]}
-  });
-  if(current.length)segments.push(current);
-  let best=segments.filter(segment=>segment.length>=2).sort((a,b)=>b.length-a.length||weatherHourScore(b[0])-weatherHourScore(a[0]))[0];
-  if(!best){
-    const sorted=rows.slice().sort((a,b)=>(a.cloud+a.cloudHigh*.35)-(b.cloud+b.cloudHigh*.35));
-    if(!sorted.length)return null;
-    const first=sorted[0];
-    return{start:first.time,end:new Date(first.time.getTime()+3600000),hours:1,quality:'kurz',averageCloud:first.cloud};
-  }
-  return{
-    start:best[0].time,
-    end:new Date(best.at(-1).time.getTime()+3600000),
-    hours:best.length,
-    quality:best.length>=4?'gut':'begrenzt',
-    averageCloud:best.reduce((sum,row)=>sum+Number(row.cloud||0),0)/best.length
-  };
-}
-function updateLinkedTimeDisplays(time){
-  if(!profile.central.cloudMap?.syncTime)return;
-  const loc=activeLocation();
-  const night=nightData(selectedDateKey,loc);
-  const windowRange=planningWindow(night,profile.planning.planningWindow);
-  profile.planning.detailTimeFraction=clamp((time-night.sunset)/(night.sunrise-night.sunset),0,1);
-  profile.planning.timeFraction=clamp((time-windowRange.start)/(windowRange.end-windowRange.start),0,1);
-  document.querySelectorAll('[data-detail-time-range]').forEach(element=>element.value=String(profile.planning.detailTimeFraction*1000));
-  document.querySelectorAll('[data-detail-time-input]').forEach(element=>element.value=clockInputValue(time,loc.timezone));
-  document.querySelectorAll('[data-detail-time-label]').forEach(element=>element.textContent=`${fmtDateTime(time,loc.timezone)} · Aufnahmezeit`);
-  document.querySelectorAll('.large-altitude-chart,.large-horizon-chart').forEach(canvas=>canvas.dataset.currentTime=String(time.getTime()));
-  const framing=document.getElementById('framingTime');
-  if(framing)framing.value=String(profile.planning.timeFraction*100);
-  const framingLabel=document.getElementById('framingTimeValue');
-  if(framingLabel)framingLabel.textContent=fmtTime(time,loc.timezone);
-  drawLargeCharts();
-}
 function scheduleCloudMapProfileSave(){
   clearTimeout(cloudMapSaveTimer);
   cloudMapSaveTimer=setTimeout(()=>saveProfile(),500);
@@ -764,18 +831,23 @@ function renderPlan(){
   page=clamp(page,1,totalPages);
   const start=(page-1)*profile.planning.pageSize;
   const shown=objects.slice(start,start+profile.planning.pageSize);
-  if(profile.planning.detailsOpen&&!shown.some(item=>item.object.id===profile.planning.selectedObjectId)){
-    profile.planning.detailsOpen=false;
-  }
+  if(profile.planning.detailsOpen&&!shown.some(item=>item.object.id===profile.planning.selectedObjectId))profile.planning.detailsOpen=false;
   const currentWeather=currentWeatherView();
   const defaultWeather=profile.central.weatherModels.defaultView||'consensus';
+  const locationOptions=profile.locations.map(item=>`<option value="${esc(item.id)}" ${item.id===loc.id?'selected':''}>${esc(item.name)}${item.id===profile.central.defaultLocationId?' (Standard)':''}</option>`).join('');
   return `<div data-page="plan">
     <section class="card">
       <div class="section-title-row">
-        <div><h2>Planungsnacht</h2><div class="muted">${esc(loc.name)} · ${fmt(loc.latitude,4)}°, ${fmt(loc.longitude,4)}°</div></div>
+        <div><h2>Planungsnacht</h2><div class="muted">Standort und Datum gelten nur für diese Planung. Den Standardstandort legst du in den Einstellungen fest.</div></div>
         <button id="weatherRefresh">Wetter aktualisieren</button>
       </div>
-      <div class="date-buttons">${keys.map((key,index)=>`<button data-date="${key}" class="${key===selectedDateKey?'active':''}">${index===0?'Heute':index===1?'Morgen':`+${index}`}<br><span class="small">${fmtDate(key,loc.timezone)}</span></button>`).join('')}</div>
+      <div class="planning-night-selector" style="margin-top:14px">
+        <label class="planning-location-select">Standort für diese Planung
+          <select id="planningLocationSelect">${locationOptions}</select>
+          <span class="planning-location-coordinates">${fmt(loc.latitude,4)}°, ${fmt(loc.longitude,4)}° · ${fmt(Number(loc.elevation)||0)} m</span>
+        </label>
+        <div class="date-buttons">${keys.map((key,index)=>`<button data-date="${key}" class="${key===selectedDateKey?'active':''}">${index===0?'Heute':index===1?'Morgen':`+${index}`}<br><span class="small">${fmtDate(key,loc.timezone)}</span></button>`).join('')}</div>
+      </div>
       <div class="grid four" style="margin-top:14px">
         <div class="metric"><div class="label">Sonnenuntergang</div><div class="value">${fmtTime(night.sunset,loc.timezone)}</div></div>
         <div class="metric"><div class="label">Gewählter Zeitraum</div><div class="value">${fmtTime(windowRange.start,loc.timezone)}–${fmtTime(windowRange.end,loc.timezone)}</div><div class="small muted">${windowRange.label}</div></div>
@@ -790,7 +862,7 @@ function renderPlan(){
       </div>
     </section>
     <section class="card">
-      <div class="section-title-row"><h2>Profile für diese Planung</h2><span class="small muted">Temporäre Auswahl überschreibt den Standard nicht.</span></div>
+      <div class="section-title-row"><h2>Profile für diese Planung</h2><span class="small muted">Alle Auswahlen sind temporär. Dauerhafte Standards werden ausschließlich in den Einstellungen geändert.</span></div>
       <div class="toolbar">
         <label>Planungszeitraum
           <select id="planningWindowTop">${planningWindowOptions(profile.planning.planningWindow)}</select>
@@ -798,17 +870,14 @@ function renderPlan(){
         <label>Aufnahmequalitätsprofil
           <select id="planWindProfile"><option value="">Standard: ${esc(profile.central.windProfiles[profile.central.activeWindProfile].name)}</option>${Object.entries(profile.central.windProfiles).map(([key,value])=>`<option value="${key}" ${profile.planning.temporaryWindProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select>
         </label>
-        <button id="makeWindDefault" ${!profile.planning.temporaryWindProfile?'disabled':''}>Als Standard übernehmen</button>
         <label>Darstellungsprofil
           <select id="planDisplayProfile"><option value="">Standard: ${esc(profile.central.listDisplay.profiles[profile.central.listDisplay.activeProfile].name)}</option>${Object.entries(profile.central.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${profile.planning.temporaryDisplayProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select>
         </label>
-        <button id="makeDisplayDefault" ${!profile.planning.temporaryDisplayProfile?'disabled':''}>Als Standard übernehmen</button>
         <label>Wetterdarstellung
           <select id="planWeatherView"><option value="">Standard: ${esc(weatherViewLabel(defaultWeather))}</option>${WEATHER_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.planning.temporaryWeatherView===key?'selected':''}>${esc(label)}</option>`).join('')}</select>
         </label>
-        <button id="makeWeatherDefault" ${!profile.planning.temporaryWeatherView?'disabled':''}>Als Standard übernehmen</button>
       </div>
-      <div class="small muted" style="margin-top:8px">Der Planungszeitraum steuert Objektbewertung, Sichtbarkeitsdauer, Wetterbewertung und Höhenprofile. Wetterdarstellung aktuell: ${esc(weatherViewLabel(currentWeather))}</div>
+      <div class="small muted" style="margin-top:8px">Der Planungszeitraum steuert Objektbewertung, Sichtbarkeitsdauer, Wetterbewertung und Höhenprofile. Wetterdarstellung aktuell: ${esc(weatherViewLabel(currentWeather))}.</div>
     </section>
     ${renderWeather(windowRange,weather,loc,night)}
     ${renderCloudMap(windowRange,loc,night)}
@@ -1024,7 +1093,7 @@ function renderWeather(windowRange,summary,loc,night){
     ${notice}
     <div class="grid four weather-summary-grid">
       <div class="metric"><div class="label">Wolken gesamt</div><div class="value ${valueClass(100-selectedSummary.cloud)}">${fmt(selectedSummary.cloud)} %</div></div>
-      <div class="metric"><div class="label">Transparenz-Tendenz</div><div class="value ${valueClass(selectedSummary.transparency)}">${fmt(selectedSummary.transparency)}/100</div></div>
+      <div class="metric"><div class="label">Effektive Transparenz</div><div class="value ${valueClass(selectedSummary.transparency)}">${fmt(selectedSummary.transparency)}/100</div><div class="small muted">Atmosphäre ohne Wolken: ${fmt(selectedSummary.atmosphericTransparency)}/100</div></div>
       <div class="metric"><div class="label">Seeing-Tendenz</div><div class="value ${valueClass(selectedSummary.seeing)}">${fmt(selectedSummary.seeing)}/100</div></div>
       <div class="metric"><div class="label">Tauabstand</div><div class="value ${dewClass(selectedSummary.dewGap)}">${fmt(selectedSummary.dewGap,1)} °C</div></div>
       <div class="metric"><div class="label">Wind</div><div class="value ${windQualityClass(selectedSummary.windKmh)}">${fmt(selectedSummary.wind,1)} ${unit}</div></div>
@@ -1041,7 +1110,7 @@ function renderWeather(windowRange,summary,loc,night){
               <th rowspan="2">Uhrzeit</th><th rowspan="2">Qualität</th>
               <th colspan="4">Wolken</th><th rowspan="2">Temp.</th><th rowspan="2">Tauabstand</th>
               <th rowspan="2">Wind</th><th rowspan="2">Böen</th><th rowspan="2">Jetstream</th>
-              <th rowspan="2">Seeing*</th><th rowspan="2">Transparenz*</th>
+              <th rowspan="2">Seeing*</th><th rowspan="2">Effektive Transparenz*</th>
             </tr>
             <tr><th>gesamt</th><th>tief</th><th>mittel</th><th>hoch</th></tr>
           </thead>
@@ -1061,12 +1130,12 @@ function renderWeather(windowRange,summary,loc,night){
               <td class="weather-cell ${windQualityClass(row.gust,'gust')}">${fmt(windFromKmh(row.gust),1)} ${unit}</td>
               <td class="weather-cell ${jetClass(row.jet)}">${fmt(windFromKmh(row.jet),1)} ${unit}</td>
               <td class="weather-cell ${valueClass(row.seeing)}"><span class="quality-pill ${valueClass(row.seeing)}">${fmt(row.seeing)}</span></td>
-              <td class="weather-cell ${valueClass(row.transparency)}"><span class="quality-pill ${valueClass(row.transparency)}">${fmt(row.transparency)}</span></td>
+              <td class="weather-cell ${valueClass(row.transparency)}" title="Atmosphärische Transparenz ohne Wolkeneinfluss: ${fmt(row.atmosphericTransparency)}/100"><span class="quality-pill ${valueClass(row.transparency)}">${fmt(row.transparency)}</span><div class="small muted">atm. ${fmt(row.atmosphericTransparency)}</div></td>
             </tr>`;
           }).join('')}</tbody>
         </table>
       </div>
-      <div class="small muted weather-footnote">Die farbliche Bewertung bezieht sich auf die erwartete Aufnahmequalität. Der aktuell gewählte Planungszeitraum ist in der Tabelle hervorgehoben. * Seeing und Transparenz sind abgeleitete Tendenzen, keine gemessenen Bogensekundenwerte.</div>
+      <div class="small muted weather-footnote">Die farbliche Bewertung bezieht sich auf die erwartete Aufnahmequalität. Der aktuell gewählte Planungszeitraum ist in der Tabelle hervorgehoben. * Seeing und Transparenz sind abgeleitete Tendenzen. Die effektive Transparenz berücksichtigt die Gesamtbewölkung; der kleine atmosphärische Wert zeigt die wolkenunabhängige Klarheit. Seeing ist kein gemessener Bogensekundenwert.</div>
     </details>
   </section>`;
 }
@@ -1081,14 +1150,10 @@ function renderCloudMap(windowRange,loc,night){
   const time=cloudMapData?.times?.[frameIndex]?new Date(cloudMapData.times[frameIndex]):cloudMapRange(night).times[frameIndex];
   const stats=cloudMapData?cloudFrameStats(view,layer,frameIndex):null;
   const movement=cloudMapData?estimateCloudMovement(view,layer,frameIndex):null;
-  const clearWindow=findClearWindow(night);
   const viewOptions=CLOUD_MAP_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${view===key?'selected':''}>${esc(label)}</option>`).join('');
   const layerOptions=CLOUD_MAP_LAYER_OPTIONS.map(([key,label])=>`<option value="${key}" ${layer===key?'selected':''}>${esc(label)}</option>`).join('');
   const modeOptions=CLOUD_MAP_MODE_OPTIONS.map(([key,label])=>`<option value="${key}" ${mode===key?'selected':''}>${esc(label)}</option>`).join('');
   const status=cloudMapError?`<div class="notice warn">${esc(cloudMapError)}</div>`:'';
-  const clearText=clearWindow
-    ? `${fmtTime(clearWindow.start,loc.timezone)}–${fmtTime(clearWindow.end,loc.timezone)} · ${fmt(clearWindow.hours,0)} h · Ø ${fmt(clearWindow.averageCloud)} % Wolken`
-    : 'Kein ausreichend klares Fenster in den betrachteten 24 Stunden gefunden.';
   const compareRows=locationComparisonData?.rows||[];
   return`<section class="card cloud-map-card">
     <div class="section-title-row">
@@ -1102,45 +1167,40 @@ function renderCloudMap(windowRange,loc,night){
         <label>Darstellung
           <select id="cloudMapView">${viewOptions}</select>
         </label>
-        <button id="makeCloudMapDefault" ${view===settings.defaultView?'disabled':''}>Als Standard übernehmen</button>
         <label>Wolkenschicht
           <select id="cloudMapLayer">${layerOptions}</select>
         </label>
         <label>Kartenmodus
           <select id="cloudMapMode">${modeOptions}</select>
         </label>
-        <label class="chip"><input id="cloudMapSyncTime" type="checkbox" ${settings.syncTime?'checked':''}>Zeit mit Objektgrafiken koppeln</label>
       </div>
+      ${cloudMapLoading&&!cloudMapData?`<div class="loading-card"><div class="spinner"></div><p>${settings.gridSize*settings.gridSize} Prognosepunkte für drei Wettermodelle werden geladen …</p></div>`:
+      cloudMapData?`<div class="cloud-map-stage" style="margin-top:12px">
+        <canvas id="cloudMapCanvas" width="1400" height="720" aria-label="Wolkenkarte für ${esc(loc.name)}"></canvas>
+        <div class="cloud-map-legend" id="cloudMapLegend"></div>
+        <div class="cloud-map-movement" id="cloudMapMovement">${movement?`Geschätzte Verlagerung: ${esc(movement.direction)} · ${fmt(movement.distance,0)} km/h`:'Geschätzte Verlagerung: nicht zuverlässig ableitbar'}</div>
+      </div>`:`<div class="notice warn" style="margin-top:12px">Noch keine Wolkenkartendaten vorhanden. Bitte „Wolkenkarte aktualisieren“ wählen.</div>`}
       <div class="grid four cloud-map-summary" style="margin-top:12px">
         <div class="metric"><div class="label">Kartenzeit</div><div class="value" id="cloudMapTimeLabel">${fmtDateTime(time,loc.timezone)}</div></div>
         <div class="metric"><div class="label">Am Standort</div><div class="value" id="cloudMapCenterValue">${stats?`${fmt(stats.center)} %`:'–'}</div></div>
         <div class="metric"><div class="label">Kartenmittel</div><div class="value" id="cloudMapAverageValue">${stats?`${fmt(stats.average)} %`:'–'}</div></div>
         <div class="metric"><div class="label">Modellabweichung</div><div class="value" id="cloudMapSpreadValue">${stats?`${fmt(stats.uncertainty,1)} %-Punkte`:'–'}</div></div>
       </div>
-      <div class="notice good clear-window-notice" style="margin-top:12px">
-        <strong>Nächstes klares Fenster:</strong> ${esc(clearText)}
-      </div>
-      ${cloudMapLoading&&!cloudMapData?`<div class="loading-card"><div class="spinner"></div><p>${settings.gridSize*settings.gridSize} Kartenpunkte für drei Wettermodelle werden geladen …</p></div>`:
-      cloudMapData?`<div class="cloud-map-stage" style="margin-top:12px">
-        <canvas id="cloudMapCanvas" width="1400" height="720" aria-label="Wolkenkarte für ${esc(loc.name)}"></canvas>
-        <div class="cloud-map-legend" id="cloudMapLegend"></div>
-        <div class="cloud-map-movement" id="cloudMapMovement">${movement?`Geschätzte Verlagerung: ${esc(movement.direction)} · ${fmt(movement.distance,0)} km/h`:'Geschätzte Verlagerung: nicht zuverlässig ableitbar'}</div>
-      </div>`:`<div class="notice warn" style="margin-top:12px">Noch keine Wolkenkartendaten vorhanden. Bitte „Wolkenkarte aktualisieren“ wählen.</div>`}
-      <div class="cloud-map-time-controls" style="margin-top:12px">
+      <div class="cloud-map-time-controls" style="margin-top:10px">
         <button id="cloudMapPrev" aria-label="Eine Stunde zurück">−1 h</button>
         <button id="cloudMapPlay">${cloudMapAnimationTimer?'Pause':'▶ Abspielen'}</button>
         <input id="cloudMapTime" type="range" min="0" max="${Math.max(0,frameCount-1)}" step="1" value="${frameIndex}" ${cloudMapData?'':'disabled'}>
         <button id="cloudMapNext" aria-label="Eine Stunde vor">+1 h</button>
       </div>
       <div class="small muted" style="margin-top:8px">
-        ${cloudMapData?`${cloudMapData.gridSize*cloudMapData.gridSize} Kartenpunkte · Radius ${cloudMapData.radiusKm} km · ${Object.values(cloudMapData.models).map(model=>esc(model.name)).join(', ')}`:`Geplante Auflösung: ${settings.gridSize*settings.gridSize} Kartenpunkte · Radius ${settings.radiusKm} km`}
-        · Werte werden im Browser zwischengespeichert.
+        ${cloudMapData?`${cloudMapData.gridSize*cloudMapData.gridSize} Prognosepunkte · Radius ${cloudMapData.radiusKm} km · ${Object.values(cloudMapData.models).map(model=>esc(model.name)).join(', ')}`:`Geplante Auflösung: ${settings.gridSize*settings.gridSize} Prognosepunkte · Radius ${settings.radiusKm} km`}
+        · Die Darstellung wird zwischen den Prognosepunkten weich interpoliert und 90 Minuten im Browser zwischengespeichert.
       </div>
       <details class="location-comparison" style="margin-top:14px">
         <summary>Gespeicherte Standorte vergleichen</summary>
         <div class="section-title-row" style="margin-top:10px"><div class="small muted">Der Vergleich lädt nur Punktprognosen und verbraucht deutlich weniger Daten als die Wolkenkarte.</div><button id="loadLocationComparison">${locationComparisonLoading?'Lädt …':'Vergleich laden'}</button></div>
         ${locationComparisonError?`<div class="notice warn">${esc(locationComparisonError)}</div>`:''}
-        ${compareRows.length?`<div class="weather-scroll"><table class="weather-table"><thead><tr><th>Standort</th><th>Ø Wolken</th><th>Bestes Fenster</th><th>Modellstreuung</th></tr></thead><tbody>${compareRows.map(row=>`<tr><td>${esc(row.name)}</td><td>${fmt(row.cloud)} %</td><td>${esc(row.window)}</td><td>${fmt(row.spread,1)} %-Punkte</td></tr>`).join('')}</tbody></table></div>`:'<div class="small muted" style="margin-top:8px">Noch kein Standortvergleich geladen.</div>'}
+        ${compareRows.length?`<div class="weather-scroll"><table class="weather-table"><thead><tr><th>Standort</th><th>Ø Wolken</th><th>Modellstreuung</th></tr></thead><tbody>${compareRows.map(row=>`<tr><td>${esc(row.name)}</td><td>${fmt(row.cloud)} %</td><td>${fmt(row.spread,1)} %-Punkte</td></tr>`).join('')}</tbody></table></div>`:'<div class="small muted" style="margin-top:8px">Noch kein Standortvergleich geladen.</div>'}
       </details>
     </details>
   </section>`;
@@ -1243,15 +1303,34 @@ function renderMeteoblue(loc){
   </section>`
 }
 
-function renderSettings(){return`<div data-page="settings"><section class="card"><div class="section-title-row"><div><h2>Einstellungen</h2><div class="muted">Lokales Profil „${esc(profile.name)}“ · Speicherung in IndexedDB</div></div>${renderProfileBar()}</div><div class="settings-tabs" style="margin-top:16px">${[['equipment','Ausrüstung'],['central','Zentrale Einstellungen'],['locations','Standorte & Horizont'],['info','Info']].map(([k,n])=>`<button data-settings-tab="${k}" class="${currentSettingsTab===k?'active':''} ${dirtySections.has(k)?'dirty-dot':''}">${n}</button>`).join('')}</div></section><section class="settings-section ${currentSettingsTab==='equipment'?'active':''}">${renderEquipment()}</section><section class="settings-section ${currentSettingsTab==='central'?'active':''}">${renderCentral()}</section><section class="settings-section ${currentSettingsTab==='locations'?'active':''}">${renderLocations()}</section><section class="settings-section ${currentSettingsTab==='info'?'active':''}">${renderInfo()}</section></div>`}
+function renderSaveBar(section,label='Änderungen speichern'){
+  const dirty=dirtySections.has(section),success=saveFeedbackSections.has(section);
+  const state=dirty?'Ungespeicherte Änderungen':success?'Erfolgreich gespeichert':'Gespeichert';
+  return`<div class="save-bar ${dirty?'is-dirty':''} ${success?'is-success':''}"><span class="save-state">${state}</span><button data-save-section="${section}" data-default-label="${esc(label)}" class="primary ${success?'save-success':''}" ${success?'disabled':''}>${success?'Gespeichert ✓':label}</button></div>`;
+}
+function settingsTabHasDirty(tab){
+  const groups={equipment:['equipment'],central:['centralWind','weatherModels','cloudMap','weights','display'],locations:['locations'],info:['backup']};
+  return(groups[tab]||[]).some(key=>dirtySections.has(key));
+}
+function renderSettings(){return`<div data-page="settings"><section class="card"><div class="section-title-row"><div><h2>Einstellungen</h2><div class="muted">Lokales Profil „${esc(profile.name)}“ · Einstellungen in IndexedDB, Programmdateien im PWA-Cache</div></div>${renderProfileBar()}</div><div class="settings-tabs" style="margin-top:16px">${[['equipment','Ausrüstung'],['central','Zentrale Einstellungen'],['locations','Standorte & Horizont'],['info','Info, Hilfe & Sicherung']].map(([k,n])=>`<button data-settings-tab="${k}" class="${currentSettingsTab===k?'active':''} ${settingsTabHasDirty(k)?'dirty-dot':''}">${n}</button>`).join('')}</div></section><section class="settings-section ${currentSettingsTab==='equipment'?'active':''}">${renderEquipment()}</section><section class="settings-section ${currentSettingsTab==='central'?'active':''}">${renderCentral()}</section><section class="settings-section ${currentSettingsTab==='locations'?'active':''}">${renderLocations()}</section><section class="settings-section ${currentSettingsTab==='info'?'active':''}">${renderInfo()}</section></div>`}
 function renderProfileBar(){return`<div class="profile-bar"><select id="settingsProfileSelect">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===profile.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button id="newProfile">Neu</button><button id="duplicateProfile">Duplizieren</button><button id="renameProfile">Umbenennen</button><button id="deleteProfile" class="danger" ${profiles.length===1?'disabled':''}>Löschen</button></div>`}
-function renderEquipment(){return`<div class="card"><div class="section-title-row"><h2>Teleskope</h2><button id="addTelescope">Teleskop hinzufügen</button></div><div class="equipment-list">${draft.equipment.telescopes.map(s=>`<div class="equipment-row" data-scope-row="${s.id}"><label>Name<input data-scope="name" value="${esc(s.name)}"></label><label>Brennweite mm<input data-scope="focalLength" type="number" value="${s.focalLength}"></label><label>Öffnung mm<input data-scope="aperture" type="number" value="${s.aperture||''}"></label><label class="chip"><input data-selected-scope type="radio" name="selectedScope" value="${s.id}" ${draft.equipment.selectedTelescopeId===s.id?'checked':''}>Aktiv</label><button data-delete-scope="${s.id}" class="danger">Entfernen</button></div>`).join('')}</div><div class="divider"></div><div class="section-title-row"><h2>Kameras</h2><button id="addCamera">Kamera hinzufügen</button></div><div class="equipment-list">${draft.equipment.cameras.map(c=>`<div class="equipment-row" data-camera-row="${c.id}"><label>Name<input data-camera="name" value="${esc(c.name)}"></label><label>Sensorbreite mm<input data-camera="sensorWidth" type="number" step="0.01" value="${c.sensorWidth}"></label><label>Sensorhöhe mm<input data-camera="sensorHeight" type="number" step="0.01" value="${c.sensorHeight}"></label><label>Pixel µm<input data-camera="pixelSize" type="number" step="0.01" value="${c.pixelSize}"></label><label class="chip"><input data-selected-camera type="radio" name="selectedCamera" value="${c.id}" ${draft.equipment.selectedCameraId===c.id?'checked':''}>Aktiv</label><button data-delete-camera="${c.id}" class="danger">Entfernen</button></div>`).join('')}</div><div class="divider"></div><div class="section-title-row"><span class="save-state">${dirtySections.has('equipment')?'Ungespeicherte Änderungen':'Gespeichert'}</span><button data-save-section="equipment" class="primary">Ausrüstung speichern</button></div></div>`}
+function renderEquipment(){return`<div class="card">
+  <div class="section-title-row"><div><h2>Teleskope</h2><div class="small muted">Brennweite und Öffnung bestimmen zusammen mit der Kamera das Bildfeld.</div></div><button id="addTelescope">Teleskop hinzufügen</button></div>
+  <div class="equipment-list">${draft.equipment.telescopes.map(s=>`<div class="equipment-row scope-row" data-scope-row="${s.id}"><label>Name<input data-scope="name" value="${esc(s.name)}"></label><label>Brennweite (mm)<input data-scope="focalLength" type="number" min="1" value="${s.focalLength}"></label><label>Öffnung (mm)<input data-scope="aperture" type="number" min="1" value="${s.aperture||''}"></label><label class="chip"><input data-selected-scope type="radio" name="selectedScope" value="${s.id}" ${draft.equipment.selectedTelescopeId===s.id?'checked':''}>Aktiv</label><button data-delete-scope="${s.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="divider"></div>
+  <div class="section-title-row"><div><h2>Kameras</h2><div class="small muted">Sensorgröße und Pixelgröße werden für Bildfeld und Abbildungsmaßstab verwendet.</div></div><button id="addCamera">Kamera hinzufügen</button></div>
+  <div class="equipment-list">${draft.equipment.cameras.map(c=>`<div class="equipment-row camera-row" data-camera-row="${c.id}"><label>Name<input data-camera="name" value="${esc(c.name)}"></label><label>Sensorbreite (mm)<input data-camera="sensorWidth" type="number" min="0.1" step="0.01" value="${c.sensorWidth}"></label><label>Sensorhöhe (mm)<input data-camera="sensorHeight" type="number" min="0.1" step="0.01" value="${c.sensorHeight}"></label><label>Pixelgröße (µm)<input data-camera="pixelSize" type="number" min="0.1" step="0.01" value="${c.pixelSize}"></label><label class="chip"><input data-selected-camera type="radio" name="selectedCamera" value="${c.id}" ${draft.equipment.selectedCameraId===c.id?'checked':''}>Aktiv</label><button data-delete-camera="${c.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="divider"></div>
+  <div class="section-title-row"><div><h2>Montierungen</h2><div class="small muted">Die Montierung wird derzeit dokumentiert; eine spätere Qualitätsbewertung kann Typ und Tragfähigkeit berücksichtigen.</div></div><button id="addMount">Montierung hinzufügen</button></div>
+  <div class="equipment-list">${draft.equipment.mounts.map(m=>`<div class="equipment-row mount-row" data-mount-row="${m.id}"><label>Name<input data-mount="name" value="${esc(m.name)}"></label><label>Montierungsart<select data-mount="type">${['Parallaktisch','Alt-Azimutal','Startracker','Säule / stationär','Sonstige'].map(type=>`<option ${m.type===type?'selected':''}>${type}</option>`).join('')}</select></label><label>Max. Zuladung (kg, optional)<input data-mount="maxPayloadKg" type="number" min="0" step="0.1" value="${m.maxPayloadKg??''}"></label><label class="chip"><input data-selected-mount type="radio" name="selectedMount" value="${m.id}" ${draft.equipment.selectedMountId===m.id?'checked':''}>Aktiv</label><button data-delete-mount="${m.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  ${renderSaveBar('equipment','Ausrüstung speichern')}
+</div>`}
 function renderCentral(){
   const c=draft.central;
   const total=Object.values(c.weights).reduce((a,b)=>a+Number(b||0),0);
   const weatherTotal=Object.values(c.weatherModels?.weights||{}).reduce((a,b)=>a+Number(b||0),0);
   return`<div class="card">
-    <div class="section-title-row"><h2>Wind und Aufnahmequalität</h2><span class="save-state">${dirtySections.has('centralWind')?'Ungespeicherte Änderungen':'Gespeichert'}</span></div>
+    <div class="section-title-row"><div><h2>Wind und Aufnahmequalität</h2><div class="small muted">Grenzwerte bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit der Ausrüstung.</div></div></div>
     <div class="grid two">
       <label>Einheit für Wind, Böen und Jetstream<select id="windUnit"><option value="kmh" ${c.windUnit==='kmh'?'selected':''}>km/h</option><option value="ms" ${c.windUnit==='ms'?'selected':''}>m/s</option></select></label>
       <label>Aktives Aufnahmequalitätsprofil<select id="activeWindProfile">${Object.entries(c.windProfiles).map(([key,value])=>`<option value="${key}" ${c.activeWindProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label>
@@ -1266,110 +1345,101 @@ function renderCentral(){
       <div class="metric"><strong>Tauabstand</strong><label>Grün über (°C)<input id="dewGreen" type="number" value="${c.dew.green}"></label><label>Gelb ab (°C)<input id="dewYellow" type="number" value="${c.dew.yellow}"></label></div>
       <div class="metric"><strong>Jetstream</strong><label>Grün unter (${windUnitLabel(c.windUnit)})<input id="jetGreen" type="number" value="${c.jet.green}"></label><label>Gelb bis (${windUnitLabel(c.windUnit)})<input id="jetYellow" type="number" value="${c.jet.yellow}"></label></div>
     </div>
-    <div class="section-title-row" style="margin-top:14px"><span></span><button data-save-section="centralWind" class="primary">Rubrik speichern</button></div>
+    ${renderSaveBar('centralWind','Windwerte speichern')}
   </div>
   <div class="card">
     <div class="section-title-row"><div><h2>Wettermodelle</h2><div class="small muted">Gewichtung für den Modellkonsens je Prognosestunde</div></div><span class="weight-total ${weatherTotal===100?'ok':'error'}">Summe: ${weatherTotal} %</span></div>
     <div class="notice">Der Modellkonsens mittelt DWD ICON, ECMWF IFS und NOAA GFS nach diesen Anteilen. Default: 40 % / 40 % / 20 %.</div>
     <div class="grid three" style="margin-top:12px">${Object.entries(WEATHER_MODEL_CONFIG).map(([key,value])=>`<label>${esc(value.name)} (%)<input data-weather-weight="${key}" type="number" min="0" max="100" step="1" value="${Number(c.weatherModels?.weights?.[key]??value.defaultWeight)}"></label>`).join('')}</div>
-    <div class="grid two" style="margin-top:12px">
-      <label>Standarddarstellung in der Planung<select id="defaultWeatherView">${WEATHER_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.weatherModels?.defaultView===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
-      <div class="notice good">In der Planung kann temporär auf ein einzelnes Modell umgeschaltet und die Auswahl dort als neuer Standard übernommen werden.</div>
-    </div>
-    <div class="section-title-row" style="margin-top:14px"><span class="save-state">${dirtySections.has('weatherModels')?'Ungespeicherte Änderungen':'Gespeichert'}</span><button data-save-section="weatherModels" class="primary" ${weatherTotal!==100?'disabled':''}>Wettermodelle speichern</button></div>
+    <div class="grid two" style="margin-top:12px"><label>Standarddarstellung in der Planung<select id="defaultWeatherView">${WEATHER_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.weatherModels?.defaultView===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label><div class="notice">In der Planung kann die Ansicht temporär auf ein Einzelmodell umgestellt werden. Der Standard wird ausschließlich hier gespeichert.</div></div>
+    ${renderSaveBar('weatherModels','Wettermodelle speichern')}
   </div>
   <div class="card">
-    <div class="section-title-row"><div><h2>Wolkenkarte und Datenmenge</h2><div class="small muted">Auflösung, Kartenausschnitt und Standarddarstellung der animierten 24-Stunden-Wolkenprognose</div></div><span class="save-state">${dirtySections.has('cloudMap')?'Ungespeicherte Änderungen':'Gespeichert'}</span></div>
+    <div class="section-title-row"><div><h2>Wolkenkarte und Datenmenge</h2><div class="small muted">Auflösung, Kartenausschnitt und Standarddarstellung der animierten 24-Stunden-Prognose</div></div></div>
     <div class="grid three">
-      <label>Kartenpunkte<select id="cloudMapGridSize">${CLOUD_MAP_GRID_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.gridSize)===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+      <label>Kartendetails<select id="cloudMapGridSize">${CLOUD_MAP_GRID_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.gridSize)===value?'selected':''}>${esc(label.replace('Kartenpunkte','Prognosepunkte'))}</option>`).join('')}</select></label>
       <label>Kartenradius<select id="cloudMapRadius">${CLOUD_MAP_RADIUS_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.radiusKm)===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
       <label>Animationsgeschwindigkeit<select id="cloudMapAnimationMs">${[[1400,'langsam'],[900,'normal'],[550,'schnell']].map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.animationMs)===value?'selected':''}>${label} (${value} ms)</option>`).join('')}</select></label>
       <label>Standard-Modellansicht<select id="defaultCloudMapView">${CLOUD_MAP_VIEW_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultView===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
       <label>Standard-Wolkenschicht<select id="defaultCloudMapLayer">${CLOUD_MAP_LAYER_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultLayer===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
       <label>Standard-Kartenmodus<select id="defaultCloudMapMode">${CLOUD_MAP_MODE_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultMode===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
     </div>
-    <div class="grid three" style="margin-top:12px">
-      <label class="chip"><input id="cloudMapSyncDefault" type="checkbox" ${c.cloudMap?.syncTime?'checked':''}>Kartenzeit mit Höhenkurve, Horizont und Framing koppeln</label>
-      <label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label>
-      <label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label>
-    </div>
-    <div class="notice" style="margin-top:12px">25 Punkte benötigen je Aktualisierung drei kompakte Modellabfragen, 49 Punkte meist sechs und 81 Punkte bis zu neun Teilabfragen. Daten werden 90 Minuten im Browser zwischengespeichert. Standard: 49 Punkte in einem Radius von 120 km.</div>
-    <div class="section-title-row" style="margin-top:14px"><span></span><button data-save-section="cloudMap" class="primary">Wolkenkarte speichern</button></div>
+    <div class="grid two" style="margin-top:12px"><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
+    <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
+    ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
   <div class="card">
     <div class="section-title-row"><h2>Deep-Sky-Gewichtung</h2><span class="weight-total ${total===100?'ok':'error'}">Summe: ${total} %</span></div>
     <div class="notice">Nur ganzzahlige Eingabefelder. Speichern ist nur bei exakt 100 % möglich.</div>
-    <div class="weight-grid" style="margin-top:12px">${Object.entries({clouds:'Wolken',transparency:'Transparenz',seeing:'Seeing',wind:'Wind/Böen',dew:'Tauabstand',moon:'Mond',altitude:'Objekthöhe',duration:'Sichtbarkeitsdauer'}).map(([key,name])=>`<label>${name} (%)<input data-weight="${key}" type="number" min="0" max="100" step="1" value="${c.weights[key]}"></label>`).join('')}</div>
-    <div class="section-title-row" style="margin-top:14px"><span class="save-state">${dirtySections.has('weights')?'Ungespeicherte Änderungen':'Gespeichert'}</span><button data-save-section="weights" class="primary" ${total!==100?'disabled':''}>Gewichtung speichern</button></div>
+    <div class="weight-grid" style="margin-top:12px">${Object.entries({clouds:'Wolken',transparency:'Effektive Transparenz',seeing:'Seeing',wind:'Wind/Böen',dew:'Tauabstand',moon:'Mond',altitude:'Objekthöhe',duration:'Sichtbarkeitsdauer'}).map(([key,name])=>`<label>${name} (%)<input data-weight="${key}" type="number" min="0" max="100" step="1" value="${c.weights[key]}"></label>`).join('')}</div>
+    ${renderSaveBar('weights','Gewichtung speichern')}
   </div>
   <div class="card">
-    <div class="section-title-row"><h2>Anzeige und Planung</h2><span class="save-state">${dirtySections.has('display')?'Ungespeicherte Änderungen':'Gespeichert'}</span></div>
-    <div class="grid two">
-      <label>Standard-Planungszeitraum<select id="defaultPlanningWindow">${[['sunset','Sonnenuntergang–Sonnenaufgang'],['civil','Bürgerliche Nacht'],['nautical','Nautischer Planungszeitraum'],['astronomicalTwilight','Nautisch + astronomisch'],['astronomicalNight','Astronomische Nacht']].map(([key,name])=>`<option value="${key}" ${c.defaultPlanningWindow===key?'selected':''}>${name}</option>`).join('')}</select></label>
-      <label>Darstellungsprofil – Aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label>
-    </div>
+    <div class="section-title-row"><div><h2>Anzeige und Planung</h2><div class="small muted">Dauerhafte Standards für neue beziehungsweise zurückgesetzte Planungen</div></div></div>
+    <div class="grid two"><label>Standard-Planungszeitraum<select id="defaultPlanningWindow">${[['sunset','Sonnenuntergang–Sonnenaufgang'],['civil','Bürgerliche Nacht'],['nautical','Nautischer Planungszeitraum'],['astronomicalTwilight','Nautisch + astronomisch'],['astronomicalNight','Astronomische Nacht']].map(([key,name])=>`<option value="${key}" ${c.defaultPlanningWindow===key?'selected':''}>${name}</option>`).join('')}</select></label><label>Darstellungsprofil – Aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div>
     <div class="grid three" style="margin-top:12px">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<div class="metric"><strong>${esc(value.name)}</strong><label>Objekte/Seite<select data-display-page-size="${key}">${[10,20,50,100].map(number=>`<option ${value.pageSize===number?'selected':''}>${number}</option>`).join('')}</select></label><div class="small muted" style="margin:8px 0">Sichtbare Spalten</div>${DISPLAY_COLUMNS.map(([id,name])=>`<label class="chip"><input type="checkbox" data-display-column-profile="${key}" data-column="${id}" ${value.columns.includes(id)?'checked':''}>${name}</label>`).join('')}</div>`).join('')}</div>
-    <div class="grid two" style="margin-top:12px">
-      <label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label>
-      <label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label>
-      <label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label>
-      <label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label>
-      <label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label>
-    </div>
-    <div class="section-title-row" style="margin-top:14px"><button id="resetDisplayProfiles">Auf Standard zurücksetzen</button><button data-save-section="display" class="primary">Rubrik speichern</button></div>
+    <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label><label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label><label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label><label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label><label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label></div>
+    <div class="display-actions"><button id="resetDisplayProfiles">Auf Standard zurücksetzen</button></div>
+    ${renderSaveBar('display','Anzeigeeinstellungen speichern')}
   </div>`;
 }
 function renderLocations(){
   const loc=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0];
-  const dirs=['N','NO','O','SO','S','SW','W','NW'];
-  const horizonPoints=Array.from({length:73},(_,index)=>{
-    const azimuth=index*5;
-    const position=azimuth/45;
-    const lower=Math.floor(position)%8;
-    const upper=(lower+1)%8;
-    const fraction=position-Math.floor(position);
-    const altitude=(Number(loc.horizon?.[lower])||0)*(1-fraction)+(Number(loc.horizon?.[upper])||0)*fraction;
-    return[azimuth,altitude];
-  });
+  const horizonProfile=Array.isArray(loc.horizonProfile)&&loc.horizonProfile.length===73?loc.horizonProfile:Array(73).fill(0);
+  const horizonPoints=horizonProfile.map((altitude,index)=>[index*5,Number(altitude)||0]);
   const obstacles=(loc.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
   return`<div class="card">
-    <div class="section-title-row"><h2>Gespeicherte Aufnahmeorte</h2><button id="addLocation">Standort hinzufügen</button></div>
-    <div class="toolbar">
-      <label>Standort<select id="locationSelect">${draft.locations.map(item=>`<option value="${item.id}" ${item.id===loc.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label>
-      <label>Standardstandort<select id="defaultLocationSelect">${draft.locations.map(item=>`<option value="${item.id}" ${item.id===draft.central.defaultLocationId?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label>
-      <label>GPS-Verhalten<select id="gpsBehavior"><option value="last" ${draft.central.gpsBehavior==='last'?'selected':''}>Letzten Standort verwenden</option><option value="default" ${draft.central.gpsBehavior==='default'?'selected':''}>Immer Standardstandort</option><option value="ask" ${draft.central.gpsBehavior==='ask'?'selected':''}>Bei jedem Start fragen</option></select></label>
-    </div>
-    <div class="grid two" style="margin-top:12px">
-      <label>Name<input id="locName" value="${esc(loc.name)}"></label>
-      <label>Zeitzone<input id="locTimezone" value="${esc(loc.timezone)}"></label>
-      <label>Breitengrad (°)<input id="locLat" type="number" step="0.0001" value="${loc.latitude}"></label>
-      <label>Längengrad (°)<input id="locLon" type="number" step="0.0001" value="${loc.longitude}"></label>
-      <label>Höhe über Meer (m)<input id="locElevation" type="number" value="${loc.elevation||0}"></label>
-      <div class="inline" style="align-self:end"><button id="useGps">GPS verwenden</button><button id="searchLocation">Ort suchen</button><button id="deleteLocation" class="danger" ${draft.locations.length===1?'disabled':''}>Standort löschen</button></div>
-    </div>
+    <div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Der Standardstandort wird hier festgelegt. In der Planung kann vorübergehend ein anderer gespeicherter Ort gewählt werden.</div></div><button id="addLocation">Standort hinzufügen</button></div>
+    <div class="grid two"><label>Standort bearbeiten<select id="locationSelect">${draft.locations.map(item=>`<option value="${item.id}" ${item.id===loc.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label><label>Standardstandort<select id="defaultLocationSelect">${draft.locations.map(item=>`<option value="${item.id}" ${item.id===draft.central.defaultLocationId?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label><label>GPS-Verhalten<select id="gpsBehavior"><option value="last" ${draft.central.gpsBehavior==='last'?'selected':''}>Letzten/Standardstandort verwenden</option><option value="ask" ${draft.central.gpsBehavior==='ask'?'selected':''}>Bei Bedarf nach GPS fragen</option></select></label><span></span></div>
+    <div class="grid three" style="margin-top:12px"><label>Name<input id="locName" value="${esc(loc.name)}"></label><label>Zeitzone<input id="locTimezone" value="${esc(loc.timezone)}"></label><label>Breitengrad (°)<input id="locLat" type="number" step="0.0001" value="${loc.latitude}"></label><label>Längengrad (°)<input id="locLon" type="number" step="0.0001" value="${loc.longitude}"></label><label>Höhe über Meer (m)<input id="locElevation" type="number" value="${loc.elevation||0}"></label><div class="inline" style="align-self:end"><button id="useGps">GPS verwenden</button><button id="searchLocation">Ort suchen</button><button id="deleteLocation" class="danger" ${draft.locations.length===1?'disabled':''}>Standort löschen</button></div></div>
   </div>
   <div class="card">
-    <div class="section-title-row"><div><div class="eyebrow">Persönlicher Horizont</div><h2>${esc(loc.name)}</h2></div><span class="save-state">${dirtySections.has('locations')?'Ungespeicherte Änderungen':'Gespeichert'}</span></div>
-    <canvas class="settings-horizon-chart" width="1400" height="390"
-      data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}"
-      data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}"></canvas>
-    <div class="horizon-grid" style="margin-top:16px">${dirs.map((direction,index)=>`<label><span class="direction-label">${index*45}° = ${direction}</span>Horizonthöhe (°)<input data-horizon="${index}" type="number" min="0" max="90" value="${loc.horizon[index]||0}"></label>`).join('')}</div>
+    <div class="section-title-row"><div><div class="eyebrow">Interaktiver persönlicher Horizont</div><h2>${esc(loc.name)}</h2><div class="small muted">Ziehe die Horizontlinie mit Maus oder Finger direkt in der Grafik. Die Werte werden in 5°-Schritten gespeichert und weich verbunden.</div></div><div class="horizon-editor-actions"><button id="undoHorizon" ${!horizonUndoStack.length?'disabled':''}>Letzte Änderung rückgängig</button><button id="resetHorizon">Horizont auf 0° setzen</button></div></div>
+    <div class="horizon-editor-wrap"><canvas class="settings-horizon-chart editable-horizon" width="1400" height="440" data-editable="true" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}"></canvas><div class="small muted horizon-editor-help">Beschriftung: 0° N · 45° NO · 90° O · 135° SO · 180° S · 225° SW · 270° W · 315° NW · 360° N. Änderungen werden erst mit dem Speichern dauerhaft übernommen.</div></div>
     <div class="divider"></div>
     <div class="section-title-row"><h3>Hindernisse</h3><button id="addObstacle">Hindernis hinzufügen</button></div>
     <div class="obstacle-list">${loc.obstacles.map(item=>`<div class="obstacle-row" data-obstacle="${item.id}"><label>Bezeichnung<input data-obstacle-field="name" value="${esc(item.name)}"></label><label>Azimut (°)<input data-obstacle-field="azimuth" type="number" min="0" max="360" value="${item.azimuth}"></label><label>Höhe (°)<input data-obstacle-field="altitude" type="number" min="0" max="90" value="${item.altitude}"></label><button data-delete-obstacle="${item.id}" class="danger">Entfernen</button></div>`).join('')||'<div class="muted">Keine zusätzlichen Hindernisse erfasst.</div>'}</div>
-    <div class="section-title-row" style="margin-top:14px"><span></span><button data-save-section="locations" class="primary">Standort und Horizont speichern</button></div>
+    ${renderSaveBar('locations','Standort und Horizont speichern')}
   </div>`;
 }
 function renderInfo(){
-  return`<div class="card"><h2>Astro Night Planner 1.0</h2><p>Stabile, installierbare PWA für Nachtplanung, astronomisches Wetter, Mond und Dämmerung, Deep-Sky-Auswahl, persönliche Ausrüstung, Standorte, Horizont und Rahmung.</p><div class="storage-status"><div class="metric"><div class="label">Umgebung</div><div class="value">${ENV==='prod'?'Produktion':'Test'}</div></div><div class="metric"><div class="label">Datenbank</div><div class="value small">${DB_NAME}</div></div><div class="metric"><div class="label">Version</div><div class="value">${APP_VERSION}</div></div></div></div>
-  <div class="card"><h2>Profile, Sicherung und Wiederherstellung</h2><div class="data-actions"><button id="exportProfile">Aktuelles Profil exportieren</button><button id="exportAll">Komplette Sicherung exportieren</button><button id="importProfile">Profil/Sicherung importieren</button><button id="requestPersistence">Persistenten Speicher anfordern</button></div><div id="storageMessage" class="notice" style="margin-top:12px">Die Daten liegen lokal im Browser. Test- und Produktivversion verwenden getrennte Datenbanken und Caches.</div></div>
-  <div class="card help-article"><h2>Browserbasierte Hilfe</h2><div class="help-toc"><a href="#help-plan">Planung</a><a href="#help-weather">Wetter</a><a href="#help-objects">Objektliste</a><a href="#help-framing">Rahmung</a><a href="#help-horizon">Horizont</a><a href="#help-profiles">Profile & Sicherung</a><a href="docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html" target="_blank">Handbuch öffnen</a></div>
-  <section id="help-plan"><h3>Planung</h3><p>Wähle Standort und Datum; der Planungszeitraum steht in der Rubrik „Profile für diese Planung“. Die Auswahl steuert Objektbewertung, Wetterbewertung und sämtliche Höhenprofile. Der unter „Zentrale Einstellungen“ gespeicherte Standard wird unmittelbar auf die Planung angewendet.</p></section>
-  <section id="help-weather"><h3>Wetter und Wolkenkarten</h3><p>Der Standard „Modellkonsens“ bildet je Prognosestunde einen gewichteten Wert aus DWD ICON, ECMWF IFS und NOAA GFS. Die Gewichte werden unter „Zentrale Einstellungen → Wettermodelle“ festgelegt. Die animierte 24-Stunden-Wolkenkarte zeigt Gesamtbewölkung sowie tiefe, mittlere und hohe Wolken wahlweise als Konsens oder Einzelmodell. Der Modus „Modellabweichung“ macht unterschiedliche Prognosen sichtbar. Kartenpunkte, Radius, Animation und Standarddarstellung werden unter „Zentrale Einstellungen → Wolkenkarte und Datenmenge“ festgelegt. Meteoblue Astronomy Seeing und die Meteoblue-Wetterkarten sind zusätzlich als unabhängige eingebettete Kontrollquellen verfügbar.</p></section>
-  <section id="help-objects"><h3>Objektliste und Details</h3><p>Ein Klick auf eine beliebige freie Stelle einer Objektzeile öffnet die Details unmittelbar unter dieser Zeile. Mit „Details schließen“ oder einem erneuten Klick auf dieselbe Zeile wird die Ansicht geschlossen. Höhenkurve und Horizontansicht sind auf- und zuklappbar; ihr initialer Zustand wird in den zentralen Anzeigeeinstellungen festgelegt. Beide Ansichten besitzen synchronisierte Zeitregler. Die Höhenkurve enthält eine Dämmerungslegende sowie stündliche Höhe und Himmelsrichtung.</p></section>
-  <section id="help-framing"><h3>Rahmung</h3><p>Aladin Lite wird auf die Koordinaten des gewählten Objekts zentriert und so gezoomt, dass Setup-Rahmen beziehungsweise Objektgröße sichtbar sind. Setup-Rahmen und Objektellipse lassen sich unabhängig ein- oder ausblenden und getrennt rotieren.</p></section>
-  <section id="help-horizon"><h3>Persönlicher Horizont</h3><p>Unter „Standorte & Horizont“ zeigt eine Vorschaugrafik den aus den acht Richtungswerten und den Hindernissen entstehenden Horizont. Große Höhen- und Horizontgrafiken beschriften den Azimut sowohl in Grad als auch mit N, NO, O, SO, S, SW, W und NW. In der Horizontansicht kann Boden/Horizont ein- und ausgeblendet werden.</p></section>
-  <section id="help-profiles"><h3>Profile und Datensicherung</h3><p>Jedes lokale Benutzerprofil enthält Ausrüstung, Standorte, Horizont, Filter, Wettermodellgewichte, Darstellungsprofile und Anzeigeoptionen. Exportiere regelmäßig eine vollständige Sicherung.</p></section></div>`;
+  const persistentText=storageInfo.persistent===true?'Aktiv':storageInfo.persistent===false?'Nicht aktiv':'Nicht ermittelbar';
+  const permissionText={granted:'Zugriff vorhanden',prompt:'Freigabe erforderlich',denied:'Zugriff verweigert',none:'Kein Ordner gewählt'}[storageInfo.permission]||storageInfo.permission;
+  const fileSupport=storageInfo.fileSystemSupported?'Automatische Ordnersicherung unterstützt':'Automatische Ordnersicherung in diesem Browser nicht unterstützt';
+  const lastBackup=backupAgeText();
+  const reminderDue=!backupConfig.lastSuccessAt||Date.now()-new Date(backupConfig.lastSuccessAt).getTime()>Number(backupConfig.reminderDays||7)*86400000;
+  return`<div class="card storage-warning-card"><div class="eyebrow">Bitte vor der Nutzung lesen</div><h2>Wichtiger Hinweis zur lokalen Datenspeicherung</h2><p><strong>Einstellungen, Profile, Ausrüstung, Standorte und Horizonte werden lokal in der Browserdatenbank IndexedDB gespeichert. Normale Cookies sind nicht der primäre Speicherort.</strong></p><p>Die PWA-Programmdateien liegen getrennt im Cache Storage. Das Löschen nur von „Bildern und Dateien im Cache“ entfernt IndexedDB normalerweise nicht. Das Löschen der Websitedaten kann jedoch Profile, Einstellungen und gespeicherte Dateizugriffe entfernen. Persistenter Speicher schützt nur vor automatischer Browserbereinigung – nicht vor einer bewussten Löschung. Erstelle deshalb regelmäßig externe Sicherungen.</p></div>
+  <div class="card"><h2>Astro Night Planner 1.0</h2><p>Installierbare PWA für Nachtplanung, astronomisches Wetter, Mond und Dämmerung, Deep-Sky-Auswahl, persönliche Ausrüstung, Standorte, Horizont und Rahmung.</p><div class="storage-status"><div class="metric"><div class="label">Umgebung</div><div class="value">${ENV==='prod'?'Produktion':'Test'}</div></div><div class="metric"><div class="label">Datenbank</div><div class="value small">${DB_NAME}</div></div><div class="metric"><div class="label">Version</div><div class="value">${APP_VERSION}</div></div></div></div>
+  <div class="card"><div class="section-title-row"><div><h2>Datenstatus</h2><div class="small muted">Technischer Status der lokalen Speicherung</div></div><button id="refreshStorageStatus">Status aktualisieren</button></div><div class="grid four"><div class="metric"><div class="label">Speicherschutz</div><div class="value ${storageInfo.persistent?'good':'warn'}">${persistentText}</div></div><div class="metric"><div class="label">Lokaler Speicherverbrauch</div><div class="value">${formatBytes(storageInfo.usage)}</div><div class="small muted">von ${formatBytes(storageInfo.quota)}</div></div><div class="metric"><div class="label">Externe Sicherung</div><div class="value small ${storageInfo.permission==='granted'?'good':'warn'}">${permissionText}</div><div class="small muted">${esc(backupConfig.targetName||'Kein Ziel')}</div></div><div class="metric"><div class="label">Letzte Sicherung</div><div class="value small ${reminderDue?'warn':'good'}">${esc(lastBackup)}</div></div></div><div class="data-actions" style="margin-top:12px"><button id="requestPersistence">Lokale Daten vor automatischer Browserbereinigung schützen</button></div><div id="storageMessage" class="notice" style="margin-top:12px">Der Speicherschutz verhindert keine manuelle Löschung von Websitedaten.</div></div>
+  <div class="card"><div class="section-title-row"><div><h2>Automatische externe Sicherung</h2><div class="small muted">Die Sicherungsdatei liegt außerhalb des Browsercaches. Nach einer vollständigen Löschung der Websitedaten muss Ordner oder Datei erneut ausgewählt werden.</div></div><span class="backup-support ${storageInfo.fileSystemSupported?'good':'warn'}">${fileSupport}</span></div>
+    <div class="grid two"><label class="chip"><input id="backupEnabled" type="checkbox" ${backupDraft.enabled?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Automatische Sicherung aktivieren</label><label>Aufzubewahrende datierte Sicherungen<input id="backupKeep" type="number" min="1" max="50" value="${backupDraft.keep}"></label><label class="chip"><input id="backupAfterSave" type="checkbox" ${backupDraft.afterSave?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Nach jedem erfolgreichen Speichern der Einstellungen sichern</label><label class="chip"><input id="backupDaily" type="checkbox" ${backupDraft.daily?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Zusätzlich höchstens einmal täglich datierte Sicherung</label><label>Sicherungserinnerung nach Tagen<input id="backupReminderDays" type="number" min="1" max="90" value="${backupDraft.reminderDays}"></label><div class="metric"><div class="label">Sicherungsziel</div><div class="value small">${esc(backupConfig.targetName||'Noch nicht gewählt')}</div><div class="small muted">Berechtigung: ${permissionText}</div></div></div>
+    <div class="data-actions" style="margin-top:14px"><button id="chooseBackupDirectory" ${!storageInfo.fileSystemSupported?'disabled':''}>Sicherungsordner auswählen</button><button id="backupNow">Sicherung jetzt erstellen</button><button id="restoreBackup">Aus Sicherung wiederherstellen</button><button id="exportAll">Komplette Sicherung herunterladen</button><button id="exportProfile">Aktuelles Profil herunterladen</button></div>
+    ${backupConfig.lastError?`<div class="notice warn" style="margin-top:12px">Letzter Sicherungsfehler: ${esc(backupConfig.lastError)}</div>`:''}
+    ${!storageInfo.fileSystemSupported?'<div class="notice" style="margin-top:12px">Fallback: Nutze „Komplette Sicherung herunterladen“. Die App erinnert nach dem eingestellten Zeitraum an einen neuen Export.</div>':''}
+    ${renderSaveBar('backup','Sicherungseinstellungen speichern')}
+  </div>
+  <div class="card help-article"><div class="section-title-row"><div><h2>Ausführliche browserbasierte Hilfe</h2><div class="small muted">Ausschließlich für Anwender – ohne Installations- oder Testsystem-Anweisungen</div></div><div class="data-actions"><a class="button" href="docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html" target="_blank" rel="noopener">Handbuch im Browser</a><a class="button primary" href="docs/ASTRO_NIGHT_PLANNER_HANDBUCH.pdf" download>Handbuch als PDF</a></div></div>
+    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
+    <section id="help-storage"><h3>Datenspeicherung, Cookies und Browsercache</h3><p>Alle persönlichen Daten werden im gerade verwendeten Browser und Browserprofil gespeichert. IndexedDB enthält die fachlichen Daten, Cache Storage die für den Offlinebetrieb benötigten App-Dateien. Cookies sind nicht der Hauptspeicher. Ein normaler Cache-Löschvorgang betrifft die Einstellungen meist nicht; das Löschen aller Websitedaten kann sie entfernen. Test- und Produktivversion nutzen getrennte Datenbanknamen, können bei einer vollständigen Löschung der gesamten GitHub-Pages-Domain aber gemeinsam betroffen sein.</p></section>
+    <section id="help-first"><h3>Erste Schritte</h3><p>Prüfe zuerst unter Ausrüstung Teleskop, Kamera und Montierung. Lege anschließend unter Standorte & Horizont deinen Aufnahmeort als Standard fest. Wähle in der Planung Standort, Datum, Planungszeitraum und Wetterdarstellung. Danach kannst du Objektfilter setzen und ein Objekt durch Klick auf die gesamte Tabellenzeile öffnen.</p></section>
+    <section id="help-plan"><h3>Planungsnacht</h3><p>Die Standortauswahl links neben den Datumsfeldern gilt nur für die aktuelle Planung. Koordinaten und Höhe stehen direkt darunter. Sonnen-, Dämmerungs- und Mondzeiten werden für diesen Standort berechnet. Der Planungszeitraum begrenzt Bewertung, Sichtbarkeitsdauer, Wetterzusammenfassung und Höhenprofile.</p></section>
+    <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Aufnahmequalitäts-, Darstellungs- und Wetterprofil können temporär gewählt werden. Diese Auswahl überschreibt keinen gespeicherten Standard. Dauerhafte Standards werden ausschließlich unter Zentrale Einstellungen gespeichert.</p></section>
+    <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
+    <section id="help-cloudmap"><h3>Animierte 24-Stunden-Wolkenkarte</h3><p>Die Karte zeigt Gesamtbewölkung oder einzelne Wolkenschichten. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge; die sichtbare Fläche wird weich interpoliert. Die dynamische Legende passt sich der Schicht an. Der Modus Modellabweichung zeigt, wie stark die drei Modelle voneinander abweichen. Kartenzeit und Kennwerte stehen unmittelbar über dem Zeitregler.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section>
+    <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Alle Beschriftungen enthalten die verwendeten Einheiten. Änderungen setzen die Ergebnisliste auf Seite 1 zurück.</p></section>
+    <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Darstellungsprofile bestimmen Spalten und Objekte pro Seite. Das Mini-Höhenprofil verwendet denselben Planungszeitraum wie die große Kurve und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
+    <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt.</p></section>
+    <section id="help-framing"><h3>Rahmung mit Aladin Lite</h3><p>Die Ansicht wird auf das gewählte Objekt zentriert und passend gezoomt. Kamerarahmen und Objektgröße können unabhängig ein- oder ausgeblendet und rotiert werden. Der Zeitregler zeigt die Objekthöhe innerhalb des Planungsfensters.</p></section>
+    <section id="help-horizon"><h3>Standorte und interaktiver Horizont</h3><p>Bearbeite die Horizontlinie direkt in der Grafik mit Maus oder Finger. Die Linie wird in 5°-Schritten gespeichert. Rückgängig und Zurücksetzen helfen bei der Bearbeitung. Hindernisse wie Bäume oder Gebäude können zusätzlich mit Azimut und Höhe eingetragen werden.</p></section>
+    <section id="help-equipment"><h3>Ausrüstung</h3><p>Teleskope, Kameras und Montierungen werden als Listen geführt. Je Kategorie ist ein Eintrag aktiv. Teleskop und Kamera bestimmen Bildfeld und Pixelmaßstab. Die Montierung dient zunächst der Dokumentation und kann später in Wind- oder Tragfähigkeitsbewertungen einbezogen werden.</p></section>
+    <section id="help-settings"><h3>Speichern von Einstellungen</h3><p>Jede Rubrik besitzt eine einheitliche Speicherleiste. Ungespeicherte Änderungen werden deutlich angezeigt. Nach erfolgreichem Speichern wird der Button drei Sekunden gelb und zeigt „Gespeichert ✓“. Erst dann sind die Änderungen dauerhaft in IndexedDB übernommen.</p></section>
+    <section id="help-backup"><h3>Export, automatische Sicherung und Wiederherstellung</h3><p>In unterstützten Chromium-Browsern kann ein externer Ordner gewählt werden. Die App aktualisiert dort eine aktuelle JSON-Datei und legt optional täglich rotierende Sicherungen an. Der Ordnerzugriff wird als geschütztes Handle in IndexedDB gespeichert. Nach dem Löschen aller Websitedaten bleibt die externe Datei erhalten, der Ordner muss aber erneut ausgewählt werden. Andere Browser verwenden Download und Import als Fallback.</p></section>
+    <section id="help-pwa"><h3>Installation als PWA und Offlinebetrieb</h3><p>Nach der Installation kann die App wie ein eigenständiges Programm gestartet werden. Programmdateien stehen offline zur Verfügung. Wetter-, Karten-, Meteoblue- und Katalogaktualisierungen benötigen weiterhin eine Internetverbindung.</p></section>
+    <section id="help-troubleshooting"><h3>Fehlerbehebung</h3><p>Bei alten Darstellungen zuerst die App neu laden. Bei einem PWA-Update kann ein Updatehinweis erscheinen. Externe Dienste können zeitweise nicht erreichbar sein. Lösche Websitedaten nur als letzte Maßnahme und nur nach einer aktuellen Sicherung.</p></section>
+    <section id="help-values"><h3>Bedeutung der Bewertungswerte</h3><p>Die Gesamtbewertung kombiniert Wolken, effektive Transparenz, Seeing, Wind/Böen, Tauabstand, Mond, Objekthöhe und Sichtbarkeitsdauer. Die Gewichte ergeben zusammen 100 %. Farben beziehen sich auf erwartete Aufnahmequalität, nicht auf die sichere Belastbarkeit der Ausrüstung.</p></section>
+    <div class="help-return"><a class="button primary" href="./">Zurück zur aktuellen Anwendung</a></div>
+  </div>`;
 }
 
 async function setObjectDetails(objectId,open=true,scroll=true){
@@ -1386,6 +1456,14 @@ async function setObjectDetails(objectId,open=true,scroll=true){
 }
 
 function bindRendered(){
+  const planningLocationSelect=document.getElementById('planningLocationSelect');
+  if(planningLocationSelect)planningLocationSelect.onchange=async()=>{
+    profile.planning.locationId=planningLocationSelect.value||null;
+    profile.planning.detailsOpen=false;profile.planning.cloudMapFrame=0;page=1;
+    const location=activeLocation();selectedDateKey=dateKeyFor(new Date(),location.timezone);profile.planning.dateKey=selectedDateKey;
+    cloudMapData=null;locationComparisonData=null;
+    await saveProfile();render();fetchWeather();
+  };
   document.querySelectorAll('[data-date]').forEach(button=>button.onclick=async()=>{
     selectedDateKey=button.dataset.date;
     profile.planning.dateKey=selectedDateKey;
@@ -1502,7 +1580,6 @@ function applyCloudMapFrame(index,persist=true){
   const time=new Date(cloudMapData.times[value]);
   updateCloudMapReadouts();
   drawCloudMap();
-  updateLinkedTimeDisplays(time);
   if(persist)scheduleCloudMapProfileSave();
 }
 function updateCloudMapReadouts(){
@@ -1568,25 +1645,10 @@ async function fetchLocationComparison(){
         const spread=Math.sqrt(weightedValues.reduce((acc,item)=>acc+Math.pow(item.cloud-mean,2)*item.weight,0)/sum);
         return{time:frameTime,cloud:mean,high:weighted('high'),precip:weighted('precip'),spread};
       });
-      let bestStart=-1,bestLength=0,currentStart=-1;
-      hourlyFrames.forEach((frame,index)=>{
-        const good=frame.cloud<=35&&frame.high<=45&&frame.precip<=.2;
-        if(good&&currentStart<0)currentStart=index;
-        if((!good||index===hourlyFrames.length-1)&&currentStart>=0){
-          const end=good&&index===hourlyFrames.length-1?index+1:index;
-          const length=end-currentStart;
-          if(length>bestLength){bestLength=length;bestStart=currentStart}
-          currentStart=-1;
-        }
-      });
-      const window=bestStart>=0
-        ?`${fmtTime(hourlyFrames[bestStart].time,location.timezone)}–${fmtTime(new Date(hourlyFrames[Math.min(hourlyFrames.length-1,bestStart+bestLength-1)].time.getTime()+3600000),location.timezone)}`
-        :'kein klares 2-h-Fenster';
       return{
         name:location.name,
         cloud:hourlyFrames.reduce((sum,frame)=>sum+frame.cloud,0)/hourlyFrames.length,
-        spread:hourlyFrames.reduce((sum,frame)=>sum+frame.spread,0)/hourlyFrames.length,
-        window
+        spread:hourlyFrames.reduce((sum,frame)=>sum+frame.spread,0)/hourlyFrames.length
       };
     }).sort((a,b)=>a.cloud-b.cloud);
     locationComparisonData={rows,updatedAt:new Date().toISOString()};
@@ -1601,28 +1663,16 @@ function bindCloudMap(){
     await saveProfile();
     updateCloudMapReadouts();drawCloudMap();
   };
-  document.getElementById('makeCloudMapDefault')?.addEventListener('click',async()=>{
-    profile.central.cloudMap.defaultView=currentCloudMapView();
-    profile.planning.temporaryCloudMapView=null;
-    draft=deepClone(profile);
-    await saveProfile();render();
-  });
   const layer=document.getElementById('cloudMapLayer');
   if(layer)layer.onchange=async()=>{
     profile.planning.cloudMapLayer=layer.value;
-    await saveProfile();updateCloudMapReadouts();drawCloudMap();
+    await saveProfile();
+    updateCloudMapReadouts();drawCloudMap();
   };
   const mode=document.getElementById('cloudMapMode');
   if(mode)mode.onchange=async()=>{
     profile.planning.cloudMapMode=mode.value;
     await saveProfile();drawCloudMap();
-  };
-  const sync=document.getElementById('cloudMapSyncTime');
-  if(sync)sync.onchange=async()=>{
-    profile.central.cloudMap.syncTime=sync.checked;
-    draft=deepClone(profile);
-    await saveProfile();
-    if(sync.checked&&cloudMapData)applyCloudMapFrame(profile.planning.cloudMapFrame,false);
   };
   const slider=document.getElementById('cloudMapTime');
   if(slider){
@@ -1665,32 +1715,6 @@ function bindPlanProfiles(){
   if(wind)wind.onchange=async()=>{profile.planning.temporaryWindProfile=wind.value||null;await saveProfile();render()};
   if(display)display.onchange=async()=>{profile.planning.temporaryDisplayProfile=display.value||null;profile.planning.detailsOpen=false;page=1;await saveProfile();render()};
   if(weather)weather.onchange=async()=>{profile.planning.temporaryWeatherView=weather.value||null;await saveProfile();render()};
-  document.getElementById('makeWindDefault')?.addEventListener('click',async()=>{
-    if(!profile.planning.temporaryWindProfile)return;
-    profile.central.activeWindProfile=profile.planning.temporaryWindProfile;
-    profile.planning.temporaryWindProfile=null;
-    await saveProfile();
-    draft=deepClone(profile);
-    render();
-  });
-  document.getElementById('makeDisplayDefault')?.addEventListener('click',async()=>{
-    if(!profile.planning.temporaryDisplayProfile)return;
-    profile.central.listDisplay.activeProfile=profile.planning.temporaryDisplayProfile;
-    profile.planning.temporaryDisplayProfile=null;
-    profile.planning.detailsOpen=false;
-    page=1;
-    await saveProfile();
-    draft=deepClone(profile);
-    render();
-  });
-  document.getElementById('makeWeatherDefault')?.addEventListener('click',async()=>{
-    if(!profile.planning.temporaryWeatherView)return;
-    profile.central.weatherModels.defaultView=profile.planning.temporaryWeatherView;
-    profile.planning.temporaryWeatherView=null;
-    await saveProfile();
-    draft=deepClone(profile);
-    render();
-  });
 }
 function bindFraming(){
   const select=document.getElementById('framingObjectSelect');
@@ -1826,12 +1850,37 @@ function bindSettings(){
   bindEquipmentDraft();bindCentralDraft();bindLocationDraft();bindInfoActions();
   document.querySelectorAll('[data-save-section]').forEach(b=>b.onclick=()=>saveDraftSection(b.dataset.saveSection));
 }
-function markDirty(section){dirtySections.add(section);render()}
-function bindEquipmentDraft(){document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(e=>e.onchange=()=>{const s=draft.equipment.telescopes.find(x=>x.id===row.dataset.scopeRow);s[e.dataset.scope]=e.type==='number'?Number(e.value):e.value;dirtySections.add('equipment')}));document.querySelectorAll('[data-camera-row]').forEach(row=>row.querySelectorAll('[data-camera]').forEach(e=>e.onchange=()=>{const c=draft.equipment.cameras.find(x=>x.id===row.dataset.cameraRow);c[e.dataset.camera]=e.type==='number'?Number(e.value):e.value;dirtySections.add('equipment')}));document.querySelectorAll('[data-selected-scope]').forEach(e=>e.onchange=()=>{draft.equipment.selectedTelescopeId=e.value;dirtySections.add('equipment')});document.querySelectorAll('[data-selected-camera]').forEach(e=>e.onchange=()=>{draft.equipment.selectedCameraId=e.value;dirtySections.add('equipment')});document.getElementById('addTelescope')?.addEventListener('click',()=>{const id=uid('scope');draft.equipment.telescopes.push({id,name:'Neues Teleskop',focalLength:500,aperture:80});draft.equipment.selectedTelescopeId=id;dirtySections.add('equipment');render()});document.getElementById('addCamera')?.addEventListener('click',()=>{const id=uid('cam');draft.equipment.cameras.push({id,name:'Neue Kamera',sensorWidth:23.5,sensorHeight:15.7,pixelSize:3.76});draft.equipment.selectedCameraId=id;dirtySections.add('equipment');render()});document.querySelectorAll('[data-delete-scope]').forEach(b=>b.onclick=()=>{draft.equipment.telescopes=draft.equipment.telescopes.filter(x=>x.id!==b.dataset.deleteScope);draft.equipment.selectedTelescopeId=draft.equipment.telescopes[0]?.id||'';dirtySections.add('equipment');render()});document.querySelectorAll('[data-delete-camera]').forEach(b=>b.onclick=()=>{draft.equipment.cameras=draft.equipment.cameras.filter(x=>x.id!==b.dataset.deleteCamera);draft.equipment.selectedCameraId=draft.equipment.cameras[0]?.id||'';dirtySections.add('equipment');render()})}
+function setSectionDirty(section){
+  dirtySections.add(section);
+  const button=document.querySelector(`[data-save-section="${section}"]`);
+  const bar=button?.closest('.save-bar');
+  if(bar){
+    bar.classList.add('is-dirty');bar.classList.remove('is-success');
+    const state=bar.querySelector('.save-state');if(state)state.textContent='Ungespeicherte Änderungen';
+  }
+  if(button){button.disabled=false;button.classList.remove('save-success');button.textContent=button.dataset.defaultLabel||'Änderungen speichern'}
+  const tabGroups={equipment:['equipment'],central:['centralWind','weatherModels','cloudMap','weights','display'],locations:['locations'],info:['backup']};
+  for(const [tab,sections]of Object.entries(tabGroups))if(sections.includes(section))document.querySelector(`[data-settings-tab="${tab}"]`)?.classList.add('dirty-dot');
+}
+function markDirty(section){setSectionDirty(section)}
+function bindEquipmentDraft(){
+  document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(element=>element.onchange=()=>{const item=draft.equipment.telescopes.find(value=>value.id===row.dataset.scopeRow);item[element.dataset.scope]=element.type==='number'?Number(element.value):element.value;setSectionDirty('equipment')}));
+  document.querySelectorAll('[data-camera-row]').forEach(row=>row.querySelectorAll('[data-camera]').forEach(element=>element.onchange=()=>{const item=draft.equipment.cameras.find(value=>value.id===row.dataset.cameraRow);item[element.dataset.camera]=element.type==='number'?Number(element.value):element.value;setSectionDirty('equipment')}));
+  document.querySelectorAll('[data-mount-row]').forEach(row=>row.querySelectorAll('[data-mount]').forEach(element=>element.onchange=()=>{const item=draft.equipment.mounts.find(value=>value.id===row.dataset.mountRow);const field=element.dataset.mount;item[field]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;setSectionDirty('equipment')}));
+  document.querySelectorAll('[data-selected-scope]').forEach(element=>element.onchange=()=>{draft.equipment.selectedTelescopeId=element.value;setSectionDirty('equipment')});
+  document.querySelectorAll('[data-selected-camera]').forEach(element=>element.onchange=()=>{draft.equipment.selectedCameraId=element.value;setSectionDirty('equipment')});
+  document.querySelectorAll('[data-selected-mount]').forEach(element=>element.onchange=()=>{draft.equipment.selectedMountId=element.value;setSectionDirty('equipment')});
+  document.getElementById('addTelescope')?.addEventListener('click',()=>{const id=uid('scope');draft.equipment.telescopes.push({id,name:'Neues Teleskop',focalLength:500,aperture:80});draft.equipment.selectedTelescopeId=id;setSectionDirty('equipment');render()});
+  document.getElementById('addCamera')?.addEventListener('click',()=>{const id=uid('cam');draft.equipment.cameras.push({id,name:'Neue Kamera',sensorWidth:23.5,sensorHeight:15.7,pixelSize:3.76});draft.equipment.selectedCameraId=id;setSectionDirty('equipment');render()});
+  document.getElementById('addMount')?.addEventListener('click',()=>{const id=uid('mount');draft.equipment.mounts.push({id,name:'Neue Montierung',type:'Parallaktisch',maxPayloadKg:null});draft.equipment.selectedMountId=id;setSectionDirty('equipment');render()});
+  document.querySelectorAll('[data-delete-scope]').forEach(button=>button.onclick=()=>{if(draft.equipment.telescopes.length<=1)return alert('Mindestens ein Teleskop muss erhalten bleiben.');draft.equipment.telescopes=draft.equipment.telescopes.filter(item=>item.id!==button.dataset.deleteScope);draft.equipment.selectedTelescopeId=draft.equipment.telescopes[0]?.id||'';setSectionDirty('equipment');render()});
+  document.querySelectorAll('[data-delete-camera]').forEach(button=>button.onclick=()=>{if(draft.equipment.cameras.length<=1)return alert('Mindestens eine Kamera muss erhalten bleiben.');draft.equipment.cameras=draft.equipment.cameras.filter(item=>item.id!==button.dataset.deleteCamera);draft.equipment.selectedCameraId=draft.equipment.cameras[0]?.id||'';setSectionDirty('equipment');render()});
+  document.querySelectorAll('[data-delete-mount]').forEach(button=>button.onclick=()=>{if(draft.equipment.mounts.length<=1)return alert('Mindestens eine Montierung muss erhalten bleiben.');draft.equipment.mounts=draft.equipment.mounts.filter(item=>item.id!==button.dataset.deleteMount);draft.equipment.selectedMountId=draft.equipment.mounts[0]?.id||'';setSectionDirty('equipment');render()});
+}
 function bindCentralDraft(){
   const set=(id,handler,section,eventName='change')=>{
     const element=document.getElementById(id);
-    if(element)element.addEventListener(eventName,()=>{handler(element);dirtySections.add(section)});
+    if(element)element.addEventListener(eventName,()=>{handler(element);setSectionDirty(section)});
   };
   const unit=document.getElementById('windUnit');
   if(unit)unit.onchange=()=>{
@@ -1843,7 +1892,7 @@ function bindCentralDraft(){
       draft.central.jet.green=Math.round(convertWindValue(Number(draft.central.jet.green),from,to)*10)/10;
       draft.central.jet.yellow=Math.round(convertWindValue(Number(draft.central.jet.yellow),from,to)*10)/10;
       draft.central.windUnit=to;
-      dirtySections.add('centralWind');
+      setSectionDirty('centralWind');
       render();
     }
   };
@@ -1854,11 +1903,11 @@ function bindCentralDraft(){
   set('jetYellow',element=>draft.central.jet.yellow=Number(element.value),'centralWind');
   document.querySelectorAll('[data-wind-profile]').forEach(element=>element.onchange=()=>{
     draft.central.windProfiles[element.dataset.windProfile][element.dataset.field]=Number(element.value);
-    dirtySections.add('centralWind');
+    setSectionDirty('centralWind');
   });
   document.querySelectorAll('[data-weather-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weatherModels.weights[element.dataset.weatherWeight]=Math.round(Number(element.value));
-    dirtySections.add('weatherModels');
+    setSectionDirty('weatherModels');
     render();
   });
   set('defaultWeatherView',element=>draft.central.weatherModels.defaultView=element.value,'weatherModels');
@@ -1868,12 +1917,11 @@ function bindCentralDraft(){
   set('defaultCloudMapView',element=>draft.central.cloudMap.defaultView=element.value,'cloudMap');
   set('defaultCloudMapLayer',element=>draft.central.cloudMap.defaultLayer=element.value,'cloudMap');
   set('defaultCloudMapMode',element=>draft.central.cloudMap.defaultMode=element.value,'cloudMap');
-  set('cloudMapSyncDefault',element=>draft.central.cloudMap.syncTime=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
-    dirtySections.add('weights');
+    setSectionDirty('weights');
     render();
   });
   set('defaultPlanningWindow',element=>draft.central.defaultPlanningWindow=element.value,'display');
@@ -1885,175 +1933,169 @@ function bindCentralDraft(){
   set('defaultHorizonCollapsed',element=>draft.central.detailPanels.horizonCollapsed=element.checked,'display');
   document.querySelectorAll('[data-display-page-size]').forEach(element=>element.onchange=()=>{
     draft.central.listDisplay.profiles[element.dataset.displayPageSize].pageSize=Number(element.value);
-    dirtySections.add('display');
+    setSectionDirty('display');
   });
   document.querySelectorAll('[data-display-column-profile]').forEach(element=>element.onchange=()=>{
     const array=draft.central.listDisplay.profiles[element.dataset.displayColumnProfile].columns;
     draft.central.listDisplay.profiles[element.dataset.displayColumnProfile].columns=element.checked?[...new Set([...array,element.dataset.column])]:array.filter(item=>item!==element.dataset.column);
-    dirtySections.add('display');
+    setSectionDirty('display');
   });
   document.getElementById('resetDisplayProfiles')?.addEventListener('click',()=>{
     draft.central.listDisplay.profiles=deepClone(DISPLAY_PROFILES);
     draft.central.listDisplay.activeProfile='standard';
-    dirtySections.add('display');
+    setSectionDirty('display');
     render();
   });
 }
 function bindLocationDraft(){
   const location=()=>draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0];
-  const mark=()=>{dirtySections.add('locations');syncSettingsHorizonCanvas()};
-  const set=(id,field,numeric=false)=>{
-    const element=document.getElementById(id);
-    if(element)element.onchange=()=>{location()[field]=numeric?Number(element.value):element.value;mark()};
-  };
+  const mark=()=>{syncCardinalHorizon(location());setSectionDirty('locations');syncSettingsHorizonCanvas()};
+  const set=(id,field,numeric=false)=>{const element=document.getElementById(id);if(element)element.onchange=()=>{location()[field]=numeric?Number(element.value):element.value;setSectionDirty('locations')}};
   const locationSelect=document.getElementById('locationSelect');
-  if(locationSelect)locationSelect.onchange=()=>{draft.selectedLocationId=locationSelect.value;render()};
-  set('locName','name');
-  set('locTimezone','timezone');
-  set('locLat','latitude',true);
-  set('locLon','longitude',true);
-  set('locElevation','elevation',true);
+  if(locationSelect)locationSelect.onchange=()=>{draft.selectedLocationId=locationSelect.value;horizonUndoStack=[];render()};
+  set('locName','name');set('locTimezone','timezone');set('locLat','latitude',true);set('locLon','longitude',true);set('locElevation','elevation',true);
   const defaultSelect=document.getElementById('defaultLocationSelect');
-  if(defaultSelect)defaultSelect.onchange=()=>{draft.central.defaultLocationId=defaultSelect.value;dirtySections.add('locations')};
+  if(defaultSelect)defaultSelect.onchange=()=>{draft.central.defaultLocationId=defaultSelect.value;setSectionDirty('locations')};
   const gpsBehavior=document.getElementById('gpsBehavior');
-  if(gpsBehavior)gpsBehavior.onchange=()=>{draft.central.gpsBehavior=gpsBehavior.value;dirtySections.add('locations')};
-  document.querySelectorAll('[data-horizon]').forEach(element=>{
-    const update=()=>{location().horizon[Number(element.dataset.horizon)]=clamp(Number(element.value)||0,0,90);mark()};
-    element.oninput=update;
-    element.onchange=update;
-  });
-  document.getElementById('addLocation')?.addEventListener('click',()=>{
-    const id=uid('loc');
-    draft.locations.push({id,name:'Neuer Standort',latitude:48.5,longitude:9,elevation:0,timezone:'Europe/Berlin',horizon:[0,0,0,0,0,0,0,0],obstacles:[]});
-    draft.selectedLocationId=id;
-    dirtySections.add('locations');
-    render();
-  });
-  document.getElementById('deleteLocation')?.addEventListener('click',()=>{
-    draft.locations=draft.locations.filter(item=>item.id!==location().id);
-    draft.selectedLocationId=draft.locations[0].id;
-    dirtySections.add('locations');
-    render();
-  });
-  document.getElementById('useGps')?.addEventListener('click',()=>navigator.geolocation?.getCurrentPosition(position=>{
-    location().latitude=position.coords.latitude;
-    location().longitude=position.coords.longitude;
-    location().elevation=position.coords.altitude||location().elevation;
-    delete location().geonameId;
-    delete location().meteobluePath;
-    dirtySections.add('locations');
-    render();
-  },error=>alert(`GPS nicht verfügbar: ${error.message}`)));
-  document.getElementById('searchLocation')?.addEventListener('click',async()=>{
-    const name=prompt('Ort oder Postleitzahl:');
-    if(!name)return;
-    try{
-      const response=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=de&format=json`);
-      const json=await response.json();
-      const result=json.results?.[0];
-      if(!result)throw new Error('Kein Treffer');
-      const country=result.country||result.country_code||'';
-      const cityName=result.name||name;
-      Object.assign(location(),{
-        name:`${cityName}${result.admin1?`, ${result.admin1}`:''}`,
-        latitude:result.latitude,longitude:result.longitude,elevation:result.elevation||0,timezone:result.timezone||'Europe/Berlin',
-        geonameId:result.id||undefined,country,
-        meteobluePath:result.id?`${meteoblueSlugPart(cityName)}_${meteoblueSlugPart(country||'Deutschland')}_${result.id}`:undefined
-      });
-      dirtySections.add('locations');
-      render();
-    }catch(error){alert(error.message)}
-  });
-  document.getElementById('addObstacle')?.addEventListener('click',()=>{
-    location().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});
-    dirtySections.add('locations');
-    render();
-  });
-  document.querySelectorAll('[data-obstacle]').forEach(row=>row.querySelectorAll('[data-obstacle-field]').forEach(element=>{
-    const update=()=>{
-      const obstacle=location().obstacles.find(item=>item.id===row.dataset.obstacle);
-      obstacle[element.dataset.obstacleField]=element.type==='number'?Number(element.value):element.value;
-      mark();
-    };
-    element.oninput=update;
-    element.onchange=update;
-  }));
-  document.querySelectorAll('[data-delete-obstacle]').forEach(button=>button.onclick=()=>{
-    location().obstacles=location().obstacles.filter(item=>item.id!==button.dataset.deleteObstacle);
-    dirtySections.add('locations');
-    render();
-  });
+  if(gpsBehavior)gpsBehavior.onchange=()=>{draft.central.gpsBehavior=gpsBehavior.value;setSectionDirty('locations')};
+  document.getElementById('addLocation')?.addEventListener('click',()=>{const id=uid('loc');draft.locations.push({id,name:'Neuer Standort',latitude:48.5,longitude:9,elevation:0,timezone:'Europe/Berlin',horizon:[0,0,0,0,0,0,0,0],horizonProfile:Array(73).fill(0),obstacles:[]});draft.selectedLocationId=id;horizonUndoStack=[];setSectionDirty('locations');render()});
+  document.getElementById('deleteLocation')?.addEventListener('click',()=>{draft.locations=draft.locations.filter(item=>item.id!==location().id);draft.selectedLocationId=draft.locations[0].id;if(!draft.locations.some(item=>item.id===draft.central.defaultLocationId))draft.central.defaultLocationId=draft.locations[0].id;horizonUndoStack=[];setSectionDirty('locations');render()});
+  document.getElementById('useGps')?.addEventListener('click',()=>navigator.geolocation?.getCurrentPosition(position=>{location().latitude=position.coords.latitude;location().longitude=position.coords.longitude;location().elevation=position.coords.altitude||location().elevation;delete location().geonameId;delete location().meteobluePath;setSectionDirty('locations');render()},error=>alert(`GPS nicht verfügbar: ${error.message}`)));
+  document.getElementById('searchLocation')?.addEventListener('click',async()=>{const name=prompt('Ort oder Postleitzahl:');if(!name)return;try{const response=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=de&format=json`);const json=await response.json();const result=json.results?.[0];if(!result)throw new Error('Kein Treffer');const country=result.country||result.country_code||'',cityName=result.name||name;Object.assign(location(),{name:`${cityName}${result.admin1?`, ${result.admin1}`:''}`,latitude:result.latitude,longitude:result.longitude,elevation:result.elevation||0,timezone:result.timezone||'Europe/Berlin',geonameId:result.id||undefined,country,meteobluePath:result.id?`${meteoblueSlugPart(cityName)}_${meteoblueSlugPart(country||'Deutschland')}_${result.id}`:undefined});setSectionDirty('locations');render()}catch(error){alert(error.message)}});
+  document.getElementById('resetHorizon')?.addEventListener('click',()=>{horizonUndoStack.push(ensureHorizonProfile(location()).slice());horizonUndoStack=horizonUndoStack.slice(-20);location().horizonProfile=Array(73).fill(0);mark();render()});
+  document.getElementById('undoHorizon')?.addEventListener('click',()=>{const previous=horizonUndoStack.pop();if(!previous)return;location().horizonProfile=previous.slice();mark();render()});
+  const canvas=document.querySelector('.settings-horizon-chart[data-editable="true"]');
+  if(canvas){
+    let drawing=false,lastIndex=null,lastAltitude=null;
+    const pointFromEvent=event=>{const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*canvas.width/Math.max(1,rect.width),y=(event.clientY-rect.top)*canvas.height/Math.max(1,rect.height);const margin={left:62,right:22,top:22,bottom:68},plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;const azimuth=clamp((x-margin.left)/plotW*360,0,360),altitude=clamp(90-(y-margin.top)/plotH*90,0,90);return{index:clamp(Math.round(azimuth/5),0,72),altitude}};
+    const applyPoint=point=>{const values=ensureHorizonProfile(location());if(lastIndex===null){values[point.index]=point.altitude}else{const from=Math.min(lastIndex,point.index),to=Math.max(lastIndex,point.index),span=Math.max(1,to-from);for(let index=from;index<=to;index++){const fraction=(index-from)/span;const start=lastIndex<=point.index?lastAltitude:point.altitude,end=lastIndex<=point.index?point.altitude:lastAltitude;values[index]=start+(end-start)*fraction}}if(point.index===0||point.index===72){values[0]=point.altitude;values[72]=point.altitude}lastIndex=point.index;lastAltitude=point.altitude;mark()};
+    canvas.addEventListener('pointerdown',event=>{event.preventDefault();drawing=true;canvas.setPointerCapture?.(event.pointerId);horizonUndoStack.push(ensureHorizonProfile(location()).slice());horizonUndoStack=horizonUndoStack.slice(-20);lastIndex=null;lastAltitude=null;applyPoint(pointFromEvent(event))});
+    canvas.addEventListener('pointermove',event=>{if(!drawing)return;event.preventDefault();applyPoint(pointFromEvent(event))});
+    const stop=event=>{if(!drawing)return;drawing=false;canvas.releasePointerCapture?.(event.pointerId);lastIndex=null;lastAltitude=null;render()};
+    canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
+  }
+  document.getElementById('addObstacle')?.addEventListener('click',()=>{location().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});
+  document.querySelectorAll('[data-obstacle]').forEach(row=>row.querySelectorAll('[data-obstacle-field]').forEach(element=>{const update=()=>{const obstacle=location().obstacles.find(item=>item.id===row.dataset.obstacle);obstacle[element.dataset.obstacleField]=element.type==='number'?Number(element.value):element.value;setSectionDirty('locations');syncSettingsHorizonCanvas()};element.oninput=update;element.onchange=update}));
+  document.querySelectorAll('[data-delete-obstacle]').forEach(button=>button.onclick=()=>{location().obstacles=location().obstacles.filter(item=>item.id!==button.dataset.deleteObstacle);setSectionDirty('locations');render()});
 }
 async function saveDraftSection(section){
+  let profileChanged=true;
   if(section==='equipment'){
     profile.equipment=deepClone(draft.equipment);
     dirtySections.delete('equipment');
   }
   if(section==='centralWind'){
-    profile.central.windUnit=draft.central.windUnit;
-    profile.central.activeWindProfile=draft.central.activeWindProfile;
-    profile.central.windProfiles=deepClone(draft.central.windProfiles);
-    profile.central.dew=deepClone(draft.central.dew);
-    profile.central.jet=deepClone(draft.central.jet);
-    dirtySections.delete('centralWind');
+    profile.central.windUnit=draft.central.windUnit;profile.central.activeWindProfile=draft.central.activeWindProfile;profile.central.windProfiles=deepClone(draft.central.windProfiles);profile.central.dew=deepClone(draft.central.dew);profile.central.jet=deepClone(draft.central.jet);dirtySections.delete('centralWind');
   }
   if(section==='weatherModels'){
     const total=Object.values(draft.central.weatherModels.weights).reduce((sum,value)=>sum+Number(value),0);
     if(total!==100){alert('Die Gewichtung der Wettermodelle muss exakt 100 % ergeben.');return}
-    profile.central.weatherModels=deepClone(draft.central.weatherModels);
-    profile.planning.temporaryWeatherView=null;
-    profile.planning.temporaryCloudMapView=null;
-    dirtySections.delete('weatherModels');
+    profile.central.weatherModels=deepClone(draft.central.weatherModels);profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
   }
   if(section==='cloudMap'){
-    profile.central.cloudMap=deepClone(draft.central.cloudMap);
-    profile.planning.temporaryCloudMapView=null;
-    profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;
-    profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;
-    profile.planning.cloudMapFrame=0;
-    cloudMapData=null;
-    dirtySections.delete('cloudMap');
+    profile.central.cloudMap={...deepClone(draft.central.cloudMap)};profile.planning.temporaryCloudMapView=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;cloudMapData=null;dirtySections.delete('cloudMap');
   }
   if(section==='weights'){
     const total=Object.values(draft.central.weights).reduce((sum,value)=>sum+Number(value),0);
     if(total!==100){alert('Die Gewichtung muss exakt 100 % ergeben.');return}
-    profile.central.weights=deepClone(draft.central.weights);
-    dirtySections.delete('weights');
+    profile.central.weights=deepClone(draft.central.weights);dirtySections.delete('weights');
   }
   if(section==='display'){
-    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;
-    profile.planning.planningWindow=draft.central.defaultPlanningWindow;
-    profile.central.listDisplay=deepClone(draft.central.listDisplay);
-    profile.central.frameVisible=draft.central.frameVisible;
-    profile.central.objectSizeVisible=draft.central.objectSizeVisible;
-    profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;
-    profile.central.detailPanels=deepClone(draft.central.detailPanels);
-    profile.planning.detailsOpen=false;
-    page=1;
-    dirtySections.delete('display');
+    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
   }
   if(section==='locations'){
-    profile.locations=deepClone(draft.locations);
-    profile.selectedLocationId=draft.selectedLocationId;
-    profile.central.defaultLocationId=draft.central.defaultLocationId;
-    profile.central.gpsBehavior=draft.central.gpsBehavior;
-    dirtySections.delete('locations');
+    draft.locations.forEach(item=>{ensureHorizonProfile(item);syncCardinalHorizon(item)});
+    profile.locations=deepClone(draft.locations);profile.selectedLocationId=draft.selectedLocationId;profile.central.defaultLocationId=draft.central.defaultLocationId;profile.central.gpsBehavior=draft.central.gpsBehavior;if(profile.planning.locationId&&!profile.locations.some(item=>item.id===profile.planning.locationId))profile.planning.locationId=null;dirtySections.delete('locations');horizonUndoStack=[];
   }
-  await saveProfile();
-  draft=deepClone(profile);
-  render();
+  if(section==='backup'){
+    profileChanged=false;
+    if(backupDraft.enabled&&storageInfo.fileSystemSupported&&!await getBackupDirectoryHandle()){
+      alert('Bitte zuerst einen Sicherungsordner auswählen oder die automatische Sicherung deaktivieren.');
+      return;
+    }
+    backupConfig={...backupConfig,...deepClone(backupDraft),keep:clamp(Number(backupDraft.keep)||10,1,50),reminderDays:clamp(Number(backupDraft.reminderDays)||7,1,90)};
+    await saveBackupConfig();dirtySections.delete('backup');
+  }
+  if(profileChanged)await saveProfile();
+  draft=deepClone(profile);backupDraft=deepClone(backupConfig);
+  saveFeedbackSections.add(section);render();
+  window.setTimeout(()=>{saveFeedbackSections.delete(section);if(currentMainTab==='settings')render()},3000);
   if(section==='locations'||section==='weatherModels')fetchWeather();
   else if(section==='cloudMap')fetchCloudMap(true);
+  await maybeAutomaticBackup('settings');
 }
 
 async function createProfile(){const name=prompt('Name des neuen Profils:','Neues Profil');if(!name)return;const p=standardProfile();p.id=uid('profile');p.name=name.trim();await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;draft=deepClone(p);await setActiveProfile(p.id);updateProfileSelectors();render()}
 async function duplicateProfile(){const name=prompt('Name der Kopie:',`${profile.name} – Kopie`);if(!name)return;const p=deepClone(profile);p.id=uid('profile');p.name=name.trim();p.createdAt=new Date().toISOString();await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;draft=deepClone(p);await setActiveProfile(p.id);updateProfileSelectors();render()}
 async function renameProfile(){const name=prompt('Neuer Profilname:',profile.name);if(!name)return;profile.name=name.trim();draft.name=profile.name;await saveProfile();render()}
 async function deleteProfile(){if(profiles.length===1||!confirm(`Profil „${profile.name}“ wirklich löschen?`))return;await idbDelete('profiles',profile.id);profiles=await idbAll('profiles');profile=normalizeProfile(profiles[0]);draft=deepClone(profile);await setActiveProfile(profile.id);updateProfileSelectors();render()}
-function bindInfoActions(){document.getElementById('exportProfile')?.addEventListener('click',()=>downloadJson(`astro-night-planner-profil-${safeName(profile.name)}.json`,{kind:'astro-night-planner-profile',appVersion:APP_VERSION,exportedAt:new Date().toISOString(),profile}));document.getElementById('exportAll')?.addEventListener('click',async()=>downloadJson(`astro-night-planner-sicherung-${new Date().toISOString().slice(0,10)}.json`,{kind:'astro-night-planner-backup',appVersion:APP_VERSION,environment:ENV,exportedAt:new Date().toISOString(),profiles:await idbAll('profiles'),activeProfileId:profile.id}));document.getElementById('importProfile')?.addEventListener('click',()=>importInput.click());document.getElementById('requestPersistence')?.addEventListener('click',async()=>{const el=document.getElementById('storageMessage');if(!navigator.storage?.persist){el.textContent='Dieser Browser unterstützt die Anforderung persistenten Speichers nicht.';return}const granted=await navigator.storage.persist();profile.central.persistentStorageRequested=granted;await saveProfile();el.textContent=granted?'Persistenter Speicher wurde gewährt.':'Der Browser hat persistenten Speicher nicht gewährt; regelmäßige Exporte bleiben wichtig.'})}
+function bindInfoActions(){
+  document.getElementById('exportProfile')?.addEventListener('click',()=>downloadJson(`astro-night-planner-profil-${safeName(profile.name)}.json`,{kind:'astro-night-planner-profile',appVersion:APP_VERSION,exportedAt:new Date().toISOString(),profile}));
+  document.getElementById('exportAll')?.addEventListener('click',async()=>{downloadJson(`astro-night-planner-sicherung-${new Date().toISOString().slice(0,10)}.json`,await buildBackupPayload());backupConfig.lastSuccessAt=new Date().toISOString();backupConfig.lastError='';await saveBackupConfig();backupDraft=deepClone(backupConfig);render()});
+  document.getElementById('importProfile')?.addEventListener('click',()=>importInput.click());
+  document.getElementById('restoreBackup')?.addEventListener('click',()=>importInput.click());
+  document.getElementById('refreshStorageStatus')?.addEventListener('click',async()=>{await refreshStorageInfo();render()});
+  document.getElementById('requestPersistence')?.addEventListener('click',async()=>{
+    const message=document.getElementById('storageMessage');
+    if(!navigator.storage?.persist){if(message)message.textContent='Dieser Browser unterstützt die Anforderung persistenten Speichers nicht.';return}
+    try{
+      const granted=await navigator.storage.persist();
+      profile.central.persistentStorageRequested=granted;
+      await saveProfile();
+      await refreshStorageInfo();
+      if(message)message.textContent=granted?'Speicherschutz aktiv: Der Browser soll diese Daten nicht automatisch wegen Speichermangels entfernen. Manuelles Löschen der Websitedaten bleibt weiterhin möglich.':'Der Browser hat den Speicherschutz nicht gewährt. Regelmäßige externe Sicherungen bleiben besonders wichtig.';
+      window.setTimeout(render,1200);
+    }catch(error){if(message)message.textContent=`Speicherschutz konnte nicht angefordert werden: ${error.message}`}
+  });
+  const bindBackupDraft=(id,key,type='checked')=>{
+    const element=document.getElementById(id);
+    if(!element)return;
+    element.addEventListener('change',()=>{
+      backupDraft[key]=type==='number'?Number(element.value):element.checked;
+      setSectionDirty('backup');
+      render();
+    });
+  };
+  bindBackupDraft('backupEnabled','enabled');
+  bindBackupDraft('backupAfterSave','afterSave');
+  bindBackupDraft('backupDaily','daily');
+  bindBackupDraft('backupKeep','keep','number');
+  bindBackupDraft('backupReminderDays','reminderDays','number');
+  document.getElementById('chooseBackupDirectory')?.addEventListener('click',async()=>{
+    if(typeof window.showDirectoryPicker!=='function'){alert('Dieser Browser unterstützt keine automatische Ordnersicherung. Verwende stattdessen „Komplette Sicherung herunterladen“.');return}
+    try{
+      const handle=await window.showDirectoryPicker({id:'astro-night-planner-backup',mode:'readwrite',startIn:'documents'});
+      await setMetaValue('backupDirectoryHandle',handle);
+      backupConfig.targetName=handle.name||'Gewählter Ordner';
+      backupConfig.permission=await fileHandlePermission(handle,true);
+      backupDraft=deepClone(backupConfig);
+      await saveBackupConfig();
+      await refreshStorageInfo();
+      render();
+    }catch(error){if(error?.name!=='AbortError')alert(`Sicherungsordner konnte nicht gewählt werden: ${error.message}`)}
+  });
+  document.getElementById('backupNow')?.addEventListener('click',async()=>{
+    const button=document.getElementById('backupNow');
+    if(button){button.disabled=true;button.textContent='Sicherung läuft …'}
+    try{
+      if(storageInfo.fileSystemSupported&&await getBackupDirectoryHandle()){
+        const ok=await performExternalBackup({forceDated:true,requestPermission:true});
+        if(!ok)throw new Error(backupConfig.lastError||'Externe Sicherung nicht möglich.');
+        await refreshStorageInfo();
+        saveFeedbackSections.add('backup');
+        render();
+        window.setTimeout(()=>{saveFeedbackSections.delete('backup');if(currentMainTab==='settings')render()},3000);
+      }else{
+        downloadJson(`astro-night-planner-sicherung-${new Date().toISOString().slice(0,10)}.json`,await buildBackupPayload());
+        backupConfig.lastSuccessAt=new Date().toISOString();backupConfig.lastError='';
+        await saveBackupConfig();backupDraft=deepClone(backupConfig);render();
+      }
+    }catch(error){alert(`Sicherung fehlgeschlagen: ${error.message}`);render()}
+  });
+}
 function downloadJson(name,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function safeName(s){return s.toLowerCase().replace(/[^a-z0-9äöüß]+/gi,'-').replace(/^-|-$/g,'')}
-async function handleImportFile(){const file=importInput.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.kind==='astro-night-planner-backup'&&Array.isArray(data.profiles)){if(!confirm(`${data.profiles.length} Profile aus der Sicherung wiederherstellen? Gleichnamige IDs werden überschrieben.`))return;for(const p of data.profiles)await idbPut('profiles',normalizeProfile(p));profiles=await idbAll('profiles');profile=normalizeProfile(profiles.find(x=>x.id===data.activeProfileId)||profiles[0]);await setActiveProfile(profile.id)}else{const raw=data.profile||data;if(!raw.name)throw new Error('Kein gültiges Profil');const p=normalizeProfile(raw);if(profiles.some(x=>x.id===p.id))p.id=uid('profile');await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;await setActiveProfile(p.id)}draft=deepClone(profile);dirtySections.clear();updateProfileSelectors();render();alert('Import erfolgreich.')}catch(e){alert(`Import fehlgeschlagen: ${e.message}`)}finally{importInput.value=''}}
+async function handleImportFile(){const file=importInput.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.kind==='astro-night-planner-backup'&&Array.isArray(data.profiles)){if(!confirm(`${data.profiles.length} Profile aus der Sicherung wiederherstellen? Gleichnamige IDs werden überschrieben.`))return;for(const p of data.profiles)await idbPut('profiles',normalizeProfile(p));profiles=await idbAll('profiles');profile=normalizeProfile(profiles.find(x=>x.id===data.activeProfileId)||profiles[0]);await setActiveProfile(profile.id);if(data.backupSettings){backupConfig={...backupConfig,...data.backupSettings,enabled:false,targetName:'',permission:'none',lastError:'',lastSuccessAt:null,lastDailyDate:null};await saveBackupConfig();backupDraft=deepClone(backupConfig)}}else{const raw=data.profile||data;if(!raw.name)throw new Error('Kein gültiges Profil');const p=normalizeProfile(raw);if(profiles.some(x=>x.id===p.id))p.id=uid('profile');await idbPut('profiles',p);profiles=await idbAll('profiles');profile=p;await setActiveProfile(p.id)}draft=deepClone(profile);dirtySections.clear();updateProfileSelectors();render();alert('Import erfolgreich.')}catch(e){alert(`Import fehlgeschlagen: ${e.message}`)}finally{importInput.value=''}}
 
 
 function cloudMapInterpolated(values,size,gx,gy){
@@ -2073,14 +2115,27 @@ function cloudMapColor(value,layer,mode){
   if(mode==='uncertainty'){
     const t=clamp(value/30,0,1);
     const hue=120*(1-t);
-    return`hsla(${hue},78%,52%,${.22+.68*t})`;
+    return`hsla(${hue},82%,50%,${.28+.68*t})`;
   }
   const t=clamp(value/100,0,1);
-  const hues={cloud:210,cloudLow:184,cloudMid:214,cloudHigh:270};
-  const hue=hues[layer]??210;
-  const light=28+58*t;
-  const saturation=layer==='cloud'?18:58;
-  return`hsla(${hue},${saturation}%,${light}%,${.18+.8*t})`;
+  const palette={
+    cloud:{hue:210,saturation:22,light0:15,light1:92},
+    cloudLow:{hue:180,saturation:70,light0:12,light1:82},
+    cloudMid:{hue:218,saturation:72,light0:13,light1:83},
+    cloudHigh:{hue:276,saturation:66,light0:14,light1:84}
+  }[layer]||{hue:210,saturation:22,light0:15,light1:92};
+  const light=palette.light0+(palette.light1-palette.light0)*t;
+  return`hsla(${palette.hue},${palette.saturation}%,${light}%,${.32+.66*t})`;
+}
+function cloudLegendDefinition(layer,mode){
+  if(mode==='uncertainty')return{left:'geringe Abweichung',right:'starke Abweichung',gradient:'linear-gradient(90deg,#2ed274 0%,#d7d34a 50%,#ef5a5a 100%)',suffix:''};
+  const definitions={
+    cloud:{left:'klar 0 %',right:'bedeckt 100 %',gradient:'linear-gradient(90deg,#081726 0%,#526779 50%,#eef4f8 100%)'},
+    cloudLow:{left:'keine tiefen Wolken',right:'starke tiefe Bewölkung',gradient:'linear-gradient(90deg,#061a1b 0%,#1e8f91 50%,#b9f4ec 100%)'},
+    cloudMid:{left:'keine mittleren Wolken',right:'starke mittlere Bewölkung',gradient:'linear-gradient(90deg,#07142a 0%,#366fca 50%,#c8dcff 100%)'},
+    cloudHigh:{left:'keine hohen Wolken',right:'starke hohe Bewölkung',gradient:'linear-gradient(90deg,#170b28 0%,#8052b7 50%,#eadcff 100%)'}
+  };
+  return{...(definitions[layer]||definitions.cloud),suffix:'<span class="rain-legend">╱ Niederschlag</span>'};
 }
 function drawCloudMap(){
   const canvas=document.getElementById('cloudMapCanvas');
@@ -2103,19 +2158,27 @@ function drawCloudMap(){
   ctx.save();
   ctx.beginPath();ctx.roundRect(map.x,map.y,map.w,map.h,18);ctx.clip();
   ctx.fillStyle='#071b2c';ctx.fillRect(map.x,map.y,map.w,map.h);
-  const step=7;
-  for(let py=0;py<map.h;py+=step){
-    const gy=(py/map.h)*(size-1);
-    for(let px=0;px<map.w;px+=step){
-      const gx=(px/map.w)*(size-1);
+
+  // Die API-Punktzahl bleibt unverändert. Für die Darstellung wird ein feineres,
+  // weich interpoliertes Hilfsraster berechnet und anschließend geglättet skaliert.
+  const offscreen=document.createElement('canvas');
+  offscreen.width=360;offscreen.height=Math.max(180,Math.round(360*map.h/map.w));
+  const offCtx=offscreen.getContext('2d');
+  for(let py=0;py<offscreen.height;py++){
+    const gy=(py/Math.max(1,offscreen.height-1))*(size-1);
+    for(let px=0;px<offscreen.width;px++){
+      const gx=(px/Math.max(1,offscreen.width-1))*(size-1);
       const value=cloudMapInterpolated(drawValues,size,gx,gy);
-      ctx.fillStyle=cloudMapColor(value,layer,mode);
-      ctx.fillRect(map.x+px,map.y+py,step+1,step+1);
+      offCtx.fillStyle=cloudMapColor(value,layer,mode);
+      offCtx.fillRect(px,py,1,1);
     }
   }
-  // Niederschlag als zusätzliche blaue Schraffur
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(offscreen,map.x,map.y,map.w,map.h);
+
+  // Niederschlag als zusätzliche blaue Schraffur.
   if(mode==='clouds'){
-    ctx.globalAlpha=.7;
+    ctx.globalAlpha=.72;
     for(let py=0;py<map.h;py+=14){
       const gy=(py/map.h)*(size-1);
       for(let px=0;px<map.w;px+=14){
@@ -2130,25 +2193,20 @@ function drawCloudMap(){
     }
     ctx.globalAlpha=1;
   }
-  // Distanzringe und Kartenraster
-  ctx.strokeStyle='rgba(135,190,225,.22)';ctx.lineWidth=1;
+  // Nur Distanzringe – keine sichtbaren Zellen- oder Punktgitter.
+  ctx.strokeStyle='rgba(135,190,225,.23)';ctx.lineWidth=1.2;
   for(let i=1;i<4;i++){
     ctx.beginPath();ctx.ellipse(map.x+map.w/2,map.y+map.h/2,map.w*i/8,map.h*i/8,0,0,Math.PI*2);ctx.stroke();
   }
-  for(let i=0;i<size;i++){
-    const x=map.x+map.w*i/(size-1),y=map.y+map.h*i/(size-1);
-    ctx.beginPath();ctx.moveTo(x,map.y);ctx.lineTo(x,map.y+map.h);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(map.x,y);ctx.lineTo(map.x+map.w,y);ctx.stroke();
-  }
   ctx.restore();
   ctx.strokeStyle='rgba(95,190,240,.72)';ctx.lineWidth=2;ctx.strokeRect(map.x,map.y,map.w,map.h);
-  // Standortmarker
+
   const cx=map.x+map.w/2,cy=map.y+map.h/2;
   ctx.fillStyle='#ffd66b';ctx.strokeStyle='#06111b';ctx.lineWidth=5;
   ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='#ffd66b';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(cx-22,cy);ctx.lineTo(cx+22,cy);ctx.moveTo(cx,cy-22);ctx.lineTo(cx,cy+22);ctx.stroke();
-  // Bewegungsrichtung
+
   const movement=estimateCloudMovement(view,layer,frameIndex);
   if(movement&&Number.isFinite(movement.azimuth)&&movement.distance>=1){
     const length=clamp(60+movement.distance*2,70,170);
@@ -2161,7 +2219,6 @@ function drawCloudMap(){
     ctx.lineTo(cx+dx-head*Math.cos(headAngle-.55),cy+dy-head*Math.sin(headAngle-.55));
     ctx.lineTo(cx+dx-head*Math.cos(headAngle+.55),cy+dy-head*Math.sin(headAngle+.55));ctx.closePath();ctx.fill();
   }
-  // Beschriftung
   ctx.fillStyle='#dcecff';ctx.font='700 26px system-ui';ctx.textAlign='center';
   ctx.fillText('N',W/2,34);ctx.fillText('S',W/2,H-16);
   ctx.textAlign='left';ctx.fillText('W',30,H/2);ctx.textAlign='right';ctx.fillText('O',W-30,H/2);
@@ -2171,7 +2228,8 @@ function drawCloudMap(){
   ctx.fillText(`${weatherViewLabel(view)} · ${CLOUD_MAP_LAYER_OPTIONS.find(item=>item[0]===layer)?.[1]||layer}`,map.x+map.w,map.y-16);
   ctx.textAlign='center';ctx.font='700 22px system-ui';ctx.fillStyle='#ffe08a';
   ctx.fillText(cloudMapData.locationName,cx,cy+44);
-  // Werte an Stützpunkten
+
+  // Die tatsächlichen Prognosepunkte bleiben als dezente Zahlen sichtbar.
   ctx.font='600 14px system-ui';
   cloudMapData.points.forEach((point,index)=>{
     const x=map.x+map.w*point.x/(size-1),y=map.y+map.h*point.y/(size-1);
@@ -2182,12 +2240,10 @@ function drawCloudMap(){
   });
   const legend=document.getElementById('cloudMapLegend');
   if(legend){
-    legend.innerHTML=mode==='uncertainty'
-      ?'<span>geringe Abweichung</span><div class="legend-gradient uncertainty"></div><span>starke Abweichung</span>'
-      :'<span>klar 0 %</span><div class="legend-gradient clouds"></div><span>bedeckt 100 %</span><span class="rain-legend">╱ Niederschlag</span>';
+    const definition=cloudLegendDefinition(layer,mode);
+    legend.innerHTML=`<span>${definition.left}</span><div class="legend-gradient dynamic" style="background:${definition.gradient}"></div><span>${definition.right}</span>${definition.suffix||''}`;
   }
 }
-
 function drawMiniCharts(){document.querySelectorAll('.mini-chart').forEach(canvas=>{const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;const points=JSON.parse(decodeURIComponent(canvas.dataset.points));const start=Number(canvas.dataset.start),end=Number(canvas.dataset.end),civilS=Number(canvas.dataset.civilStart),civilE=Number(canvas.dataset.civilEnd),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),minAlt=Number(canvas.dataset.minAlt);ctx.clearRect(0,0,w,h);const x=t=>(t-start)/(end-start)*w,y=a=>h-8-clamp(a,0,90)/90*(h-16);ctx.fillStyle='#3a3227';ctx.fillRect(0,0,w,h);const band=(s,e,fill)=>{const left=clamp(x(s),0,w),right=clamp(x(e),0,w);if(right<=left)return;ctx.fillStyle=fill;ctx.fillRect(left,0,right-left,h)};band(civilS,civilE,'#1b2a3d');band(nautS,nautE,'#142235');band(astroS,astroE,'#08121f');for(const t of [civilS,nautS,astroS,astroE,nautE,civilE]){ctx.beginPath();ctx.strokeStyle='#73849a';ctx.setLineDash([3,3]);ctx.moveTo(x(t),0);ctx.lineTo(x(t),h);ctx.stroke()}ctx.setLineDash([5,4]);ctx.strokeStyle='#d7ad47';ctx.beginPath();ctx.moveTo(0,y(minAlt));ctx.lineTo(w,y(minAlt));ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#7ec1ff';ctx.lineWidth=2;ctx.beginPath();points.forEach(([t,a],i)=>i?ctx.lineTo(x(t),y(a)):ctx.moveTo(x(t),y(a)));ctx.stroke();const max=points.reduce((m,p)=>p[1]>m[1]?p:m,points[0]);ctx.fillStyle='#f0c75e';ctx.beginPath();ctx.arc(x(max[0]),y(max[1]),3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aabbd0';ctx.font='10px sans-serif';ctx.fillText('0°',2,h-2);ctx.fillText('90°',2,10)})}
 
 function decodeCanvasData(value,fallback=[]){
@@ -2371,6 +2427,13 @@ function drawHorizonChart(canvas,withTrack=false){
     context.beginPath();
     horizon.forEach((point,index)=>index?context.lineTo(x(point[0]),y(point[1])):context.moveTo(x(point[0]),y(point[1])));
     context.stroke();
+    if(canvas.dataset.editable==='true'){
+      horizon.forEach((point,index)=>{
+        if(index%3!==0&&index!==horizon.length-1)return;
+        context.fillStyle='#07111d';context.strokeStyle=palette.accent2;context.lineWidth=2;
+        context.beginPath();context.arc(x(point[0]),y(point[1]),5,0,Math.PI*2);context.fill();context.stroke();
+      });
+    }
   }
   if(showGround)obstacles.forEach(obstacle=>{
     const center=((Number(obstacle.azimuth)%360)+360)%360;
@@ -2438,13 +2501,7 @@ function syncSettingsHorizonCanvas(){
   const canvas=document.querySelector('.settings-horizon-chart');
   if(!canvas)return;
   const location=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0];
-  const points=Array.from({length:73},(_,index)=>{
-    const azimuthValue=index*5;
-    const position=azimuthValue/45;
-    const lower=Math.floor(position)%8,upper=(lower+1)%8,fraction=position-Math.floor(position);
-    const altitudeValue=(Number(location.horizon?.[lower])||0)*(1-fraction)+(Number(location.horizon?.[upper])||0)*fraction;
-    return[azimuthValue,altitudeValue];
-  });
+  const points=ensureHorizonProfile(location).map((altitude,index)=>[index*5,Number(altitude)||0]);
   canvas.dataset.horizon=encodeURIComponent(JSON.stringify(points));
   canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((location.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));
   drawSettingsHorizonCharts();
