@@ -7,6 +7,7 @@
   <meta name="description" content="Astro Night Planner – mobile Planung für Astrofotografie, Wetter, Dämmerung, Mond, Objektwahl und Framing." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/build-config.js"></script>
   <script>document.documentElement.dataset.environment=(window.ANP_BUILD&&window.ANP_BUILD.environment)||'prod';</script>
@@ -43,6 +44,7 @@
   </nav>
 
   <input id="fileImport" type="file" accept="application/json,.json" hidden />
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
   <script src="assets/app.js" defer></script>
 </body>
 </html>

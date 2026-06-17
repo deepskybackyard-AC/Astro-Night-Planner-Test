@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.6",
+  "version": "1.0.0-test.7",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "releasedAt": "2026-06-17",
-  "notes": "Korrekturrunde 6: 15/30/60-Minuten-Wolkenanimation mit stabilisierter Bewegungsrichtung, korrigierte Aladin-Overlays, verbesserte Framingbewertung mit Mindestfreiraum und optimaler Rotation, temporäre Teleskop- und Kameraauswahl, mehrere Horizontprofile je Standort, präzisierte Sicherung und vollständig aktualisierte Anwenderhilfe." 
+  "notes": "Korrekturrunde 7: korrigierte Objektellipse, rubrikspezifische Standardwerte, beste Stunde im nautischen Zeitraum, konfigurierbare Qualitätsampel, verzögerte Filterung, frei konfigurierbare Objektlisteninformationen, topografische Wolkenkarte mit einheitlich weißen Wolken und Glättungsstufen, verbesserte Standortsuche und Zeitzonenauswahl sowie zoomabhängige Aladin-Objektbeschriftungen ohne Neuladen bei Rotation."
 }

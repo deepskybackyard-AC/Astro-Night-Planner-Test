@@ -12,7 +12,7 @@
 <body>
 <main>
 <header>
-<div class="meta">Benutzerhandbuch - Astro Night Planner 1.0</div>
+<div class="meta">Benutzerhandbuch - Astro Night Planner 1.0 / Test 7</div>
 <h1>Astro Night Planner</h1>
 <p class="subtitle">Planung von Astrofotografie-Nächten mit persönlicher Ausrüstung, Standorten, Horizont, Wettermodellen, Objektbewertung und Rahmung</p>
 <p class="meta">Stand: 17. Juni 2026</p>
@@ -107,8 +107,10 @@
 <section id="wolkenkarte">
 <h2>Animierte 24-Stunden-Wolkenkarte</h2>
 <p>Die eigene Wolkenkarte stellt die Prognose rund um den gewählten Standort dar. Auswählbar sind Modellkonsens, DWD ICON, ECMWF IFS und NOAA GFS sowie Gesamtbewölkung, tiefe, mittlere und hohe Wolken.</p>
-<h3>Datenmenge und Darstellung</h3>
-<p>25, 49 oder 81 Prognosepunkte bestimmen die Zahl der abgefragten Kartenpunkte. Die sichtbare Fläche wird zwischen diesen Punkten in höherer Auflösung weich interpoliert; sichtbare Zellumrandungen werden nicht dargestellt. Mehr Prognosepunkte erhöhen die räumliche Detailtiefe, aber auch Datenmenge und Ladezeit.</p>
+<h3>Astro-Topografie, Datenmenge und Darstellung</h3>
+<p>Im Modus Wolkenverteilung liegt das Prognosefeld auf einer dezenten topografischen Basiskarte. Straßen, Gebäude und POIs werden weitgehend ausgeblendet; Gelände, Gewässer, Grenzen und wichtige Ortsnamen bleiben zur Orientierung erhalten. Die Kartendaten basieren auf OpenStreetMap-Vektordaten und werden über eine austauschbare MapLibre-Kartenebene dargestellt.</p>
+<p>Alle Wettermodelle verwenden dieselbe Wolkendarstellung: Wolken sind weiß, und ein höherer Wolkenanteil wird über eine höhere Deckkraft sichtbar. Der Modus Modellabweichung bleibt farbig. 25, 49 oder 81 Prognosepunkte bestimmen die Zahl der abgefragten Kartenpunkte. Die sichtbare Fläche wird zwischen diesen Punkten in höherer Auflösung interpoliert; sichtbare Zellumrandungen werden nicht dargestellt.</p>
+<p>Die Glättung kann als <strong>Strukturiert</strong>, <strong>Ausgewogen</strong> oder <strong>Weich</strong> gewählt werden. Die Auswahl verändert nur die Darstellung, nicht die Zahl oder Genauigkeit der abgefragten Prognosepunkte.</p>
 <h3>Zeitraster</h3>
 <p>In der Planung sind 15, 30 und 60 Minuten wählbar. Der Standard beträgt 30 Minuten und wird unter <em>Zentrale Einstellungen – Wolkenkarte und Datenmenge</em> festgelegt. Die Wettermodelle liefern im Wesentlichen stündliche Werte. 15- und 30-Minuten-Bilder werden zeitlich interpoliert und dienen einer flüssigeren Darstellung; sie enthalten keine zusätzliche Prognosegenauigkeit.</p>
 <h3>Modellkonsens und Modellabweichung</h3>
@@ -124,11 +126,15 @@
 <section id="filter">
 <h2>Objektfilter</h2>
 <p>Die Filter begrenzen die Objektliste nach Katalog, Typ, Helligkeit, Höhe, Sichtbarkeitsdauer, Mondabstand, Objektgröße und Bildfeld. Einheiten wie Grad, Stunden, Magnitude und Bogenminuten stehen direkt in den Feldbeschriftungen.</p>
-<p>Bei einer Filteränderung springt die Liste auf Seite 1 zurück. Der gewählte Planungszeitraum wird bei Höhen- und Sichtbarkeitsfiltern berücksichtigt.</p>
+<p>Die Texteingabe wartet 0,9 Sekunden, bevor die Liste neu berechnet wird. Dadurch wird nicht nach jedem Zeichen gesucht. Mit Enter oder der Schaltfläche „Filter anwenden“ wird sofort gefiltert. Bei einer Filteränderung springt die Liste auf Seite 1 zurück.</p>
 </section>
 <section id="objektliste">
 <h2>Objektliste und Mini-Höhenprofile</h2>
-<p>Die Objektliste ist paginiert. Je Darstellungsprofil können Spalten und 10, 20, 50 oder 100 Objekte pro Seite festgelegt werden. Standard sind 20 Objekte.</p>
+<p>Die Objektliste ist paginiert. Je Darstellungsprofil können 10, 20, 50 oder 100 Objekte pro Seite festgelegt werden. Standard sind 20 Objekte.</p>
+<h3>Sichtbarkeit und Reihenfolge der Informationen</h3>
+<p>Unter <em>Zentrale Einstellungen - Anzeige und Planung</em> öffnet eine Auswahlliste die verfügbaren Objektinformationen. Jede Information kann per Checkbox ein- oder ausgeschaltet werden. Die Reihenfolge lässt sich per Drag-and-drop oder mit Auf-/Ab-Schaltflächen verändern. Der Objektname bleibt immer sichtbar. Die Konfiguration wird im Darstellungsprofil gespeichert.</p>
+<h3>Beste Stunde</h3>
+<p>Die „Beste Stunde“ ist nicht automatisch die Kulmination. Es wird zwingend innerhalb des nautischen Planungszeitraums die Stunde mit dem höchsten Qualitätswert gewählt, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Bei Gleichstand gewinnt zuerst die größere Objekthöhe, danach die geringere Bewölkung. Existiert keine geeignete Stunde, wird dies ausdrücklich angezeigt.</p>
 <p>Das Mini-Höhenprofil zeigt die Objektbahn im aktuell gewählten Zeitraum. Dämmerungsflächen, vertikale Zeitgrenzen, Mindesthöhe und Maximum werden aus denselben Zeitgrenzen berechnet wie die große Höhenkurve.</p>
 <p>Klicke auf eine freie Stelle der gesamten Objektzeile, um die Details direkt darunter zu öffnen. Ein erneuter Klick auf dieselbe Zeile oder „Details schließen“ beendet die Ansicht.</p>
 </section>
@@ -149,7 +155,11 @@
 <h2>Rahmung mit Aladin Lite</h2>
 <p>Aladin Lite öffnet zentriert auf das gewählte Objekt und zoomt so, dass Objekt und Setup-Rahmen sinnvoll sichtbar sind. Direkt oberhalb der Grafik können Objekt, Teleskop und Kamera gewählt werden. Teleskop- und Kamerawechsel gelten temporär für die aktuelle Planung und wirken zugleich auf die Objektliste.</p>
 <h3>Kamerarahmen und Objektellipse</h3>
-<p>Der Kamerarahmen basiert auf Brennweite und Sensorgröße. Die Objektellipse verwendet vollständige Haupt- und Nebenachse sowie – sofern vorhanden – den Positionswinkel. Beide Overlays werden in Himmelskoordinaten gezeichnet. Dadurch bleiben sie bei Zoom, Verschieben, Größenänderung und Surveywechsel maßstäblich an den Himmel gebunden.</p>
+<p>Der Kamerarahmen basiert auf Brennweite und Sensorgröße. Die Objektellipse verwendet vollständige Haupt- und Nebenachse sowie - sofern vorhanden - den astronomischen Positionswinkel bezogen auf Norden. Für die Aladin-Ellipse werden die vollständigen Achsen korrekt in Halbachsen umgerechnet. Beide Overlays liegen in Himmelskoordinaten und bleiben bei Zoom, Verschieben und Größenänderung maßstäblich am Himmel.</p>
+<h3>Objektnamen und Katalognummern</h3>
+<p>Mit „Objektnamen anzeigen“ kann eine Beschriftungsebene ein- und ausgeschaltet werden. In der Stufe <strong>Automatisch</strong> hängt die Anzahl der Beschriftungen vom Sichtfeld ab: bei großem Feld werden nur Hauptobjekte gezeigt, beim Hineinzoomen schrittweise weitere Objekte des Planner-Katalogs. „Nur Hauptobjekte“ begrenzt die Anzeige, „Erweitert“ zeigt mehr Einträge. Das ausgewählte Ziel bleibt bevorzugt sichtbar.</p>
+<h3>Rotation ohne Bildneuladung</h3>
+<p>Das Drehen von Kamerarahmen oder Objektellipse aktualisiert ausschließlich die Overlays. Das Surveybild wird dabei nicht neu geladen. Die Schaltfläche „Himmelsbild neu laden“ ist nur für einen tatsächlichen Ladefehler oder nach einem Surveywechsel vorgesehen.</p>
 <h3>Framingbewertung und Mindestfreiraum</h3>
 <p>Die Bewertung berücksichtigt Objektellipse, Kamerafeld, relative Drehung und den unter <em>Zentrale Einstellungen – Anzeige und Planung</em> festgelegten Mindestfreiraum zum Bildrand. Der Standard beträgt 10 Prozent je Seite.</p>
 <table><thead><tr><th>Hinweis</th><th>Bedeutung</th></tr></thead><tbody>
@@ -169,7 +179,8 @@
 <section id="standorte">
 <h2>Standorte und Standardstandort</h2>
 <p>Gespeicherte Aufnahmeorte enthalten Name, Koordinaten, Höhe, Zeitzone und beliebig viele Horizontprofile. Der Standardstandort wird ausschließlich in den Einstellungen festgelegt. Die Planung kann vorübergehend einen anderen gespeicherten Standort verwenden.</p>
-<p>GPS und Ortssuche helfen beim Anlegen. Kontrolliere nach einer Suche insbesondere Zeitzone und Höhe. Für jeden Standort wird außerdem ein Standard-Horizontprofil festgelegt.</p></section>
+<p>GPS und Ortssuche helfen beim Anlegen. Eine Suche zeigt eine Ergebnisliste mit Ort, Region, Land, Postleitzahl und Koordinaten. Ein bevorzugtes Land verhindert, dass eine deutsche Postleitzahl ungeprüft einem internationalen Ersttreffer zugeordnet wird. Erst die bewusste Auswahl übernimmt den Standort.</p>
+<p>Die Zeitzone wird nach der Auswahl automatisch ermittelt. Eine manuelle Korrektur erfolgt ausschließlich über eine Liste gültiger IANA-Zeitzonen wie <code>Europe/Berlin</code>; freie Schreibweisen wie „berlin“ sind nicht zulässig. Für jeden Standort wird außerdem ein Standard-Horizontprofil festgelegt.</p></section>
 <section id="horizonteditor">
 <h2>Interaktiver Horizonteditor und mehrere Horizontprofile</h2>
 <p>Für einen Standort können mehrere Horizontprofile angelegt werden, zum Beispiel „Garten“, „Terrasse“, „Nordplatz“ oder „mobile Aufstellung“. Profile lassen sich neu erstellen, duplizieren, umbenennen und löschen. Ein Profil wird als Standard des Standorts festgelegt.</p>
@@ -181,10 +192,11 @@
 <h2>Zentrale Einstellungen</h2>
 <h3>Wind und Aufnahmequalität</h3><p>Wähle Einheit, aktives Profil sowie Grenzwerte für Wind, Böen, Tauabstand und Jetstream. Die Farben bewerten erwartete Aufnahmequalität und sind keine Sicherheitsfreigabe für die Ausrüstung.</p>
 <h3>Wettermodelle</h3><p>Die drei Gewichte müssen zusammen exakt 100 Prozent ergeben. Hier wird außerdem die Standardansicht Modellkonsens oder Einzelmodell gewählt.</p>
-<h3>Wolkenkarte und Datenmenge</h3><p>Lege Prognosepunkte, Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus, Anfangszustand und das Standard-Zeitraster von 15, 30 oder 60 Minuten fest.</p>
+<h3>Wolkenkarte und Datenmenge</h3><p>Lege Prognosepunkte, Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus, Glättung, Anfangszustand und das Standard-Zeitraster von 15, 30 oder 60 Minuten fest.</p>
 <h3>Deep-Sky-Gewichtung</h3><p>Alle ganzzahligen Gewichte müssen zusammen 100 Prozent ergeben. Sie bestimmen die Gesamtbewertung.</p>
-<h3>Anzeige und Planung</h3><p>Lege Standard-Planungszeitraum, Darstellungsprofil, Seitenlänge, sichtbare Spalten und Anfangszustände fest. Außerdem werden der gewünschte Mindestfreiraum zum Bildrand und die automatische optimale Kamerarotation konfiguriert.</p>
-<h3>Einheitliche Speicherleiste</h3><p>Jede Rubrik zeigt an derselben Stelle „Ungespeicherte Änderungen“ oder „Gespeichert“. Nach erfolgreichem Speichern wird die Schaltfläche drei Sekunden gelb und zeigt „Gespeichert ✓“.</p></section>
+<h3>Anzeige und Planung</h3><p>Lege Standard-Planungszeitraum, Darstellungsprofil, Seitenlänge, sichtbare Objektinformationen und deren Reihenfolge fest. Außerdem werden Mindestfreiraum, automatische Kamerarotation und die Aladin-Beschriftungen konfiguriert.</p>
+<h3>Qualitätsampel</h3><p>Die Standardgrenzen lauten Rot 0-59, Gelb 60-79 und Grün 80-100. Über „Gelb ab“ und „Grün ab“ können eigene Grenzen definiert werden. Die Anwendung prüft, dass der gelbe Grenzwert unter dem grünen liegt.</p>
+<h3>Einheitliche Speicherleiste und Rubrik-Reset</h3><p>Jede Rubrik zeigt an derselben Stelle „Ungespeicherte Änderungen“ oder „Gespeichert“. „Rubrik auf Standard zurücksetzen“ betrifft nur den jeweiligen Bereich und verändert zunächst nur die Eingaben. Erst der Speichern-Button übernimmt den Reset dauerhaft. Nach erfolgreichem Speichern wird die Schaltfläche drei Sekunden gelb und zeigt „Gespeichert ✓“.</p></section>
 <section id="profile">
 <h2>Lokale Benutzerprofile</h2>
 <p>Profile trennen Ausrüstung, Standorte, Horizontprofile, Einstellungen und Planungspräferenzen innerhalb desselben Browsers. Das Profil „Standard“ wird beim ersten Start vollständig mit Vorgabewerten angelegt. Profile können neu erstellt, dupliziert, umbenannt und gelöscht werden.</p>
