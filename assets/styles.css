@@ -88,3 +88,39 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:#071321
   .meteoblue-embed{min-height:500px}
   .meteoblue-frame,.meteoblue-frame.seeing-frame,.meteoblue-frame.map-frame{height:540px}
 }
+
+/* Version 1.0 – kumulative Korrekturen: Speichern, Sicherung, Standort und Horizonteditor */
+.save-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.save-bar .save-state{min-width:190px;color:var(--muted);font-weight:700}
+.save-bar.is-dirty .save-state{color:var(--warn)}
+.save-bar.is-success .save-state{color:#ffe08a}
+button.save-success,button.save-success:disabled{opacity:1;background:linear-gradient(#f5d66d,#d7aa2f);border-color:#ffe89c;color:#251c00;box-shadow:0 0 0 3px rgba(240,199,94,.16)}
+.storage-warning-card{border:2px solid #f0c75e;background:linear-gradient(145deg,rgba(76,58,15,.96),rgba(32,26,12,.97));box-shadow:0 0 0 4px rgba(240,199,94,.08),var(--shadow)}
+.storage-warning-card h2{color:#ffe08a}.storage-warning-card p{line-height:1.62}.backup-support{display:inline-flex;padding:7px 10px;border:1px solid currentColor;border-radius:999px;font-size:.78rem;font-weight:750}
+.help-article section{padding:16px 0;border-bottom:1px solid rgba(41,65,95,.62)}.help-article section:last-of-type{border-bottom:0}.help-article p{line-height:1.65}.help-return{display:flex;justify-content:center;margin-top:22px}.help-return .button{text-decoration:none}
+.planning-night-selector{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.8fr);gap:18px;align-items:end}.planning-location-select .coordinate-line{margin-top:7px;color:var(--muted);font-size:.84rem}.planning-location-select select{min-height:46px}
+.equipment-row.mount-row{grid-template-columns:1.4fr 1fr 1fr .55fr auto}
+.editable-horizon{cursor:crosshair;touch-action:none}.horizon-editor-wrap{overflow-x:auto}.horizon-editor-help{line-height:1.5;margin-top:8px}.horizon-editor-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cloud-map-summary{margin-top:14px!important;margin-bottom:10px}.cloud-map-time-controls{margin-top:0!important}.legend-gradient.dynamic{border-color:rgba(255,255,255,.28)}
+#cloudMapCanvas{image-rendering:auto}.cloud-map-stage{isolation:isolate}
+.data-actions .button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+@media(max-width:980px){.planning-night-selector{grid-template-columns:1fr}.equipment-row.mount-row{grid-template-columns:1fr 1fr}.equipment-row.mount-row label:first-child{grid-column:1/-1}.equipment-row.mount-row button{width:100%}}
+@media(max-width:720px){.save-bar{align-items:stretch;flex-direction:column}.save-bar .save-state{min-width:0}.save-bar button{width:100%}.storage-status{grid-template-columns:1fr}.help-toc{grid-template-columns:1fr}.planning-night-selector{grid-template-columns:1fr}.equipment-row.mount-row{grid-template-columns:1fr}.equipment-row.mount-row label:first-child{grid-column:auto}}
+
+/* Test 6: temporäre Ausrüstung, mehrere Horizonte und stabile Aladin-Overlays */
+.planning-profile-toolbar{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:12px;align-items:end}
+.planning-profile-toolbar label,.framing-header-grid>*{min-width:0}
+.framing-header-grid{display:grid;grid-template-columns:minmax(280px,2fr) repeat(3,minmax(170px,1fr));gap:12px;align-items:end;margin-bottom:12px}
+.framing-header-grid h3{margin:3px 0}
+.framing-section,.framing-view,.framing-view iframe,.object-detail-card,.object-detail-section,.object-detail-row>td{min-width:0;max-width:100%;box-sizing:border-box}
+.framing-view iframe{display:block}
+.horizon-detail-header{display:flex;justify-content:space-between;gap:14px;align-items:end;flex-wrap:wrap}
+.horizon-detail-header label{min-width:min(320px,100%)}
+.horizon-profile-toolbar{display:grid;grid-template-columns:minmax(220px,1.2fr) minmax(220px,1.2fr) repeat(4,auto);gap:10px;align-items:end;margin:14px 0}
+.backup-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.backup-actions button{width:auto;min-height:42px;padding:9px 13px}
+.backup-file-explanation code{white-space:normal;overflow-wrap:anywhere}
+.save-bar button{width:auto;max-width:360px}
+#optimalFrameRotation{align-self:end}
+@media(max-width:1250px){.planning-profile-toolbar{grid-template-columns:repeat(3,minmax(170px,1fr))}.framing-header-grid{grid-template-columns:repeat(3,minmax(170px,1fr))}.framing-header-grid>div:first-child{grid-column:1/-1}.horizon-profile-toolbar{grid-template-columns:repeat(3,minmax(150px,1fr))}}
+@media(max-width:800px){.planning-profile-toolbar,.framing-header-grid,.horizon-profile-toolbar{grid-template-columns:1fr}.framing-header-grid>div:first-child{grid-column:auto}.backup-actions button,.save-bar button{width:100%;max-width:none}.horizon-detail-header label{width:100%}}

@@ -1,27 +1,239 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Handbuch – Astro Night Planner 1.0</title><style>
-:root{color-scheme:dark;background:#081321;color:#eaf2fb;font-family:system-ui,-apple-system,Segoe UI,sans-serif}body{max-width:980px;margin:auto;padding:24px;line-height:1.65}h1,h2,h3{color:#fff}h1{font-size:2.2rem}h2{margin-top:2.2rem;border-bottom:1px solid #30445b;padding-bottom:.35rem}a{color:#7ec1ff}.box{background:#102033;border:1px solid #30445b;border-radius:14px;padding:16px;margin:16px 0}.warn{border-color:#c79a3d;background:#2a2417}table{border-collapse:collapse;width:100%;display:block;overflow:auto}th,td{border:1px solid #40546b;padding:8px;text-align:left}code{background:#16283c;padding:.15rem .35rem;border-radius:4px}@media print{:root{color-scheme:light;background:#fff;color:#111}body{max-width:none}h1,h2,h3{color:#000}.box{background:#f5f5f5;border-color:#bbb}.warn{background:#fff8df}a{color:#000}}
-</style></head><body>
-<h1>Astro Night Planner 1.0</h1><p>Benutzerhandbuch für die stabile, installierbare PWA-Fassung.</p>
-<div class="box"><strong>Wichtig:</strong> Die Wetterfarben bewerten die erwartete Aufnahmequalität. Sie sind keine Sicherheitsfreigabe für Montierung, Teleskop oder Dach.</div>
-<h2>1. Erster Start</h2><p>Beim ersten Start legt die App automatisch das Profil <strong>Standard</strong> an. Es enthält bereits Ausrüstung, Standort Tübingen, nautischen Planungszeitraum, 20 Objekte pro Seite, Deep-Sky-Gewichtung, Windprofil „Normales Setup“, Einheit km/h sowie die festgelegten Anzeigezustände.</p><p>Unter <strong>Einstellungen → Info</strong> sollte anschließend „Persistenten Speicher anfordern“ gewählt und eine vollständige Sicherung exportiert werden.</p>
-<h2>2. Planung</h2><p>In der Planungsansicht werden Standort, Datum, Dämmerungszeiten, Mond und Wetter zusammengeführt. Der Planungszeitraum wird in der Rubrik <strong>Profile für diese Planung</strong> zwischen Sonnenuntergang–Sonnenaufgang, bürgerlicher Nacht, nautischem Zeitraum, nautischer plus astronomischer Nacht und astronomischer Nacht gewählt. Standard ist der nautische Zeitraum.</p><p>Die Auswahl steuert Objektbewertung, Sichtbarkeitsdauer, Wetterbewertung sowie Mini- und Detail-Höhenprofile. Wird unter <strong>Einstellungen → Zentrale Einstellungen → Anzeige und Planung</strong> ein neuer Standardzeitraum gespeichert, wird er unmittelbar für die Planung übernommen.</p><p>Aufnahmequalitätsprofil, Darstellungsprofil und Wetterdarstellung lassen sich temporär für die aktuelle Planung umschalten. Mit „Als Standard übernehmen“ wird die jeweilige Auswahl dauerhaft im aktiven Profil gespeichert.</p>
-<h2>3. Wetter, Wolkenkarte und Meteoblue</h2><p>Die App lädt DWD ICON, ECMWF IFS und NOAA GFS über Open-Meteo. Standardmäßig wird pro Prognosestunde ein <strong>Modellkonsens</strong> berechnet. Die Defaultgewichtung beträgt 40 % DWD ICON, 40 % ECMWF IFS und 20 % NOAA GFS. Unter <strong>Einstellungen → Zentrale Einstellungen → Wettermodelle</strong> können diese ganzzahligen Anteile verändert werden; ihre Summe muss 100 % ergeben.</p><p>In der Planungsansicht kann alternativ jedes Modell einzeln angezeigt werden. Die Wettertabelle reicht von Sonnenuntergang bis Sonnenaufgang, hebt den gewählten Planungszeitraum hervor und bewertet Wolken, Tauabstand, Wind, Böen, Jetstream, Seeing- und Transparenz-Tendenz farbig.</p>
-<h3>3.1 Animierte Astro-Wolkenkarte</h3><p>Unterhalb der stündlichen Wetterdaten steht eine eigene visuelle 24-Stunden-Wolkenkarte für den gewählten Aufnahmeort zur Verfügung. Der Zeitregler kann stundenweise oder automatisch per Animation bewegt werden. Darstellbar sind Gesamtbewölkung sowie tiefe, mittlere und hohe Wolken. Als Datenquelle kann der gewichtete Modellkonsens oder eines der drei Einzelmodelle gewählt werden.</p><p>Der Kartenmodus <strong>Modellabweichung</strong> zeigt, wie stark sich ICON, ECMWF und GFS an einem Kartenpunkt unterscheiden. Eine geringe Abweichung bedeutet nur eine bessere Übereinstimmung der Modelle; sie ist keine Garantie für die tatsächliche Wetterentwicklung. Zusätzlich zeigt die App Bewölkung am Standort, Kartenmittel, Modellstreuung, ein nächstes voraussichtlich klares Zeitfenster und eine aus aufeinanderfolgenden Stunden geschätzte Verlagerungsrichtung des Wolkenfeldes.</p><p>Bei aktivierter Zeitkopplung steuert die Wolkenkartenzeit gleichzeitig Höhenkurve, Horizontansicht und Framing-Zeit. Unter <strong>Einstellungen → Zentrale Einstellungen → Wolkenkarte und Datenmenge</strong> werden 25, 49 oder 81 Kartenpunkte, 60/120/200 km Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus und Anfangszustände festgelegt. Mehr Punkte liefern eine feinere räumliche Darstellung, benötigen aber mehr Daten und Ladezeit. Die Kartenrohdaten werden zeitlich begrenzt im Browser zwischengespeichert.</p>
-<h3>3.2 Standortvergleich</h3><p>Im Bereich der Wolkenkarte können die gespeicherten Beobachtungsorte auf Anforderung verglichen werden. Die Übersicht zeigt durchschnittliche Bewölkung, bestes voraussichtlich klares Fenster und mittlere Modellstreuung. Dieser Vergleich verwendet nur Punktprognosen und ist deshalb datensparsamer als mehrere vollständige Karten.</p>
-<h3>3.3 Meteoblue als zusätzliche Kontrollquelle</h3><p><strong>Meteoblue Astronomy Seeing</strong> ist wieder über den speziellen einbettbaren Astronomy-Widget-Endpunkt direkt in die Planung integriert. Zusätzlich steht eine eingebettete <strong>Meteoblue-Wetterkarte</strong> mit mehreren Wetterebenen zur Verfügung. Beide Meteoblue-Bereiche sind unabhängige Kontrollquellen und werden nicht in die automatische App-Gesamtbewertung oder den ICON/ECMWF/GFS-Modellkonsens eingerechnet. Für beide Ansichten gibt es eine Großansicht und einen externen Link.</p>
-<table><thead><tr><th>Kriterium</th><th>Grün</th><th>Gelb</th><th>Rot</th></tr></thead><tbody><tr><td>Tauabstand</td><td>&gt; 5 °C</td><td>2–5 °C</td><td>&lt; 2 °C</td></tr><tr><td>Jetstream</td><td>&lt; 36 km/h</td><td>36–72 km/h</td><td>&gt; 72 km/h</td></tr><tr><td>Wind, normales Profil</td><td>&lt; 11 km/h</td><td>11–22 km/h</td><td>&gt; 22 km/h</td></tr><tr><td>Böen, normales Profil</td><td>&lt; 18 km/h</td><td>18–32 km/h</td><td>&gt; 32 km/h</td></tr></tbody></table>
-<h2>4. Objektliste</h2><p>Die Trefferliste wird nach Filtern und Bewertung vollständig berechnet und anschließend paginiert. Standard sind 20 Objekte je Seite. Das Mini-Höhenprofil verwendet genau den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Grenzlinien, Mindesthöhe und Höchstpunkt.</p><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Detailansicht unmittelbar unter dem gewählten Objekt. Ein erneuter Klick oder die Schaltfläche <strong>Details schließen</strong> beendet die Ansicht. Die große Höhenkurve und die Horizontansicht sind einzeln auf- und zuklappbar. Ihr initialer Zustand wird unter <strong>Einstellungen → Zentrale Einstellungen → Anzeige und Planung</strong> festgelegt; beide sind im Standardprofil eingeklappt. Beide Grafiken besitzen synchronisierte Zeitregler, eine Uhrzeiteingabe und Schritte um ±15 Minuten. Die Höhenkurve kann zusätzlich direkt mit Maus oder Finger gewählt werden. Die gewählte Aufnahmezeit wird in beiden Grafiken markiert.</p><p>Die Höhenkurve enthält eine Legende für bürgerliche, nautische und astronomische Dämmerung, astronomische Nacht sowie den gewählten Planungszeitraum. Unterhalb der Kurve werden für jede volle Stunde Uhrzeit, Objekthöhe und Himmelsrichtung angezeigt. In der Horizontansicht kann der persönliche Boden/Horizont ein- und ausgeblendet werden. Unter <strong>Einstellungen → Zentrale Einstellungen → Anzeige und Planung</strong> werden außerdem sichtbare Spalten und das aktive Darstellungsprofil festgelegt.</p>
-<h2>5. Rahmung</h2><p>Die Rahmungsansicht zeigt das Bildfeld der gewählten Teleskop-/Kamera-Kombination. Beim Öffnen wird Aladin Lite sofort auf die Objektkoordinaten zentriert und so gezoomt, dass Setup-Rahmen beziehungsweise Objektgröße sichtbar sind. Die Bildhöhe ist gegenüber der ersten 1.0-Fassung um 50 % vergrößert.</p><p>Setup-Rahmen und Objektgrößenellipse sind unabhängig schaltbar und unabhängig drehbar. Die Objektgrößenanzeige ist im Standardprofil ausgeschaltet.</p>
-<h2>6. Ausrüstung</h2><p>Unter <strong>Einstellungen → Ausrüstung</strong> werden Teleskope und Kameras angelegt. Benötigt werden insbesondere Brennweite, Öffnung, Sensorbreite, Sensorhöhe und Pixelgröße. Daraus berechnet die App Bildfeld und Pixelmaßstab.</p>
-<h2>7. Standorte und Horizont</h2><p>Standorte können per GPS, Ortssuche oder manueller Eingabe angelegt werden. Das Horizontprofil verwendet acht Richtungen: 0° N, 45° NO, 90° O, 135° SO, 180° S, 225° SW, 270° W und 315° NW. Eine Vorschaugrafik zeigt unmittelbar den daraus entstehenden Horizont. Änderungen an Richtungswerten oder Hindernissen werden bereits vor dem Speichern in dieser Grafik sichtbar.</p><p>Einzelne Hindernisse wie Bäume oder Gebäude können zusätzlich gespeichert werden. In den großen Objektgrafiken werden Gradwerte und Himmelsrichtungen gemeinsam dargestellt.</p>
-<h2>8. Profile und Speicherung</h2><p>Jedes lokale Profil enthält Ausrüstung, Standorte, Horizont, Filter, Gewichtungen und Anzeigeoptionen. Test- und Produktivfassung nutzen getrennte IndexedDB-Datenbanken und getrennte PWA-Caches.</p><div class="warn box"><strong>Browserdaten sind kein dauerhaftes Backup.</strong> Vor Browserbereinigung, Gerätewechsel oder größeren Updates immer unter <strong>Einstellungen → Info → Komplette Sicherung exportieren</strong> eine JSON-Datei erzeugen.</div>
-<h3>8.1 Export</h3><p>„Aktuelles Profil exportieren“ sichert nur das aktive Profil. „Komplette Sicherung exportieren“ sichert alle Profile und die aktive Profilauswahl.</p><h3>8.2 Import/Wiederherstellung</h3><p>Über „Profil/Sicherung importieren“ können beide Dateitypen eingelesen werden. Bei einer vollständigen Sicherung werden Profile mit identischer ID ersetzt.</p>
-<h2>9. Installation als PWA</h2><p>Die App muss über HTTPS beziehungsweise GitHub Pages geöffnet werden. Im Browser kann sie über „App installieren“ oder das Browsermenü zum Startbildschirm hinzugefügt werden. Nach einem Update erscheint ein Hinweis zum Neuladen.</p>
-<h2>10. Test- und Produktiv-Repository</h2>
-<p>Entwicklungen werden zuerst ausschließlich in einem eigenen <strong>Test-Repository</strong> veröffentlicht. Diese Fassung ist am gelb hinterlegten Titel und am Hinweis <strong>TESTVERSION</strong> eindeutig zu erkennen. Sie verwendet die Datenbank <code>astro-night-planner-test-v1</code> und einen separaten Test-PWA-Cache.</p>
-<p>Erst wenn die Testfassung geprüft und freigegeben wurde, wird das dazugehörige <strong>kumulative Produktivupdate</strong> in das Produktiv-Repository kopiert. Kumulativ bedeutet: Das Paket enthält den vollständigen, bis zu diesem Stand benötigten Änderungsumfang; frühere Einzelupdates müssen nicht nacheinander eingespielt werden.</p>
-<div class="warn box"><strong>Niemals das Testpaket in das Produktiv-Repository kopieren.</strong> Vor dem Commit immer prüfen: Testseite gelber Titel; Produktivseite normaler dunkler Titel ohne TESTVERSION.</div>
-<h3>10.1 Empfohlener Ablauf</h3><ol><li>Produktiv-Repository unverändert lassen.</li><li>Test-Repository aus dem aktuellen Produktivstand erstellen beziehungsweise aktualisieren.</li><li>Testpaket vollständig in das Test-Repository kopieren und vorhandene Dateien ersetzen.</li><li>Tests in Browser und installierter Test-PWA durchführen.</li><li>Nach Freigabe das gleichnamige kumulative Produktivupdate in das Produktiv-Repository kopieren.</li><li>Produktivseite nach dem Deployment kontrollieren.</li></ol>
-<h2>11. Datenschutz und externe Datenabrufe</h2><p>Profile, Einstellungen und der zeitlich begrenzte Wolkenkarten-Cache werden lokal im Browser gespeichert. Wetter-, Wolkenkarten- und Ortsanfragen werden an die eingebundenen öffentlichen Dienste gesendet. Beim Öffnen der eingebetteten Meteoblue-Widgets wird eine direkte Verbindung zu Meteoblue hergestellt. Eine zentrale Benutzeranmeldung oder geräteübergreifende Synchronisierung ist in Version 1.0 noch nicht enthalten.</p>
-<p><a href="../index.html">Zurück zum Astro Night Planner</a></p>
-</body></html>
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Astro Night Planner 1.0 - Benutzerhandbuch</title>
+<style>
+:root{--ink:#162033;--muted:#56657a;--blue:#1267a8;--light:#edf6fc;--line:#c9d7e5;--warn:#fff2c7;--warnline:#d7a91f;--good:#e7f7ef;--card:#f7fafc}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,"Segoe UI",sans-serif;color:var(--ink);background:#eef3f7;line-height:1.52}main{width:min(1040px,calc(100% - 28px));margin:24px auto;background:white;box-shadow:0 12px 45px rgba(26,50,75,.15);padding:42px 54px 60px;border-radius:14px}h1{font-size:2.35rem;margin:.15em 0;color:#0d4773}h2{margin-top:2.2em;padding-bottom:.25em;border-bottom:2px solid #d7e6f2;color:#0d4773}h3{margin-top:1.6em;color:#184f79}h4{margin-bottom:.25em}.subtitle{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.92rem}.warning{background:var(--warn);border:3px solid var(--warnline);border-radius:12px;padding:20px 22px;margin:28px 0}.warning h2{border:0;margin:0 0 10px;color:#674b00}.warning strong{color:#493600}.important{background:#edf7ff;border-left:5px solid var(--blue);padding:14px 16px;margin:16px 0}.goodbox{background:var(--good);border-left:5px solid #2e9b65;padding:14px 16px;margin:16px 0}.toc{columns:2;column-gap:34px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 26px}.toc a{display:block;color:#0e5c96;text-decoration:none;padding:4px 0;break-inside:avoid}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:15px;background:var(--card);break-inside:avoid}.card h3,.card h4{margin-top:0}.steps{counter-reset:step;list-style:none;padding:0}.steps li{counter-increment:step;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(step);position:absolute;left:0;top:-2px;width:28px;height:28px;border-radius:50%;background:var(--blue);color:white;text-align:center;line-height:28px;font-weight:bold}table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.92rem}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:#eaf3fa;text-align:left}.term{font-weight:bold;color:#0c527f}.kbd{display:inline-block;border:1px solid #aebcca;background:#f5f7f9;border-radius:5px;padding:1px 6px;font-family:monospace}.flow{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:15px 0}.flow span{background:#edf6fc;border:1px solid #b9d4e6;border-radius:999px;padding:7px 11px;font-weight:bold}.flow b{color:#6a7b8d}.small{font-size:.86rem;color:var(--muted)}.return{display:flex;justify-content:center;margin-top:35px}.return a{background:#1267a8;color:white;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:bold}.footer{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}code{background:#f1f5f8;border-radius:4px;padding:1px 5px}@media(max-width:720px){main{padding:25px 20px}.toc{columns:1}.grid{grid-template-columns:1fr}}@media print{@page{size:A4;margin:16mm 14mm 17mm}body{background:white;font-size:10.6pt}main{width:auto;margin:0;padding:0;box-shadow:none;border-radius:0}h1{font-size:24pt}h2{font-size:16pt;break-after:avoid}h3{font-size:12.5pt;break-after:avoid}.warning,.card,.important,.goodbox,table{break-inside:avoid}.return{display:none}.toc a{color:var(--ink)}a{color:inherit;text-decoration:none}.page-break{break-before:page}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="meta">Benutzerhandbuch - Astro Night Planner 1.0</div>
+<h1>Astro Night Planner</h1>
+<p class="subtitle">Planung von Astrofotografie-Nächten mit persönlicher Ausrüstung, Standorten, Horizont, Wettermodellen, Objektbewertung und Rahmung</p>
+<p class="meta">Stand: 17. Juni 2026</p>
+</header>
+<section class="warning" id="speicherhinweis">
+<h2>Wichtiger Hinweis zu Einstellungen, Cookies und Datensicherung</h2>
+<p><strong>Der Astro Night Planner speichert Profile, Ausrüstung, Standorte, Horizontprofile und Einstellungen lokal in der Browserdatenbank IndexedDB. Normale Cookies sind nicht der primäre Speicherort dieser Daten.</strong></p>
+<p>Die Programmdateien der installierbaren Web-App liegen getrennt im <strong>Cache Storage</strong>. Wenn nur „Bilder und Dateien im Cache“ gelöscht werden, bleiben die Einstellungen normalerweise erhalten. Werden jedoch die <strong>Websitedaten der Installationsadresse</strong> gelöscht, können IndexedDB, gespeicherte Profile, Einstellungen und auch die Berechtigung für einen ausgewählten Sicherungsordner entfernt werden.</p>
+<p>Die Funktion „Lokale Daten vor automatischer Browserbereinigung schützen“ bittet den Browser, die Daten nicht automatisch wegen Speichermangels zu löschen. Sie schützt <strong>nicht</strong> vor einer bewussten Löschung der Websitedaten, dem Löschen des Browserprofils oder einer Neuinstallation des Browsers.</p>
+<p><strong>Empfehlung:</strong> Richte unter <em>Einstellungen – Info, Hilfe &amp; Sicherung</em> eine externe automatische Sicherung ein. Verwende für eine normale Wiederherstellung die Datei <code>astro-night-planner-aktuell.json</code>; datierte Dateien sind historische Rücksprungpunkte.</p>
+</section>
+<h2>Inhalt</h2>
+<nav class="toc">
+<a href="#ueberblick">Überblick und Bedienkonzept</a>
+<a href="#erste-schritte">Erste Schritte</a>
+<a href="#planung">Standort, Datum und Planungszeitraum</a>
+<a href="#planungsprofile">Profile für diese Planung</a>
+<a href="#wetter">Wetter und Modellkonsens</a>
+<a href="#transparenz">Seeing und effektive Transparenz</a>
+<a href="#wolkenkarte">Animierte 24-Stunden-Wolkenkarte</a>
+<a href="#meteoblue">Meteoblue-Kontrollansichten</a>
+<a href="#filter">Objektfilter</a>
+<a href="#objektliste">Objektliste und Mini-Höhenprofile</a>
+<a href="#details">Objektdetails</a>
+<a href="#hoehenkurve">Höhenkurve und Horizontansicht</a>
+<a href="#rahmung">Rahmung mit Aladin Lite</a>
+<a href="#ausruestung">Teleskope, Kameras und Montierungen</a>
+<a href="#standorte">Standorte und Standardstandort</a>
+<a href="#horizonteditor">Interaktiver Horizonteditor</a>
+<a href="#zentrale-einstellungen">Zentrale Einstellungen</a>
+<a href="#profile">Lokale Benutzerprofile</a>
+<a href="#sicherung">Automatische Sicherung und Wiederherstellung</a>
+<a href="#pwa">PWA, Offlinebetrieb und Updates</a>
+<a href="#bewertung">Bewertung und Farben</a>
+<a href="#fehler">Fehlerbehebung</a>
+<a href="#glossar">Glossar</a>
+</nav>
+<section id="ueberblick">
+<h2>Überblick und Bedienkonzept</h2>
+<p>Der Astro Night Planner verbindet astronomische Berechnungen, Wettermodelle, persönliche Ausrüstung und den individuellen Horizont zu einer gemeinsamen Planung. Die Anwendung besitzt zwei Hauptbereiche:</p>
+<div class="grid"><div class="card"><h3>Planung</h3><p>Standort, Datum, Planungsprofile, Wetter, Wolkenkarten, Objektfilter, Objektliste, Höhenkurven, Horizontansicht und Rahmung.</p></div><div class="card"><h3>Einstellungen</h3><p>Ausrüstung, Wetter- und Qualitätsprofile, Anzeige, Standorte, persönlicher Horizont, Datensicherung, Hilfe und Benutzerprofile.</p></div></div>
+<p>Die untere Navigation bleibt auch auf kleinen Bildschirmen erreichbar. Änderungen innerhalb der Planung sind meist temporär für die aktuelle Nacht. Dauerhafte Standards werden in den Einstellungen gespeichert.</p>
+<div class="flow"><span>Standort wählen</span><b>→</b><span>Datum festlegen</span><b>→</b><span>Wetter prüfen</span><b>→</b><span>Objekte filtern</span><b>→</b><span>Details und Rahmung prüfen</span></div>
+</section>
+<section id="erste-schritte">
+<h2>Erste Schritte</h2>
+<ol class="steps">
+<li>Öffne <strong>Einstellungen – Ausrüstung</strong> und kontrolliere Teleskop, Kamera und Montierung.</li>
+<li>Öffne <strong>Standorte &amp; Horizont</strong>, erfasse deinen Aufnahmeort und lege ein Horizontprofil als Standard fest. Für unterschiedliche Aufstellplätze am selben Ort kannst du mehrere Profile anlegen.</li>
+<li>Bearbeite bei Bedarf die Horizontlinie direkt in der Grafik, ergänze Hindernisse und speichere die Rubrik.</li>
+<li>Wechsle zur Planung und wähle Standort und Datum.</li>
+<li>Wähle unter <strong>Profile für diese Planung</strong> Planungszeitraum, Teleskop, Kamera, Horizontprofil sowie Qualitäts-, Anzeige- und Wetterprofil.</li>
+<li>Prüfe Wettertabelle, Wolkenkarte und Meteoblue-Kontrollansichten.</li>
+<li>Setze Objektfilter und öffne ein Objekt durch Klick auf die gesamte Tabellenzeile.</li>
+<li>Prüfe Höhenkurve, Horizontansicht und Rahmung. Teleskop und Kamera können auch direkt im interaktiven Himmelsbild temporär gewechselt werden.</li>
+<li>Richte abschließend eine automatische externe Sicherung ein.</li>
+</ol></section>
+<section id="planung">
+<h2>Standort, Datum und Planungszeitraum</h2>
+<h3>Standort für die aktuelle Planung</h3>
+<p>Links neben den Datumsfeldern befindet sich die Standortauswahl. Darunter werden Koordinaten und Höhe angezeigt. Diese Auswahl gilt nur für die aktuelle Planung und verändert den gespeicherten Standardstandort nicht.</p>
+<h3>Datum</h3>
+<p>Die Datumsschaltflächen wählen die zu planende Nacht. Eine Nacht beginnt am Abend des angezeigten Datums und endet am folgenden Morgen. Alle Zeitangaben werden in der Zeitzone des gewählten Standortes dargestellt.</p>
+<h3>Planungszeitraum</h3>
+<p>Der Planungszeitraum befindet sich in der Rubrik <strong>Profile für diese Planung</strong>. Er steuert Bewertung, Sichtbarkeitsdauer, Wetterzusammenfassung, Mini-Höhenprofile und die großen Objektgrafiken.</p>
+<table><thead><tr><th>Auswahl</th><th>Bedeutung</th></tr></thead><tbody><tr><td>Sonnenuntergang bis Sonnenaufgang</td><td>Die gesamte Nacht einschließlich aller Dämmerungsphasen.</td></tr><tr><td>Bürgerliche Nacht</td><td>Ab Ende der bürgerlichen Abenddämmerung bis zu ihrem morgendlichen Beginn.</td></tr><tr><td>Nautischer Planungszeitraum</td><td>Standard für viele Deep-Sky-Planungen; umfasst die dunkleren Phasen ab nautischer Dämmerung.</td></tr><tr><td>Nautisch + astronomisch</td><td>Fokussiert auf nautische und astronomische Dunkelheit.</td></tr><tr><td>Astronomische Nacht</td><td>Nur die Zeit mit Sonne tiefer als 18 Grad unter dem Horizont.</td></tr></tbody></table>
+</section>
+<section id="planungsprofile">
+<h2>Profile für diese Planung</h2>
+<p>Diese Rubrik enthält alle Werte, die nur für die aktuell geplante Nacht gelten. Sie verändert keine dauerhaften Standards.</p>
+<table><thead><tr><th>Auswahl</th><th>Wirkung</th></tr></thead><tbody>
+<tr><td>Planungszeitraum</td><td>Begrenzt Objektbewertung, Sichtbarkeitsdauer, Wetterzusammenfassung, Mini-Höhenprofile und große Diagramme.</td></tr>
+<tr><td>Aufnahmequalitätsprofil</td><td>Verwendet die zugehörigen Wind- und Böengrenzen.</td></tr>
+<tr><td>Darstellungsprofil</td><td>Steuert sichtbare Spalten und Anzahl der Objekte pro Seite.</td></tr>
+<tr><td>Wetteransicht</td><td>Wählt Modellkonsens oder ein einzelnes Wettermodell.</td></tr>
+<tr><td>Teleskop und Kamera</td><td>Ändern sofort Bildfeld, Pixelmaßstab, Framingbewertung und Aladin-Rahmung.</td></tr>
+<tr><td>Horizontprofil</td><td>Bestimmt, welcher persönliche Horizont und welche Hindernisse in der Detailansicht verwendet werden.</td></tr>
+</tbody></table>
+<p>Die dauerhaften Standardwerte werden ausschließlich in den Einstellungen festgelegt. Deshalb gibt es in der Planungsrubrik keine Schaltflächen „Als Standard übernehmen“.</p></section>
+<section id="wetter">
+<h2>Wetter und Modellkonsens</h2>
+<p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS. Die prozentualen Gewichte werden in den zentralen Einstellungen festgelegt. Der Standard beträgt 40 Prozent ICON, 40 Prozent ECMWF und 20 Prozent GFS.</p>
+<p>In der Planung kann alternativ jedes Einzelmodell gewählt werden. So lässt sich erkennen, ob ein Modell deutlich vom Konsens abweicht.</p>
+<table><thead><tr><th>Wert</th><th>Nutzen für die Astrofotografie</th></tr></thead><tbody><tr><td>Wolken gesamt, tief, mittel, hoch</td><td>Zeigt Menge und Höhenlage der Bewölkung. Hohe dünne Wolken können trotz geringer Gesamtbewölkung störend sein.</td></tr><tr><td>Temperatur und Tauabstand</td><td>Ein kleiner Tauabstand erhöht das Risiko für Beschlag.</td></tr><tr><td>Wind und Böen</td><td>Bewertet die erwartete Bildruhe nach den gewählten Grenzwerten.</td></tr><tr><td>Jetstream</td><td>Hohe Werte können insbesondere bei langer Brennweite das Seeing verschlechtern.</td></tr><tr><td>Seeing-Tendenz</td><td>Abgeleiteter Qualitätswert, kein direkt gemessener Wert in Bogensekunden.</td></tr><tr><td>Effektive Transparenz</td><td>Berücksichtigt atmosphärische Klarheit und Wolkeneinfluss.</td></tr></tbody></table>
+</section>
+<section id="transparenz">
+<h2>Seeing und effektive Transparenz</h2>
+<p>Die Hauptanzeige verwendet die <strong>effektive Transparenz</strong>. Sie sinkt bei Bewölkung, auch wenn die Atmosphäre zwischen den Wolken sehr klar wäre. Zusätzlich wird klein die <strong>atmosphärische Transparenz ohne Wolkeneinfluss</strong> angezeigt.</p>
+<div class="card"><h3>Beispiel</h3><p>Atmosphärische Transparenz: 95/100. Gesamtbewölkung: 60 Prozent. Die effektive Transparenz wird deutlich niedriger als 95 dargestellt, weil die reale Nutzbarkeit für Aufnahmen durch die Wolken begrenzt ist.</p></div>
+<p>Die Seeing-Anzeige ist eine Tendenz aus verfügbaren Modellgrößen. Sie ersetzt keine lokale Seeing-Messung.</p>
+</section>
+<section id="wolkenkarte">
+<h2>Animierte 24-Stunden-Wolkenkarte</h2>
+<p>Die eigene Wolkenkarte stellt die Prognose rund um den gewählten Standort dar. Auswählbar sind Modellkonsens, DWD ICON, ECMWF IFS und NOAA GFS sowie Gesamtbewölkung, tiefe, mittlere und hohe Wolken.</p>
+<h3>Datenmenge und Darstellung</h3>
+<p>25, 49 oder 81 Prognosepunkte bestimmen die Zahl der abgefragten Kartenpunkte. Die sichtbare Fläche wird zwischen diesen Punkten in höherer Auflösung weich interpoliert; sichtbare Zellumrandungen werden nicht dargestellt. Mehr Prognosepunkte erhöhen die räumliche Detailtiefe, aber auch Datenmenge und Ladezeit.</p>
+<h3>Zeitraster</h3>
+<p>In der Planung sind 15, 30 und 60 Minuten wählbar. Der Standard beträgt 30 Minuten und wird unter <em>Zentrale Einstellungen – Wolkenkarte und Datenmenge</em> festgelegt. Die Wettermodelle liefern im Wesentlichen stündliche Werte. 15- und 30-Minuten-Bilder werden zeitlich interpoliert und dienen einer flüssigeren Darstellung; sie enthalten keine zusätzliche Prognosegenauigkeit.</p>
+<h3>Modellkonsens und Modellabweichung</h3>
+<p>Der Modellkonsens verwendet die gespeicherten prozentualen Gewichte. Der Modus Modellabweichung zeigt, wie stark sich die drei Modelle unterscheiden. Die Legende passt Farbe und Text automatisch an die gewählte Wolkenschicht beziehungsweise an den Abweichungsmodus an.</p>
+<h3>Wolkenbewegung</h3>
+<p>Die Verlagerungsrichtung wird aus mehreren aufeinanderfolgenden Stunden und räumlichen Mustern abgeleitet und geglättet. Eine Sicherheitsangabe beschreibt die Stabilität der Schätzung. Ist die Übereinstimmung zu gering, zeigt die App „Bewegungsrichtung unsicher“ und blendet keinen irreführenden Pfeil ein.</p>
+<div class="important"><strong>Hinweis:</strong> Die Wolkenkarte ist eine modellbasierte Planungshilfe. Zwischenbilder, Bewegungsrichtung und Konsens sind keine Messung der aktuellen Wolkenlage.</div></section>
+<section id="meteoblue">
+<h2>Meteoblue-Kontrollansichten</h2>
+<p>Die Meteoblue-Astronomy-Seeing-Ansicht und die zusätzliche Meteoblue-Wetterkarte dienen als unabhängige Kontrollquellen. Sie werden nicht in den automatisch berechneten Modellkonsens eingerechnet.</p>
+<p>Die Astronomy-Ansicht zeigt unter anderem Wolken, Temperatur, Feuchte und Seeing-Tendenzen. Die Wetterkarte bietet zusätzliche visuelle Ebenen wie Satellit, Wolken, Niederschlag, Wind und Temperatur. Über die Großansicht kann die jeweilige Einbettung bildschirmfüllend geöffnet werden.</p>
+</section>
+<section id="filter">
+<h2>Objektfilter</h2>
+<p>Die Filter begrenzen die Objektliste nach Katalog, Typ, Helligkeit, Höhe, Sichtbarkeitsdauer, Mondabstand, Objektgröße und Bildfeld. Einheiten wie Grad, Stunden, Magnitude und Bogenminuten stehen direkt in den Feldbeschriftungen.</p>
+<p>Bei einer Filteränderung springt die Liste auf Seite 1 zurück. Der gewählte Planungszeitraum wird bei Höhen- und Sichtbarkeitsfiltern berücksichtigt.</p>
+</section>
+<section id="objektliste">
+<h2>Objektliste und Mini-Höhenprofile</h2>
+<p>Die Objektliste ist paginiert. Je Darstellungsprofil können Spalten und 10, 20, 50 oder 100 Objekte pro Seite festgelegt werden. Standard sind 20 Objekte.</p>
+<p>Das Mini-Höhenprofil zeigt die Objektbahn im aktuell gewählten Zeitraum. Dämmerungsflächen, vertikale Zeitgrenzen, Mindesthöhe und Maximum werden aus denselben Zeitgrenzen berechnet wie die große Höhenkurve.</p>
+<p>Klicke auf eine freie Stelle der gesamten Objektzeile, um die Details direkt darunter zu öffnen. Ein erneuter Klick auf dieselbe Zeile oder „Details schließen“ beendet die Ansicht.</p>
+</section>
+<section id="details">
+<h2>Objektdetails</h2>
+<p>Die Detailansicht enthält Objektinformationen, Bewertungswerte, Höhenkurve, Horizontansicht und Rahmung. Höhenkurve und Horizontansicht sind getrennt auf- und zuklappbar. Ihr Anfangszustand wird unter <em>Zentrale Einstellungen - Anzeige und Planung</em> festgelegt; standardmäßig sind beide eingeklappt.</p>
+</section>
+<section id="hoehenkurve">
+<h2>Höhenkurve und Horizontansicht</h2>
+<h3>Gemeinsame Zeitsteuerung</h3>
+<p>Beide Grafiken besitzen synchronisierte Zeitregler, eine Uhrzeiteingabe und Schaltflächen für ±15 Minuten. Eine Änderung in einer Grafik wird in die andere übernommen.</p>
+<h3>Höhenkurve</h3>
+<p>Die Höhenkurve zeigt die Objekthöhe über die Nacht. Die Legende erklärt bürgerliche, nautische und astronomische Dämmerung, astronomische Nacht, gewählten Planungszeitraum und aktuelle Zeit. Unter der Grafik stehen je Stunde Uhrzeit, Höhe und Himmelsrichtung.</p>
+<h3>Horizontansicht</h3>
+<p>Die Horizontansicht zeigt Objektposition, Höhe, Azimut und Himmelsrichtung. Der persönliche Horizont und gespeicherte Hindernisse können ein- oder ausgeblendet werden. Richtungsangaben verwenden N, NO, O, SO, S, SW, W und NW.</p>
+<p>Oberhalb der Horizontgrafik kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des Planungsstandorts ausgewählt werden. Diese Auswahl verändert weder das Standardprofil des Standorts noch die gespeicherten Einstellungen.</p></section>
+<section id="rahmung">
+<h2>Rahmung mit Aladin Lite</h2>
+<p>Aladin Lite öffnet zentriert auf das gewählte Objekt und zoomt so, dass Objekt und Setup-Rahmen sinnvoll sichtbar sind. Direkt oberhalb der Grafik können Objekt, Teleskop und Kamera gewählt werden. Teleskop- und Kamerawechsel gelten temporär für die aktuelle Planung und wirken zugleich auf die Objektliste.</p>
+<h3>Kamerarahmen und Objektellipse</h3>
+<p>Der Kamerarahmen basiert auf Brennweite und Sensorgröße. Die Objektellipse verwendet vollständige Haupt- und Nebenachse sowie – sofern vorhanden – den Positionswinkel. Beide Overlays werden in Himmelskoordinaten gezeichnet. Dadurch bleiben sie bei Zoom, Verschieben, Größenänderung und Surveywechsel maßstäblich an den Himmel gebunden.</p>
+<h3>Framingbewertung und Mindestfreiraum</h3>
+<p>Die Bewertung berücksichtigt Objektellipse, Kamerafeld, relative Drehung und den unter <em>Zentrale Einstellungen – Anzeige und Planung</em> festgelegten Mindestfreiraum zum Bildrand. Der Standard beträgt 10 Prozent je Seite.</p>
+<table><thead><tr><th>Hinweis</th><th>Bedeutung</th></tr></thead><tbody>
+<tr><td>Objekt zu groß für das Bildfeld</td><td>Mindestens ein Teil der Objektellipse liegt außerhalb des Kamerafelds.</td></tr>
+<tr><td>Objekt passt nur äußerst knapp</td><td>Das Objekt liegt vollständig im Feld, besitzt aber kaum Reserve.</td></tr>
+<tr><td>Objekt nahe am Bildrand</td><td>Der gewünschte Mindestfreiraum wird noch nicht erreicht.</td></tr>
+<tr><td>Gut gerahmt</td><td>Der eingestellte Mindestfreiraum ist erfüllt.</td></tr>
+<tr><td>Viel Umfeld</td><td>Das Objekt nutzt nur einen kleineren Teil des Bildfeldes.</td></tr>
+</tbody></table>
+<h3>Automatische Rotation</h3>
+<p>Besitzt das Objekt einen verlässlichen Positionswinkel, kann die Kamera automatisch so gedreht werden, dass der kleinste Randabstand maximiert wird. Die Objektliste bewertet mit dieser optimierten Rotation; die Detailansicht öffnet mit derselben Ausrichtung. Die Rotation bleibt manuell veränderbar. Mit „Optimale Rotation“ lässt sich die berechnete Ausgangslage wiederherstellen.</p></section>
+<section id="ausruestung">
+<h2>Teleskope, Kameras und Montierungen</h2>
+<p>Jede Kategorie wird als Liste geführt. Ein Eintrag ist jeweils als dauerhafter Standard aktiv.</p>
+<table><thead><tr><th>Kategorie</th><th>Felder</th><th>Verwendung</th></tr></thead><tbody><tr><td>Teleskop</td><td>Name, Brennweite, Öffnung</td><td>Bildfeld, Pixelmaßstab und Rahmung.</td></tr><tr><td>Kamera</td><td>Name, Sensorbreite, Sensorhöhe, Pixelgröße</td><td>Bildfeld und Abbildungsmaßstab.</td></tr><tr><td>Montierung</td><td>Name, Art, optionale maximale Zuladung</td><td>Dokumentation; Grundlage für spätere Wind- oder Tragfähigkeitsbewertungen.</td></tr></tbody></table>
+<p>Änderungen werden erst mit <strong>Ausrüstung speichern</strong> dauerhaft übernommen. Für eine einzelne Nacht können Teleskop und Kamera unter „Profile für diese Planung“ oder direkt über der Aladin-Grafik temporär gewechselt werden. Die beiden Auswahlstellen sind miteinander synchronisiert.</p></section>
+<section id="standorte">
+<h2>Standorte und Standardstandort</h2>
+<p>Gespeicherte Aufnahmeorte enthalten Name, Koordinaten, Höhe, Zeitzone und beliebig viele Horizontprofile. Der Standardstandort wird ausschließlich in den Einstellungen festgelegt. Die Planung kann vorübergehend einen anderen gespeicherten Standort verwenden.</p>
+<p>GPS und Ortssuche helfen beim Anlegen. Kontrolliere nach einer Suche insbesondere Zeitzone und Höhe. Für jeden Standort wird außerdem ein Standard-Horizontprofil festgelegt.</p></section>
+<section id="horizonteditor">
+<h2>Interaktiver Horizonteditor und mehrere Horizontprofile</h2>
+<p>Für einen Standort können mehrere Horizontprofile angelegt werden, zum Beispiel „Garten“, „Terrasse“, „Nordplatz“ oder „mobile Aufstellung“. Profile lassen sich neu erstellen, duplizieren, umbenennen und löschen. Ein Profil wird als Standard des Standorts festgelegt.</p>
+<p>Die Horizontlinie wird direkt in der Grafik mit Maus oder Finger bearbeitet. Die Anwendung speichert intern Werte in 5-Grad-Schritten. Beim Ziehen werden Zwischenwerte weich verbunden.</p>
+<ol class="steps"><li>Wähle den Standort und anschließend das zu bearbeitende Horizontprofil.</li><li>Ziehe die Horizontlinie an den gewünschten Positionen nach oben oder unten.</li><li>Nutze „Letzte Änderung rückgängig“, falls ein Zug nicht passt.</li><li>Ergänze profilbezogene Hindernisse wie Bäume oder Gebäude.</li><li>Klicke auf „Standort und Horizonte speichern“.</li></ol>
+<p>Die Richtungsachse zeigt 0 Grad N, 45 Grad NO, 90 Grad O, 135 Grad SO, 180 Grad S, 225 Grad SW, 270 Grad W, 315 Grad NW und 360 Grad N.</p>
+<div class="important"><strong>Temporäre Auswahl:</strong> In „Profile für diese Planung“ und in der geöffneten Horizontansicht kann ein anderes Profil gewählt werden, ohne den Standard zu verändern.</div></section>
+<section id="zentrale-einstellungen">
+<h2>Zentrale Einstellungen</h2>
+<h3>Wind und Aufnahmequalität</h3><p>Wähle Einheit, aktives Profil sowie Grenzwerte für Wind, Böen, Tauabstand und Jetstream. Die Farben bewerten erwartete Aufnahmequalität und sind keine Sicherheitsfreigabe für die Ausrüstung.</p>
+<h3>Wettermodelle</h3><p>Die drei Gewichte müssen zusammen exakt 100 Prozent ergeben. Hier wird außerdem die Standardansicht Modellkonsens oder Einzelmodell gewählt.</p>
+<h3>Wolkenkarte und Datenmenge</h3><p>Lege Prognosepunkte, Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus, Anfangszustand und das Standard-Zeitraster von 15, 30 oder 60 Minuten fest.</p>
+<h3>Deep-Sky-Gewichtung</h3><p>Alle ganzzahligen Gewichte müssen zusammen 100 Prozent ergeben. Sie bestimmen die Gesamtbewertung.</p>
+<h3>Anzeige und Planung</h3><p>Lege Standard-Planungszeitraum, Darstellungsprofil, Seitenlänge, sichtbare Spalten und Anfangszustände fest. Außerdem werden der gewünschte Mindestfreiraum zum Bildrand und die automatische optimale Kamerarotation konfiguriert.</p>
+<h3>Einheitliche Speicherleiste</h3><p>Jede Rubrik zeigt an derselben Stelle „Ungespeicherte Änderungen“ oder „Gespeichert“. Nach erfolgreichem Speichern wird die Schaltfläche drei Sekunden gelb und zeigt „Gespeichert ✓“.</p></section>
+<section id="profile">
+<h2>Lokale Benutzerprofile</h2>
+<p>Profile trennen Ausrüstung, Standorte, Horizontprofile, Einstellungen und Planungspräferenzen innerhalb desselben Browsers. Das Profil „Standard“ wird beim ersten Start vollständig mit Vorgabewerten angelegt. Profile können neu erstellt, dupliziert, umbenannt und gelöscht werden.</p>
+<p>Jede Installationsadresse besitzt ihren eigenen Browser-Speicherbereich. Beim Wechsel auf eine andere Domain oder ein anderes Gerät müssen die Daten über Export und Wiederherstellung übertragen werden. Das vollständige Löschen der Websitedaten entfernt auch lokale Profile.</p></section>
+<section id="sicherung">
+<h2>Automatische Sicherung und Wiederherstellung</h2>
+<h3>Die beiden Sicherungsdateien</h3>
+<table><thead><tr><th>Datei</th><th>Zweck</th><th>Wann verwenden?</th></tr></thead><tbody>
+<tr><td><code>astro-night-planner-aktuell.json</code></td><td>Fortlaufend überschriebener neuester Stand.</td><td>Erste Wahl für die normale Wiederherstellung nach Datenverlust oder auf einem neuen Gerät.</td></tr>
+<tr><td><code>astro-night-planner-JJJJ-MM-TTThh-mm-ss.json</code></td><td>Unveränderlicher historischer Wiederherstellungspunkt.</td><td>Wenn bewusst auf einen älteren Zustand zurückgegangen werden soll.</td></tr>
+</tbody></table>
+<h3>Unterstützte Browser</h3><p>In geeigneten Chromium-Browsern kann ein externer Ordner ausgewählt werden. Die App speichert dort die aktuelle Datei und optional rotierende datierte Sicherungen. Der Ordner liegt außerhalb von IndexedDB und Cache Storage.</p>
+<h3>Sicherungsstrategie</h3><ul><li>Nach jedem erfolgreichen Speichern von Einstellungen, wenn aktiviert.</li><li>Zusätzlich höchstens einmal täglich als datierte Sicherung.</li><li>Aufbewahrung einer einstellbaren Anzahl, standardmäßig zehn.</li><li>Manuelle Schaltfläche „Sicherung jetzt erstellen“.</li></ul>
+<h3>Wiederherstellung Schritt für Schritt</h3>
+<ol class="steps"><li>Klicke auf „Aus Sicherung wiederherstellen“.</li><li>Wähle für den neuesten Stand <code>astro-night-planner-aktuell.json</code> oder für einen Rücksprung eine datierte Datei.</li><li>Kontrolliere die Vorschau mit Sicherungsdatum, Anzahl der Profile, Teleskope, Kameras und Standorte.</li><li>Bestätige die Wiederherstellung. Vorher versucht die App, den aktuellen Zustand noch als datierte Sicherung abzulegen.</li><li>Prüfe anschließend aktives Profil, Standardstandort und Ausrüstung.</li></ol>
+<h3>Nach dem Löschen der Websitedaten</h3><p>Die externe JSON-Datei bleibt erhalten. Die in IndexedDB gespeicherte Ordnerberechtigung geht jedoch verloren. Wähle den Ordner oder die Sicherungsdatei erneut aus. Ein Speicherpfad wird aus Sicherheitsgründen nicht im PWA-Cache aufbewahrt.</p>
+<h3>Browser ohne Ordnerzugriff</h3><p>Verwende „Komplette Sicherung herunterladen“ und importiere die Datei später wieder. Die App zeigt eine Sicherungserinnerung nach dem eingestellten Zeitraum.</p>
+<h3>Datenstatus</h3><p>Der Bereich zeigt Speicherschutz, ungefähren lokalen Speicherverbrauch, Ordnerberechtigung und Zeitpunkt der letzten Sicherung.</p>
+<div class="goodbox"><strong>Empfohlen:</strong> Speicherschutz aktivieren, externe Sicherung einrichten und gelegentlich prüfen, ob „Letzte Sicherung“ aktuell ist.</div></section>
+<section id="pwa">
+<h2>PWA, Offlinebetrieb und Updates</h2>
+<p>Die Anwendung kann als Progressive Web App installiert werden. HTML, JavaScript, Styles und Symbole werden im Cache Storage für den Offline-Start bereitgehalten. Wetter-, Katalog-, Aladin- und Meteoblue-Inhalte benötigen eine Internetverbindung.</p>
+<p>Bei einer neuen Version erscheint ein Updatehinweis. Nach dem Aktualisieren kann ein Neuladen erforderlich sein. Ein Löschen der Websitedaten ist für normale Updates nicht nötig.</p>
+</section>
+<section id="bewertung">
+<h2>Bewertung und Farben</h2>
+<p>Die Gesamtbewertung kombiniert Wolken, effektive Transparenz, Seeing, Wind/Böen, Tauabstand, Mond, Objekthöhe und Sichtbarkeitsdauer. Die Gewichte sind anpassbar.</p>
+<table><thead><tr><th>Farbe</th><th>Bedeutung</th></tr></thead><tbody><tr><td style="background:#e7f7ef">Grün</td><td>Günstiger Bereich für die erwartete Aufnahmequalität.</td></tr><tr><td style="background:#fff4cf">Gelb</td><td>Eingeschränkter oder grenzwertiger Bereich.</td></tr><tr><td style="background:#fde5e5">Rot</td><td>Ungünstiger Bereich.</td></tr></tbody></table>
+<p>Die Farben sind Planungshilfen, keine Garantie. Lokale Bedingungen, Mikroklima, Hindernisse und die Stabilität der eigenen Ausrüstung können abweichen.</p>
+</section>
+<section id="fehler">
+<h2>Fehlerbehebung</h2>
+<table><thead><tr><th>Problem</th><th>Vorgehen</th></tr></thead><tbody>
+<tr><td>Alte Darstellung oder alte Hilfe</td><td>Anwendung neu laden, angebotenen Updatehinweis bestätigen und eine installierte PWA vollständig schließen und erneut öffnen.</td></tr>
+<tr><td>PDF-Handbuch öffnet nicht</td><td>Internetverbindung prüfen und das Handbuch über „Info, Hilfe &amp; Sicherung“ erneut öffnen. Der Link verwendet den relativen Pfad der aktuellen Installation.</td></tr>
+<tr><td>Wetter oder Wolkenkarte lädt nicht</td><td>Internetverbindung prüfen, später erneut aktualisieren und zum Vergleich ein Einzelmodell wählen.</td></tr>
+<tr><td>Meteoblue bleibt leer</td><td>Externe Inhalte oder Drittanbieter-Frames im Browser prüfen; Großansicht oder externen Link verwenden.</td></tr>
+<tr><td>Keine gespeicherten Einstellungen</td><td>Prüfen, ob ein anderes Browserprofil, eine andere Installationsadresse oder Inkognitomodus verwendet wird. Externe Sicherung importieren.</td></tr>
+<tr><td>Automatische Sicherung funktioniert nicht</td><td>Ordnerberechtigung im Datenstatus prüfen, Ordner erneut wählen oder eine vollständige Sicherung herunterladen.</td></tr>
+<tr><td>Falscher Horizont in den Details</td><td>Planungsstandort und temporär ausgewähltes Horizontprofil in „Profile für diese Planung“ beziehungsweise oberhalb der Horizontansicht kontrollieren.</td></tr>
+<tr><td>Framing wirkt unplausibel</td><td>Aktives Teleskop, Kamera, Objektgröße, Positionswinkel und Rotation prüfen; anschließend „Optimale Rotation“ verwenden.</td></tr>
+</tbody></table>
+<div class="warning"><strong>Vor dem Löschen von Websitedaten immer eine aktuelle externe Sicherung erstellen.</strong></div></section>
+<section id="glossar">
+<h2>Glossar</h2>
+<table><tbody><tr><td class="term">IndexedDB</td><td>Lokale Browserdatenbank für Profile, Ausrüstung, Standorte und Einstellungen.</td></tr><tr><td class="term">Cache Storage</td><td>Speicher für PWA-Programmdateien und Offlinebetrieb.</td></tr><tr><td class="term">Modellkonsens</td><td>Gewichtete Kombination aus ICON, ECMWF und GFS.</td></tr><tr><td class="term">Modellabweichung</td><td>Maß für die Unterschiede zwischen den drei Wettermodellen.</td></tr><tr><td class="term">Effektive Transparenz</td><td>Transparenzwert unter Berücksichtigung der Bewölkung.</td></tr><tr><td class="term">Tauabstand</td><td>Differenz zwischen Lufttemperatur und Taupunkt.</td></tr><tr><td class="term">PWA</td><td>Installierbare Web-App mit lokal zwischengespeicherten Programmdateien.</td></tr><tr><td class="term">Persistenter Speicher</td><td>Schutzwunsch an den Browser gegen automatische Speicherbereinigung; kein Schutz vor manueller Löschung.</td></tr></tbody></table>
+</section>
+<div class="return"><a href="../index.html">Zurück zur aktuellen Anwendung</a></div>
+<div class="footer">Astro Night Planner 1.0 – Benutzerhandbuch. Dieses Handbuch beschreibt ausschließlich die Bedienung der Anwendung; technische Administrations- und Installationsanweisungen sind nicht Bestandteil.</div>
+</main>
+</body>
+</html>

@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.4",
+  "version": "1.0.0-test.6",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
-  "schemaVersion": 2,
-  "releasedAt": "2026-06-16",
-  "notes": "Korrekturrunde 4: wieder eingebettetes Meteoblue Astronomy Seeing, zusätzliche Meteoblue-Wetterkarte, animierte 24-Stunden-Wolkenkarte mit Modellkonsens, Einzelmodellen, Modellabweichung, Standortvergleich und wählbarer Datenmenge."
+  "schemaVersion": 4,
+  "releasedAt": "2026-06-17",
+  "notes": "Korrekturrunde 6: 15/30/60-Minuten-Wolkenanimation mit stabilisierter Bewegungsrichtung, korrigierte Aladin-Overlays, verbesserte Framingbewertung mit Mindestfreiraum und optimaler Rotation, temporäre Teleskop- und Kameraauswahl, mehrere Horizontprofile je Standort, präzisierte Sicherung und vollständig aktualisierte Anwenderhilfe." 
 }
