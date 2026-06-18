@@ -12,10 +12,10 @@
 <body>
 <main>
 <header>
-<div class="meta">Benutzerhandbuch - Astro Night Planner 1.0 / Test 7</div>
+<div class="meta">Benutzerhandbuch - Astro Night Planner 1.0 / Test 8</div>
 <h1>Astro Night Planner</h1>
 <p class="subtitle">Planung von Astrofotografie-Nächten mit persönlicher Ausrüstung, Standorten, Horizont, Wettermodellen, Objektbewertung und Rahmung</p>
-<p class="meta">Stand: 17. Juni 2026</p>
+<p class="meta">Stand: 18. Juni 2026</p>
 </header>
 <section class="warning" id="speicherhinweis">
 <h2>Wichtiger Hinweis zu Einstellungen, Cookies und Datensicherung</h2>
@@ -45,6 +45,7 @@
 <a href="#zentrale-einstellungen">Zentrale Einstellungen</a>
 <a href="#profile">Lokale Benutzerprofile</a>
 <a href="#sicherung">Automatische Sicherung und Wiederherstellung</a>
+<a href="#rechtliches">Impressum, Datenschutz und Nutzungshinweise</a>
 <a href="#pwa">PWA, Offlinebetrieb und Updates</a>
 <a href="#bewertung">Bewertung und Farben</a>
 <a href="#fehler">Fehlerbehebung</a>
@@ -82,7 +83,7 @@
 </section>
 <section id="planungsprofile">
 <h2>Profile für diese Planung</h2>
-<p>Diese Rubrik enthält alle Werte, die nur für die aktuell geplante Nacht gelten. Sie verändert keine dauerhaften Standards.</p>
+<p>Diese Rubrik enthält alle Werte, die nur für die aktuell geplante Nacht gelten. Sie verändert keine dauerhaften Standards. Der gesamte Bereich kann auf- und zugeklappt werden. Standardmäßig ist er geöffnet; der Anfangszustand wird unter <em>Zentrale Einstellungen - Anzeige und Planung</em> festgelegt.</p>
 <table><thead><tr><th>Auswahl</th><th>Wirkung</th></tr></thead><tbody>
 <tr><td>Planungszeitraum</td><td>Begrenzt Objektbewertung, Sichtbarkeitsdauer, Wetterzusammenfassung, Mini-Höhenprofile und große Diagramme.</td></tr>
 <tr><td>Aufnahmequalitätsprofil</td><td>Verwendet die zugehörigen Wind- und Böengrenzen.</td></tr>
@@ -95,7 +96,7 @@
 <section id="wetter">
 <h2>Wetter und Modellkonsens</h2>
 <p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS. Die prozentualen Gewichte werden in den zentralen Einstellungen festgelegt. Der Standard beträgt 40 Prozent ICON, 40 Prozent ECMWF und 20 Prozent GFS.</p>
-<p>In der Planung kann alternativ jedes Einzelmodell gewählt werden. So lässt sich erkennen, ob ein Modell deutlich vom Konsens abweicht.</p>
+<p>In der Planung kann alternativ jedes Einzelmodell gewählt werden. So lässt sich erkennen, ob ein Modell deutlich vom Konsens abweicht.</p><p>Die Wetterdarstellung ist in zwei eigenständige Hauptbereiche aufgeteilt: <strong>Wetter und Aufnahmequalität</strong> mit den acht großen Kennwerten sowie <strong>Stündlicher Wetterverlauf</strong>. Beide Bereiche sind standardmäßig geöffnet, können jedoch einzeln eingeklappt werden. Der jeweilige Anfangszustand ist in den Anzeigeeinstellungen wählbar.</p>
 <table><thead><tr><th>Wert</th><th>Nutzen für die Astrofotografie</th></tr></thead><tbody><tr><td>Wolken gesamt, tief, mittel, hoch</td><td>Zeigt Menge und Höhenlage der Bewölkung. Hohe dünne Wolken können trotz geringer Gesamtbewölkung störend sein.</td></tr><tr><td>Temperatur und Tauabstand</td><td>Ein kleiner Tauabstand erhöht das Risiko für Beschlag.</td></tr><tr><td>Wind und Böen</td><td>Bewertet die erwartete Bildruhe nach den gewählten Grenzwerten.</td></tr><tr><td>Jetstream</td><td>Hohe Werte können insbesondere bei langer Brennweite das Seeing verschlechtern.</td></tr><tr><td>Seeing-Tendenz</td><td>Abgeleiteter Qualitätswert, kein direkt gemessener Wert in Bogensekunden.</td></tr><tr><td>Effektive Transparenz</td><td>Berücksichtigt atmosphärische Klarheit und Wolkeneinfluss.</td></tr></tbody></table>
 </section>
 <section id="transparenz">
@@ -107,16 +108,20 @@
 <section id="wolkenkarte">
 <h2>Animierte 24-Stunden-Wolkenkarte</h2>
 <p>Die eigene Wolkenkarte stellt die Prognose rund um den gewählten Standort dar. Auswählbar sind Modellkonsens, DWD ICON, ECMWF IFS und NOAA GFS sowie Gesamtbewölkung, tiefe, mittlere und hohe Wolken.</p>
-<h3>Astro-Topografie, Datenmenge und Darstellung</h3>
-<p>Im Modus Wolkenverteilung liegt das Prognosefeld auf einer dezenten topografischen Basiskarte. Straßen, Gebäude und POIs werden weitgehend ausgeblendet; Gelände, Gewässer, Grenzen und wichtige Ortsnamen bleiben zur Orientierung erhalten. Die Kartendaten basieren auf OpenStreetMap-Vektordaten und werden über eine austauschbare MapLibre-Kartenebene dargestellt.</p>
-<p>Alle Wettermodelle verwenden dieselbe Wolkendarstellung: Wolken sind weiß, und ein höherer Wolkenanteil wird über eine höhere Deckkraft sichtbar. Der Modus Modellabweichung bleibt farbig. 25, 49 oder 81 Prognosepunkte bestimmen die Zahl der abgefragten Kartenpunkte. Die sichtbare Fläche wird zwischen diesen Punkten in höherer Auflösung interpoliert; sichtbare Zellumrandungen werden nicht dargestellt.</p>
-<p>Die Glättung kann als <strong>Strukturiert</strong>, <strong>Ausgewogen</strong> oder <strong>Weich</strong> gewählt werden. Die Auswahl verändert nur die Darstellung, nicht die Zahl oder Genauigkeit der abgefragten Prognosepunkte.</p>
-<h3>Zeitraster</h3>
-<p>In der Planung sind 15, 30 und 60 Minuten wählbar. Der Standard beträgt 30 Minuten und wird unter <em>Zentrale Einstellungen – Wolkenkarte und Datenmenge</em> festgelegt. Die Wettermodelle liefern im Wesentlichen stündliche Werte. 15- und 30-Minuten-Bilder werden zeitlich interpoliert und dienen einer flüssigeren Darstellung; sie enthalten keine zusätzliche Prognosegenauigkeit.</p>
-<h3>Modellkonsens und Modellabweichung</h3>
+<h3>Karte + Wolken oder Nur Wolken</h3>
+<p>Die Standardansicht <strong>Karte + Wolken</strong> verbindet das Prognosefeld mit einer stark abgedunkelten, entsättigten Astro-Topografiekarte. Straßen, Gebäude und POIs werden ausgeblendet; Gelände, Gewässer, Grenzen und wenige Ortsnamen bleiben dezent sichtbar. Sehr helle Kartenflächen werden vermieden, damit die weißen Wolken eindeutig erkennbar bleiben.</p>
+<p>Mit <strong>Nur Wolken</strong> wird die Topografie ausgeblendet und das Wolkenfeld auf einem neutralen dunklen Hintergrund dargestellt. Die Auswahl in der Planung ist temporär. Der dauerhafte Standard wird unter <em>Zentrale Einstellungen - Wolkenkarte und Datenmenge</em> festgelegt.</p>
+<h3>Wolkenwerte und Kontrast</h3>
+<p>Alle Wettermodelle verwenden dieselbe Wolkendarstellung: Wolken sind weiß, und ein höherer Wolkenanteil wird über eine höhere Deckkraft sichtbar. Die tatsächlichen Prognosepunkte tragen wieder ihre Prozentangabe. Die Werte werden in dezentem Amber mit dunkler Kontur gezeichnet, damit sie sowohl auf der dunklen Karte als auch über hellen Wolkenflächen lesbar bleiben. Bei kleinen Bildschirmen oder dichtem Raster wird die Beschriftungsdichte automatisch reduziert. Die Anzeige kann temporär ausgeschaltet werden.</p>
+<p>Der Modus Modellabweichung bleibt farbig. 25, 49 oder 81 Prognosepunkte bestimmen die Zahl der abgefragten Kartenpunkte. Die sichtbare Fläche wird zwischen diesen Punkten in höherer Auflösung interpoliert; sichtbare Zellumrandungen werden nicht dargestellt. Die Kartenfläche besitzt in allen Darstellungsmodi dieselbe nutzbare Größe.</p>
+<h3>Glättung und Zeitraster</h3>
+<p>Die Glättung kann direkt in der Planung temporär als <strong>Strukturiert</strong>, <strong>Ausgewogen</strong> oder <strong>Weich</strong> gewählt werden. Sie verändert nur die Darstellung, nicht Zahl oder Genauigkeit der abgefragten Prognosepunkte. Der dauerhafte Standard wird in den Einstellungen gespeichert.</p>
+<p>In der Planung sind 15, 30 und 60 Minuten wählbar. Der Standard beträgt 30 Minuten. Die Wettermodelle liefern im Wesentlichen stündliche Werte. 15- und 30-Minuten-Bilder werden zeitlich interpoliert und enthalten keine zusätzliche Prognosegenauigkeit.</p>
+<h3>Datumswechsel und Kartenstabilität</h3>
+<p>Beim Wechsel von Datum, Uhrzeit, Modell oder Wolkenschicht wird die Karteninstanz kontrolliert weiterverwendet oder sauber neu aufgebaut. Ein Größenbeobachter passt die Karte nach Aufklappen und Layoutänderungen an. Zoom und Mittelpunkt bleiben soweit möglich erhalten.</p>
+<h3>Modellkonsens, Abweichung und Bewegung</h3>
 <p>Der Modellkonsens verwendet die gespeicherten prozentualen Gewichte. Der Modus Modellabweichung zeigt, wie stark sich die drei Modelle unterscheiden. Die Legende passt Farbe und Text automatisch an die gewählte Wolkenschicht beziehungsweise an den Abweichungsmodus an.</p>
-<h3>Wolkenbewegung</h3>
-<p>Die Verlagerungsrichtung wird aus mehreren aufeinanderfolgenden Stunden und räumlichen Mustern abgeleitet und geglättet. Eine Sicherheitsangabe beschreibt die Stabilität der Schätzung. Ist die Übereinstimmung zu gering, zeigt die App „Bewegungsrichtung unsicher“ und blendet keinen irreführenden Pfeil ein.</p>
+<p>Die Verlagerungsrichtung wird aus mehreren aufeinanderfolgenden Stunden und räumlichen Mustern abgeleitet und geglättet. Ist die Sicherheit zu gering, erscheint „Bewegungsrichtung unsicher“ statt eines irreführenden Pfeils.</p>
 <div class="important"><strong>Hinweis:</strong> Die Wolkenkarte ist eine modellbasierte Planungshilfe. Zwischenbilder, Bewegungsrichtung und Konsens sind keine Messung der aktuellen Wolkenlage.</div></section>
 <section id="meteoblue">
 <h2>Meteoblue-Kontrollansichten</h2>
@@ -155,10 +160,10 @@
 <h2>Rahmung mit Aladin Lite</h2>
 <p>Aladin Lite öffnet zentriert auf das gewählte Objekt und zoomt so, dass Objekt und Setup-Rahmen sinnvoll sichtbar sind. Direkt oberhalb der Grafik können Objekt, Teleskop und Kamera gewählt werden. Teleskop- und Kamerawechsel gelten temporär für die aktuelle Planung und wirken zugleich auf die Objektliste.</p>
 <h3>Kamerarahmen und Objektellipse</h3>
-<p>Der Kamerarahmen basiert auf Brennweite und Sensorgröße. Die Objektellipse verwendet vollständige Haupt- und Nebenachse sowie - sofern vorhanden - den astronomischen Positionswinkel bezogen auf Norden. Für die Aladin-Ellipse werden die vollständigen Achsen korrekt in Halbachsen umgerechnet. Beide Overlays liegen in Himmelskoordinaten und bleiben bei Zoom, Verschieben und Größenänderung maßstäblich am Himmel.</p>
+<p>Der Kamerarahmen basiert auf Brennweite und Sensorgröße. Die Objektellipse wird aus vollständiger Haupt- und Nebenachse sowie - sofern vorhanden - dem astronomischen Positionswinkel Nord über Ost als Polygon in Himmelskoordinaten berechnet. Dadurch stimmen Größe, Achsenverhältnis und Ausrichtung auch bei Zoom, Verschieben und Größenänderung. Mit „Katalogwinkel“ wird die Objektrotation auf den Katalogwert zurückgesetzt.</p><p>Nach dem manuellen Verschieben des Himmelsbildes setzt <strong>Rahmen auf Bildmitte</strong> den Kamerarahmen auf die aktuell sichtbare Bildmitte. Das Himmelsbild und der Zoom bleiben dabei unverändert; die Objektellipse bleibt am ausgewählten Katalogobjekt.</p>
 <h3>Objektnamen und Katalognummern</h3>
 <p>Mit „Objektnamen anzeigen“ kann eine Beschriftungsebene ein- und ausgeschaltet werden. In der Stufe <strong>Automatisch</strong> hängt die Anzahl der Beschriftungen vom Sichtfeld ab: bei großem Feld werden nur Hauptobjekte gezeigt, beim Hineinzoomen schrittweise weitere Objekte des Planner-Katalogs. „Nur Hauptobjekte“ begrenzt die Anzeige, „Erweitert“ zeigt mehr Einträge. Das ausgewählte Ziel bleibt bevorzugt sichtbar.</p>
-<h3>Rotation ohne Bildneuladung</h3>
+<h3>Zeit im Planungsfenster</h3><p>Der Zeitregler zeigt konkrete Uhrzeit und Prozentposition im Planungsfenster. Gleichzeitig werden Objekthöhe, Azimut, Himmelsrichtung, Abstand zum persönlichen Horizont, Dämmerungsphase und die nächstliegenden stündlichen Wetterwerte aktualisiert. Bei einer parallaktischen Montierung verändert die Zeit nicht die geometrische Rahmung des Sternfeldes.</p><h3>Rotation ohne Bildneuladung</h3>
 <p>Das Drehen von Kamerarahmen oder Objektellipse aktualisiert ausschließlich die Overlays. Das Surveybild wird dabei nicht neu geladen. Die Schaltfläche „Himmelsbild neu laden“ ist nur für einen tatsächlichen Ladefehler oder nach einem Surveywechsel vorgesehen.</p>
 <h3>Framingbewertung und Mindestfreiraum</h3>
 <p>Die Bewertung berücksichtigt Objektellipse, Kamerafeld, relative Drehung und den unter <em>Zentrale Einstellungen – Anzeige und Planung</em> festgelegten Mindestfreiraum zum Bildrand. Der Standard beträgt 10 Prozent je Seite.</p>
@@ -192,9 +197,9 @@
 <h2>Zentrale Einstellungen</h2>
 <h3>Wind und Aufnahmequalität</h3><p>Wähle Einheit, aktives Profil sowie Grenzwerte für Wind, Böen, Tauabstand und Jetstream. Die Farben bewerten erwartete Aufnahmequalität und sind keine Sicherheitsfreigabe für die Ausrüstung.</p>
 <h3>Wettermodelle</h3><p>Die drei Gewichte müssen zusammen exakt 100 Prozent ergeben. Hier wird außerdem die Standardansicht Modellkonsens oder Einzelmodell gewählt.</p>
-<h3>Wolkenkarte und Datenmenge</h3><p>Lege Prognosepunkte, Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus, Glättung, Anfangszustand und das Standard-Zeitraster von 15, 30 oder 60 Minuten fest.</p>
+<h3>Wolkenkarte und Datenmenge</h3><p>Lege Prognosepunkte, Radius, Animationsgeschwindigkeit, Standardmodell, Wolkenschicht, Kartenmodus, Standard-Kartenansicht „Karte + Wolken“ oder „Nur Wolken“, Glättung, Prozentwerte, Anfangszustand und das Standard-Zeitraster von 15, 30 oder 60 Minuten fest.</p>
 <h3>Deep-Sky-Gewichtung</h3><p>Alle ganzzahligen Gewichte müssen zusammen 100 Prozent ergeben. Sie bestimmen die Gesamtbewertung.</p>
-<h3>Anzeige und Planung</h3><p>Lege Standard-Planungszeitraum, Darstellungsprofil, Seitenlänge, sichtbare Objektinformationen und deren Reihenfolge fest. Außerdem werden Mindestfreiraum, automatische Kamerarotation und die Aladin-Beschriftungen konfiguriert.</p>
+<h3>Anzeige und Planung</h3><p>Lege Standard-Planungszeitraum, Darstellungsprofil, Seitenlänge, sichtbare Objektinformationen und deren Reihenfolge fest. Außerdem werden Mindestfreiraum, automatische Kamerarotation und die Aladin-Beschriftungen konfiguriert. Für „Profile für diese Planung“, „Wetter und Aufnahmequalität“ und „Stündlicher Wetterverlauf“ kann jeweils der Anfangszustand geöffnet oder eingeklappt gespeichert werden.</p>
 <h3>Qualitätsampel</h3><p>Die Standardgrenzen lauten Rot 0-59, Gelb 60-79 und Grün 80-100. Über „Gelb ab“ und „Grün ab“ können eigene Grenzen definiert werden. Die Anwendung prüft, dass der gelbe Grenzwert unter dem grünen liegt.</p>
 <h3>Einheitliche Speicherleiste und Rubrik-Reset</h3><p>Jede Rubrik zeigt an derselben Stelle „Ungespeicherte Änderungen“ oder „Gespeichert“. „Rubrik auf Standard zurücksetzen“ betrifft nur den jeweiligen Bereich und verändert zunächst nur die Eingaben. Erst der Speichern-Button übernimmt den Reset dauerhaft. Nach erfolgreichem Speichern wird die Schaltfläche drei Sekunden gelb und zeigt „Gespeichert ✓“.</p></section>
 <section id="profile">
@@ -211,11 +216,18 @@
 <h3>Unterstützte Browser</h3><p>In geeigneten Chromium-Browsern kann ein externer Ordner ausgewählt werden. Die App speichert dort die aktuelle Datei und optional rotierende datierte Sicherungen. Der Ordner liegt außerhalb von IndexedDB und Cache Storage.</p>
 <h3>Sicherungsstrategie</h3><ul><li>Nach jedem erfolgreichen Speichern von Einstellungen, wenn aktiviert.</li><li>Zusätzlich höchstens einmal täglich als datierte Sicherung.</li><li>Aufbewahrung einer einstellbaren Anzahl, standardmäßig zehn.</li><li>Manuelle Schaltfläche „Sicherung jetzt erstellen“.</li></ul>
 <h3>Wiederherstellung Schritt für Schritt</h3>
-<ol class="steps"><li>Klicke auf „Aus Sicherung wiederherstellen“.</li><li>Wähle für den neuesten Stand <code>astro-night-planner-aktuell.json</code> oder für einen Rücksprung eine datierte Datei.</li><li>Kontrolliere die Vorschau mit Sicherungsdatum, Anzahl der Profile, Teleskope, Kameras und Standorte.</li><li>Bestätige die Wiederherstellung. Vorher versucht die App, den aktuellen Zustand noch als datierte Sicherung abzulegen.</li><li>Prüfe anschließend aktives Profil, Standardstandort und Ausrüstung.</li></ol>
-<h3>Nach dem Löschen der Websitedaten</h3><p>Die externe JSON-Datei bleibt erhalten. Die in IndexedDB gespeicherte Ordnerberechtigung geht jedoch verloren. Wähle den Ordner oder die Sicherungsdatei erneut aus. Ein Speicherpfad wird aus Sicherheitsgründen nicht im PWA-Cache aufbewahrt.</p>
-<h3>Browser ohne Ordnerzugriff</h3><p>Verwende „Komplette Sicherung herunterladen“ und importiere die Datei später wieder. Die App zeigt eine Sicherungserinnerung nach dem eingestellten Zeitraum.</p>
+<ol class="steps"><li>Klicke auf „Gesamtsicherung wiederherstellen“.</li><li>Wähle für den neuesten Stand <code>astro-night-planner-aktuell.json</code> oder für einen Rücksprung eine datierte Datei.</li><li>Kontrolliere die Vorschau mit Sicherungsdatum, Anzahl der Profile, Teleskope, Kameras und Standorte.</li><li>Bestätige die Wiederherstellung. Vorher versucht die App, den aktuellen Zustand noch als datierte Sicherung abzulegen.</li><li>Prüfe anschließend aktives Profil, Standardstandort und Ausrüstung.</li></ol>
+<h3>Einzelne Profile übertragen</h3><p>„Aktuelles Profil exportieren“ erstellt eine JSON-Datei des aktiven Profils einschließlich seiner Ausrüstung, Standorte und Einstellungen. „Profil importieren“ legt daraus immer ein neues Profil mit neuem internen Schlüssel und einem eindeutigen Namen wie „Profilname - Import“ an. Bestehende Profile werden nicht ungefragt überschrieben.</p><h3>Nach dem Löschen der Websitedaten</h3><p>Die externe JSON-Datei bleibt erhalten. Die in IndexedDB gespeicherte Ordnerberechtigung geht jedoch verloren. Wähle den Ordner oder die Sicherungsdatei erneut aus. Ein Speicherpfad wird aus Sicherheitsgründen nicht im PWA-Cache aufbewahrt.</p>
+<h3>Browser ohne Ordnerzugriff</h3><p>Verwende „Gesamtsicherung exportieren“ und stelle diese Datei später mit „Gesamtsicherung wiederherstellen“ wieder her. Die App zeigt eine Sicherungserinnerung nach dem eingestellten Zeitraum.</p>
 <h3>Datenstatus</h3><p>Der Bereich zeigt Speicherschutz, ungefähren lokalen Speicherverbrauch, Ordnerberechtigung und Zeitpunkt der letzten Sicherung.</p>
 <div class="goodbox"><strong>Empfohlen:</strong> Speicherschutz aktivieren, externe Sicherung einrichten und gelegentlich prüfen, ob „Letzte Sicherung“ aktuell ist.</div></section>
+<section id="rechtliches">
+<h2>Impressum, Datenschutz und Nutzungshinweise</h2>
+<p>Im kleinen Fußbereich der Anwendung sind von jeder Ansicht aus <strong>Impressum, Datenschutz, Nutzungshinweise, Datenquellen &amp; Lizenzen, Hilfe und Version</strong> erreichbar.</p>
+<h3>Impressum</h3><p>Andreas Cordt<br>Schwarzwaldstraße 15<br>70794 Filderstadt<br>E-Mail: andreas@deepskyastrophoto.de<br>Homepage: www.deepskyastrophoto.de</p><p>Der Astro Night Planner wird rein privat unter dem eigenen Namen angeboten.</p>
+<h3>Datenschutz</h3><p>Es werden keine eigenen Besucherstatistiken, kein Tracking und keine eigene Fehleranalyse eingesetzt. Es gibt keine Benutzerkonten und keine Kontaktformulare. Nutzerprofile und Einstellungen bleiben lokal im Browser. GitHub Pages sowie externe Wetter-, Karten-, Katalog- und Bilddienste können bei einem Abruf technisch erforderliche Verbindungsdaten und die angefragten Koordinaten verarbeiten. Die endgültige öffentliche URL und Diensteliste werden vor Veröffentlichung nochmals anhand der ausgelieferten Fassung geprüft.</p>
+<h3>Nutzung und Entwicklung</h3><p>Prognosen und Berechnungen sind Planungshilfen und keine Garantie. Sicherheitsentscheidungen müssen anhand der Bedingungen vor Ort und offizieller Warninformationen getroffen werden. Der Planner wurde von Andreas Cordt mit Unterstützung generativer KI entwickelt und getestet; Prognose-, Berechnungs-, Darstellungs- und Programmfehler können dennoch nicht vollständig ausgeschlossen werden.</p>
+</section>
 <section id="pwa">
 <h2>PWA, Offlinebetrieb und Updates</h2>
 <p>Die Anwendung kann als Progressive Web App installiert werden. HTML, JavaScript, Styles und Symbole werden im Cache Storage für den Offline-Start bereitgehalten. Wetter-, Katalog-, Aladin- und Meteoblue-Inhalte benötigen eine Internetverbindung.</p>

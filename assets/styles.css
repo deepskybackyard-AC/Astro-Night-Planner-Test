@@ -136,3 +136,143 @@ button.save-success,button.save-success:disabled{opacity:1;background:linear-gra
 @media(max-width:720px){.filter-search-row{align-items:stretch;flex-direction:column}.display-column-item{grid-template-columns:auto minmax(0,1fr) auto auto}.location-search-box .grid.three{grid-template-columns:1fr}.cloud-map-base{left:6.3%;right:6.3%}}
 .display-column-config{border:1px solid var(--line);border-radius:13px;background:rgba(5,18,31,.5);overflow:hidden}.display-column-config>summary{cursor:pointer;font-weight:800;padding:12px}.display-column-config-body{padding:0 12px 12px}.display-column-list{display:grid;gap:6px;margin-top:10px}.column-move-buttons{display:flex;gap:5px}.column-move-buttons button{padding:5px 9px;min-height:34px}.save-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.section-reset-button{white-space:nowrap}
 @media(max-width:720px){.save-actions{width:100%;flex-direction:column}.save-actions button{width:100%!important}.display-column-item{grid-template-columns:auto minmax(0,1fr) auto}.column-move-buttons{grid-column:3;display:flex}}
+
+/* Test 8: Markenleiste, Hauptbereiche, dunkle Wolkenkarte und Rechtshinweise */
+.app-header{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  gap:20px;
+  align-items:center;
+}
+.header-title-block{min-width:0}
+.header-actions{justify-self:end;min-width:0}
+.header-brand{
+  justify-self:center;
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  gap:1px;
+  min-width:190px;
+  color:var(--text);
+  text-decoration:none;
+  border-radius:14px;
+  padding:3px 10px 5px;
+  transition:background .2s ease,transform .2s ease;
+}
+.header-brand:hover{background:rgba(121,184,255,.08);transform:translateY(-1px)}
+.header-brand img{display:block;width:auto;height:84px;max-width:230px;object-fit:contain}
+.header-brand-site{font-size:.76rem;line-height:1.2;color:var(--accent2);font-weight:750;letter-spacing:.025em}
+.header-brand-copyright{font-size:.66rem;line-height:1.2;color:var(--muted)}
+
+.collapsible-card{padding:0;overflow:hidden}
+.card-panel-details>summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:20px clamp(16px,2.5vw,24px);
+  user-select:none;
+}
+.card-panel-details>summary::-webkit-details-marker{display:none}
+.card-panel-details>summary::after{
+  content:'▾';
+  flex:0 0 auto;
+  color:var(--accent2);
+  font-size:1.35rem;
+  line-height:1;
+  transition:transform .2s ease;
+}
+.card-panel-details:not([open])>summary::after{transform:rotate(-90deg)}
+.card-panel-details>summary h2{margin:0;font-size:clamp(1.28rem,2vw,1.65rem)}
+.card-panel-body{padding:0 clamp(16px,2.5vw,24px) 22px}
+.weather-model-summary{text-align:right;max-width:360px}
+
+.cloud-map-stage{background:#03080e;border:1px solid rgba(112,154,198,.18)}
+.cloud-map-stage.cloud-only{background:#02070c}
+.cloud-map-base{
+  left:6.2857%;right:6.2857%;top:7.5%;bottom:10%;
+  background:#061019;
+  box-shadow:inset 0 0 0 1px rgba(126,169,204,.14);
+}
+.cloud-map-base .maplibregl-map{background:#061019}
+.cloud-map-base .maplibregl-canvas{filter:brightness(.46) saturate(.45) contrast(1.28)}
+.cloud-map-base::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background:rgba(1,7,12,.25);
+}
+.cloud-map-base .maplibregl-control-container{position:relative;z-index:3}
+.cloud-map-base .maplibregl-ctrl-attrib{
+  color:#b9c8d6;
+  background:rgba(2,8,14,.78);
+  border-radius:5px 0 0 0;
+}
+.cloud-map-base .maplibregl-ctrl-attrib a{color:#c9e2f5}
+.cloud-map-toolbar{align-items:end}
+.cloud-value-toggle{align-self:end;min-height:42px}
+.cloud-map-legend .cloud-value-key{color:#f2ad55;text-shadow:0 1px 3px #000,0 0 2px #000}
+
+.framing-time-control{min-width:min(440px,100%)}
+.framing-time-control small{display:block;margin-top:4px;color:var(--muted);font-size:.72rem}
+.good-text{color:var(--good)}.bad-text{color:var(--bad)}
+#resetObjectRotation,#centerAladinFrame{align-self:end}
+
+.app-footer{
+  width:min(1180px,calc(100% - 28px));
+  margin:22px auto 92px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.5;
+}
+.app-footer button,.app-footer a{
+  appearance:none;
+  border:0;
+  padding:2px 3px;
+  background:transparent;
+  color:var(--muted);
+  text-decoration:none;
+  min-height:auto;
+}
+.app-footer button:hover,.app-footer a:hover{color:var(--accent2);text-decoration:underline}
+.legal-dialog{
+  width:min(760px,calc(100% - 28px));
+  max-height:min(86vh,880px);
+  padding:0;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#0a1624;
+  box-shadow:0 26px 80px rgba(0,0,0,.62);
+}
+.legal-dialog::backdrop{background:rgba(0,4,10,.78);backdrop-filter:blur(4px)}
+.legal-dialog-shell{display:flex;flex-direction:column;max-height:inherit}
+.legal-dialog-header,.legal-dialog-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.legal-dialog-header h2{margin:0}.legal-dialog-close{padding:7px 10px;min-height:36px}
+.legal-dialog-content{padding:18px 20px;overflow:auto;line-height:1.65}
+.legal-dialog-content p:first-child{margin-top:0}.legal-dialog-content a{color:var(--accent2)}
+.legal-dialog-content code{overflow-wrap:anywhere;white-space:normal}
+.legal-dialog-actions{justify-content:flex-end;border-top:1px solid var(--line);border-bottom:0}
+
+@media(max-width:980px){
+  .app-header{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'title actions' 'brand brand'}
+  .header-title-block{grid-area:title}.header-actions{grid-area:actions}.header-brand{grid-area:brand}
+  .header-brand img{height:68px}
+}
+@media(max-width:620px){
+  .app-header{position:relative;grid-template-columns:1fr;grid-template-areas:'title' 'brand' 'actions';justify-items:stretch;padding:14px 16px}
+  .header-title-block{text-align:center}.header-actions{justify-self:stretch;justify-content:center}.header-actions select{max-width:100%}
+  .header-brand{min-width:0}.header-brand img{height:56px;max-width:170px}
+  .card-panel-details>summary{align-items:flex-start;padding:16px}.card-panel-body{padding:0 16px 18px}.weather-model-summary{text-align:left;max-width:none}
+  .app-footer{font-size:13px;margin-bottom:88px}
+  .legal-dialog{width:calc(100% - 16px);max-height:92vh}.legal-dialog-content{padding:15px}
+}

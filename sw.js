@@ -1,11 +1,11 @@
 /* Astro Night Planner 1.0 – expliziter Test-Cache */
 'use strict';
 const ENV = 'test';
-const VERSION = '1.0.0-test.7';
+const VERSION = '1.0.0-test.8';
 const CACHE_NAME = `astro-night-planner-${ENV}-${VERSION}`;
 const CORE = [
   './', './index.html', './manifest.webmanifest', './VERSION.json', './icon.svg', './icon-192.png', './icon-512.png',
-  './assets/build-config.js', './assets/styles.css', './assets/app.js', './aladin-frame.html', './docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html', './docs/ASTRO_NIGHT_PLANNER_HANDBUCH.pdf'
+  './assets/build-config.js', './assets/styles.css', './assets/app.js', './assets/andreas-cordt-logo.png', './aladin-frame.html', './docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html', './docs/ASTRO_NIGHT_PLANNER_HANDBUCH.pdf'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
