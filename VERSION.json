@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.8",
+  "version": "1.0.0-test.9",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 6,
   "releasedAt": "2026-06-18",
-  "notes": "Korrekturrunde 8: stabile und kontrastreiche Wolkenkarte mit dunkler Astro-Topografie, reiner Wolkenansicht, temporärer Glättung und Prozentwerten; getrennte aufklappbare Wetterbereiche; zentrierte Markenleiste mit Logo und Homepage; Impressum, Datenschutz-, Nutzungs- und Quellenhinweise; verständlichere Export- und Importfunktionen; korrigierte Objektellipse, Rahmen auf aktuelle Bildmitte und aussagekräftige Zeitsteuerung in Aladin."
+  "notes": "Korrekturrunde 9: deutlich erkennbare dunkle Topografiekarte unter transparenten Wolkenfeldern; zuschaltbare Niederschlags-, Regen- und Schneedarstellung; orange Wolkenanteile an den Prognosepunkten; stabilere Karteninitialisierung; funktionierendes Zentrieren des Kamerarahmens auf die aktuelle Aladin-Bildmitte; automatische Katalogausrichtung der Objektellipse beim ersten Öffnen; verständlicher Rücksetzbutton; Aufklapp-Pfeile links."
 }

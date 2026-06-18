@@ -1,4 +1,4 @@
-# Astro Night Planner 1.0.0-test.8
+# Astro Night Planner 1.0.0-test.9
 
 Kumulative Testfassung für das separate Test-Repository. Sie enthält alle Änderungen der vorherigen Teststände; eine Zwischenversion muss nicht zuerst installiert werden.
 
@@ -10,8 +10,8 @@ Den vorhandenen Ordner `src` im Repository nicht löschen. Der GitHub-Pages-Work
 
 ## Dokumente
 
-- `INSTALLATION_ASTRO_NIGHT_PLANNER_1.0_TEST_8.md`
-- `KORREKTUREN_TESTVERSION_1.0_TEST_8.md`
-- `PRUEFPROTOKOLL_TESTVERSION_1.0_TEST_8.md`
+- `INSTALLATION_ASTRO_NIGHT_PLANNER_1.0_TEST_9.md`
+- `KORREKTUREN_TESTVERSION_1.0_TEST_9.md`
+- `PRUEFPROTOKOLL_TESTVERSION_1.0_TEST_9.md`
 - `docs/ASTRO_NIGHT_PLANNER_HANDBUCH.html`
 - `docs/ASTRO_NIGHT_PLANNER_HANDBUCH.pdf`

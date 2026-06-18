@@ -113,9 +113,9 @@ function standardProfile(){
       horizon:[0,0,0,0,0,0,0,0],horizonProfile:Array(73).fill(0),obstacles:[],
       horizonProfiles:[{id:'horizon-standard',name:'Freier Horizont',horizonProfile:Array(73).fill(0),obstacles:[]}],defaultHorizonProfileId:'horizon-standard',selectedHorizonProfileId:'horizon-standard'}], selectedLocationId:'loc-tuebingen',
     planning:{dateKey:'',locationId:null,planningWindow:'nautical',temporaryWindProfile:null,temporaryDisplayProfile:null,temporaryWeatherView:null,temporaryTelescopeId:null,temporaryCameraId:null,temporaryHorizonProfileId:null,cloudMapTimeStepMinutes:null,
-      temporaryCloudMapView:null,temporaryCloudMapBaseMode:null,temporaryCloudSmoothing:null,temporaryCloudMapShowValues:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,
+      temporaryCloudMapView:null,temporaryCloudMapBaseMode:null,temporaryCloudSmoothing:null,temporaryCloudMapShowValues:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,cloudMapWeatherOverlays:{precip:true,rain:true,snow:true},
       search:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,minMoonDistance:25,
-      minSize:0,maxSize:1200,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:35,frameRotation:0,timeFraction:.5,
+      minSize:0,maxSize:1200,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:35,objectRotationObjectId:null,frameRotation:0,timeFraction:.5,
       detailTimeFraction:0,showGroundHorizon:true},
     ui:{mainTab:'plan',settingsTab:'equipment',scroll:{plan:0,settings:0}}
   };
@@ -383,9 +383,9 @@ function legalPageContent(page){
   const publicUrl=location.href.split('#')[0].split('?')[0];
   const pages={
     impressum:{title:'Impressum',html:`<p><strong>Angaben zum Anbieter</strong></p><p>Andreas Cordt<br>Schwarzwaldstraße 15<br>70794 Filderstadt<br>Deutschland</p><p>E-Mail: <a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a><br>Homepage: <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p><p>Der Astro Night Planner wird rein privat unter dem eigenen Namen angeboten.</p>`},
-    datenschutz:{title:'Datenschutz',html:`<p><strong>Verantwortlicher</strong><br>Andreas Cordt, Schwarzwaldstraße 15, 70794 Filderstadt<br><a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a></p><p><strong>Lokale Datenhaltung</strong><br>Profile, Ausrüstung, Standorte, Horizonte und Einstellungen werden lokal im Browser in IndexedDB gespeichert. PWA-Programmdateien liegen in Cache Storage. Es bestehen keine Benutzerkonten, keine Kontaktformulare und keine zentrale Synchronisierung.</p><p><strong>Keine eigene Reichweitenmessung</strong><br>Der Betreiber setzt keine eigene Besucherstatistik, kein Tracking und keine eigene Fehleranalyse ein.</p><p><strong>Hosting und externe Abrufe</strong><br>Die Anwendung wird über GitHub Pages bereitgestellt. Beim Abruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse, durch GitHub verarbeitet werden. Je nach genutzter Funktion stellt der Browser direkte Verbindungen zu Open-Meteo, OpenStreetMap/Nominatim, OpenFreeMap, MapLibre, CDS/Aladin Lite, Meteoblue sowie gegebenenfalls dem GitHub-Rohdatenserver her. Dabei können IP-Adresse, Zeitpunkt, Browserdaten und die gewählten Koordinaten an den jeweiligen Anbieter übertragen werden.</p><p><strong>Standort</strong><br>Der Browserstandort wird nur nach ausdrücklicher Freigabe verwendet. Alternativ kann ein Ort manuell ausgewählt werden.</p><p><strong>Aktuelle Installationsadresse</strong><br><code>${esc(publicUrl)}</code></p><p class="notice warn">Vor der Veröffentlichung im Produktivsystem werden die endgültige URL und die tatsächlich eingebundenen Dienste nochmals aus dem ausgelieferten Programmstand geprüft.</p>`},
+    datenschutz:{title:'Datenschutz',html:`<p><strong>Verantwortlicher</strong><br>Andreas Cordt, Schwarzwaldstraße 15, 70794 Filderstadt<br><a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a></p><p><strong>Lokale Datenhaltung</strong><br>Profile, Ausrüstung, Standorte, Horizonte und Einstellungen werden lokal im Browser in IndexedDB gespeichert. PWA-Programmdateien liegen in Cache Storage. Es bestehen keine Benutzerkonten, keine Kontaktformulare und keine zentrale Synchronisierung.</p><p><strong>Keine eigene Reichweitenmessung</strong><br>Der Betreiber setzt keine eigene Besucherstatistik, kein Tracking und keine eigene Fehleranalyse ein.</p><p><strong>Hosting und externe Abrufe</strong><br>Die Anwendung wird über GitHub Pages bereitgestellt. Beim Abruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse, durch GitHub verarbeitet werden. Je nach genutzter Funktion stellt der Browser direkte Verbindungen zu Open-Meteo, OpenStreetMap/Nominatim, OpenFreeMap, MapLibre einschließlich der Geländeschattierung, CDS/Aladin Lite, Meteoblue sowie gegebenenfalls dem GitHub-Rohdatenserver her. Dabei können IP-Adresse, Zeitpunkt, Browserdaten und die gewählten Koordinaten an den jeweiligen Anbieter übertragen werden.</p><p><strong>Standort</strong><br>Der Browserstandort wird nur nach ausdrücklicher Freigabe verwendet. Alternativ kann ein Ort manuell ausgewählt werden.</p><p><strong>Aktuelle Installationsadresse</strong><br><code>${esc(publicUrl)}</code></p><p class="notice warn">Vor der Veröffentlichung im Produktivsystem werden die endgültige URL und die tatsächlich eingebundenen Dienste nochmals aus dem ausgelieferten Programmstand geprüft.</p>`},
     nutzung:{title:'Nutzungshinweise',html:`<p>Wetterprognosen, Modellkonsens, Wolkenkarten, astronomische Berechnungen und Qualitätsbewertungen sind Planungshilfen. Sie stellen keine Garantie für tatsächliche Beobachtungs- oder Aufnahmebedingungen dar.</p><p>Sicherheitsentscheidungen für Personen und Ausrüstung müssen anhand der aktuellen Bedingungen vor Ort sowie gegebenenfalls offizieller Wetter- und Warninformationen getroffen werden. Die Qualitätsfarben bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit einer Montierung oder anderer Ausrüstung.</p><p><strong>Entwicklungshinweis</strong><br>Der Astro Night Planner wurde von Andreas Cordt mit Unterstützung generativer KI entwickelt und fortlaufend getestet. Trotz sorgfältiger Entwicklung können Prognose-, Berechnungs-, Darstellungs- und Programmfehler nicht vollständig ausgeschlossen werden.</p>`},
-    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Kontrollvorhersage:</strong> Meteoblue Astronomy Seeing und Meteoblue-Wetterkarten.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul><p>Die Quellenhinweise und Lizenzangaben werden vor Veröffentlichung anhand der tatsächlich ausgelieferten Fassung abschließend geprüft.</p>`},
+    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS einschließlich MapLibre-Demotiles für die Geländeschattierung. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Kontrollvorhersage:</strong> Meteoblue Astronomy Seeing und Meteoblue-Wetterkarten.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul><p>Die Quellenhinweise und Lizenzangaben werden vor Veröffentlichung anhand der tatsächlich ausgelieferten Fassung abschließend geprüft.</p>`},
     version:{title:'Version',html:`<p><strong>Astro Night Planner ${esc(RELEASE)}</strong></p><p>Programmversion: <code>${esc(APP_VERSION)}</code><br>Umgebung: <code>${esc(ENV==='test'?'TESTVERSION':'Produktivversion')}</code><br>Profilschema: 6</p><p>© Andreas Cordt · <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p>`}
   };
   return pages[page]||pages.version;
@@ -748,6 +748,9 @@ function currentCloudSmoothing(){
 function cloudMapValuesVisible(){
   return profile.planning.temporaryCloudMapShowValues==null?cloudMapSettings().showValues!==false:Boolean(profile.planning.temporaryCloudMapShowValues);
 }
+function cloudMapWeatherOverlays(){
+  return{precip:true,rain:true,snow:true,...(profile.planning.cloudMapWeatherOverlays||{})};
+}
 function cloudMapRange(night){
   const rawStart=night.sunset.getTime()-4*3600000;
   const start=new Date(Math.floor(rawStart/3600000)*3600000);
@@ -791,10 +794,10 @@ function nearestTimeIndex(times,target){
   return lo;
 }
 function cloudMapCacheKey(loc,settings){
-  return`cloud-map-v2:${selectedDateKey}:${loc.latitude.toFixed(3)}:${loc.longitude.toFixed(3)}:${settings.gridSize}:${settings.radiusKm}`;
+  return`cloud-map-v3:${selectedDateKey}:${loc.latitude.toFixed(3)}:${loc.longitude.toFixed(3)}:${settings.gridSize}:${settings.radiusKm}`;
 }
 async function fetchCloudModel(key,config,grid,frameTimes,signal){
-  const layerKeys=['cloud','cloudLow','cloudMid','cloudHigh','precip'];
+  const layerKeys=['cloud','cloudLow','cloudMid','cloudHigh','precip','rain','snow'];
   const frames=frameTimes.map(()=>Object.fromEntries(layerKeys.map(layer=>[layer,new Array(grid.points.length).fill(NaN)])));
   const chunkSize=40;
   for(let offset=0;offset<grid.points.length;offset+=chunkSize){
@@ -805,7 +808,7 @@ async function fetchCloudModel(key,config,grid,frameTimes,signal){
     url.search=new URLSearchParams({
       latitude:chunk.map(point=>point.latitude.toFixed(4)).join(','),
       longitude:chunk.map(point=>point.longitude.toFixed(4)).join(','),
-      hourly:'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation',
+      hourly:'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,precipitation,rain,snowfall',
       models:config.model,
       timezone:'GMT',
       start_date:startDate,
@@ -828,6 +831,8 @@ async function fetchCloudModel(key,config,grid,frameTimes,signal){
         frames[frameIndex].cloudMid[pointIndex]=Number(hourly.cloud_cover_mid?.[sourceIndex]);
         frames[frameIndex].cloudHigh[pointIndex]=Number(hourly.cloud_cover_high?.[sourceIndex]);
         frames[frameIndex].precip[pointIndex]=Number(hourly.precipitation?.[sourceIndex]);
+        frames[frameIndex].rain[pointIndex]=Number(hourly.rain?.[sourceIndex]);
+        frames[frameIndex].snow[pointIndex]=Number(hourly.snowfall?.[sourceIndex]);
       });
     }
   }
@@ -1222,17 +1227,18 @@ function meteoblueLocationInfo(loc){
 function renderFraming(o,windowRange,loc){
   const setup=fov(),aspect=2.15,setupW=setup?.width||1.5,setupH=setup?.height||1;
   const objectW=Math.max(.02,(Number(o.majorArcMin)||1)/60),objectH=Math.max(.02,(Number(o.minorArcMin)||Number(o.majorArcMin)||1)/60);
-  const frameRotation=normalizedAngle180(profile.planning.frameRotation||0),catalogRotation=normalizedAngle180(Number(o.positionAngleDeg)||0),objectRotation=Number.isFinite(Number(profile.planning.objectRotation))?normalizedAngle180(Number(profile.planning.objectRotation)):catalogRotation;
+  const frameRotation=normalizedAngle180(profile.planning.frameRotation||0),catalogRotation=normalizedAngle180(Number(o.positionAngleDeg)||0),rotationBelongsToObject=profile.planning.objectRotationObjectId===o.id,objectRotation=rotationBelongsToObject&&Number.isFinite(Number(profile.planning.objectRotation))?normalizedAngle180(Number(profile.planning.objectRotation)):catalogRotation;
+  if(!rotationBelongsToObject){profile.planning.objectRotation=catalogRotation;profile.planning.objectRotationObjectId=o.id}
   const targetFov=clamp(Math.max(setupW,setupH*aspect,objectW,objectH*aspect,.08)*1.45,.08,120);
   const time=new Date(windowRange.start.getTime()+(windowRange.end-windowRange.start)*clamp(Number(profile.planning.timeFraction)||0,0,1)),currentAltitude=altitude(o.raHours,o.decDeg,time,loc.latitude,loc.longitude),currentAzimuth=azimuth(o.raHours,o.decDeg,time,loc.latitude,loc.longitude);
-  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),fov:String(targetFov),survey:'P/DSS2/color',frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name)}).toString();
+  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),fov:String(targetFov),survey:'P/DSS2/color',frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name)}).toString();
   const scopes=profile.equipment.telescopes.map(item=>`<option value="${esc(item.id)}" ${item.id===activeScope()?.id?'selected':''}>${esc(item.name)}</option>`).join(''),cameras=profile.equipment.cameras.map(item=>`<option value="${esc(item.id)}" ${item.id===activeCamera()?.id?'selected':''}>${esc(item.name)}</option>`).join('');
   const selectableObjects=[...new Map([...currentComputedObjects.map(entry=>entry.object),o].map(item=>[item.id,item])).values()].sort((a,b)=>a.id.localeCompare(b.id,'de',{numeric:true})),objectOptions=selectableObjects.map(x=>`<option value="${esc(x.id)}" ${x.id===o.id?'selected':''}>${esc(x.id)} · ${esc(x.name)}</option>`).join('');
   const analysis=framingAnalysis(o,{rotation:frameRotation,optimize:false});
   return`<section class="object-detail-section framing-section" id="framingCard">
     <div class="framing-header-grid"><div><div class="eyebrow">Interaktives Himmelsbild</div><h3>Rahmung: ${esc(o.id)} · ${esc(o.name)}</h3><div class="muted">${esc(o.type)} · ${fmt(o.majorArcMin)}′ × ${fmt(o.minorArcMin)}′ · ${esc(analysis.status)} · Mindestrand ${fmt(analysis.minMargin,1)} %</div></div><label>Objekt<select id="framingObjectSelect">${objectOptions}</select></label><label>Teleskop<select id="framingTelescopeSelect">${scopes}</select></label><label>Kamera<select id="framingCameraSelect">${cameras}</select></label></div>
     <div class="framing-view"><iframe id="aladinFrame" title="Aladin Lite – ${esc(o.id)}" src="aladin-frame.html?${query}" loading="eager"></iframe><div class="framing-info"><div id="framingTimePosition"><strong id="framingTimeClock">${fmtTime(time,loc.timezone)}</strong><br>Höhe ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)}</div><div id="framingTimeWeather">${setup?`Setup ${fmt(setup.width,2)}° × ${fmt(setup.height,2)}°<br>${fmt(setup.pixelScale,2)}″/px`:'Kein Setup gewählt'}</div></div></div>
-    <div class="framing-controls"><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><label class="chip"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektgröße anzeigen</label><label>Objektrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" title="Katalogwinkel ${fmt(catalogRotation)}°">Katalogwinkel</button><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label><button type="button" id="centerAladinFrame">Rahmen auf Bildmitte</button><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>Ändert Planungswerte, nicht das Sternfeld.</small></label></div>
+    <div class="framing-controls"><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><label class="chip"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektgröße anzeigen</label><label>Objektrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" title="Objektellipse auf den Katalog-Positionswinkel ${fmt(catalogRotation)}° zurücksetzen">Objektausrichtung zurücksetzen</button><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label><button type="button" id="centerAladinFrame">Rahmen auf Bildmitte</button><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>Ändert Planungswerte, nicht das Sternfeld.</small></label></div>
   </section>`;
 }
 function renderMeteoblue(loc){
@@ -1441,7 +1447,7 @@ function renderInfo(){
   </div>`;
 }
 
-async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId;profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(changed&&object)profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
+async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId,wasOpen=Boolean(profile.planning.detailsOpen);profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(open&&object&&(changed||!wasOpen||profile.planning.objectRotationObjectId!==objectId)){profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=objectId}if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
 
 function bindRendered(){
   const planningLocationSelect=document.getElementById('planningLocationSelect');
@@ -1457,6 +1463,8 @@ function bindRendered(){
     selectedDateKey=button.dataset.date;
     profile.planning.dateKey=selectedDateKey;
     profile.planning.detailsOpen=false;
+    profile.planning.cloudMapFrame=0;
+    cloudMapData=null;
     page=1;
     await saveProfile();
     render();
@@ -1631,6 +1639,7 @@ function bindCloudMap(){
   const baseMode=document.getElementById('cloudMapBaseMode');if(baseMode)baseMode.onchange=async()=>{profile.planning.temporaryCloudMapBaseMode=baseMode.value;await saveProfile();drawCloudMap()};
   const smoothing=document.getElementById('cloudMapSmoothingTemporary');if(smoothing)smoothing.onchange=async()=>{profile.planning.temporaryCloudSmoothing=smoothing.value;await saveProfile();drawCloudMap()};
   const showValues=document.getElementById('cloudMapShowValues');if(showValues)showValues.onchange=async()=>{profile.planning.temporaryCloudMapShowValues=showValues.checked;await saveProfile();drawCloudMap()};
+  const stage=document.querySelector('.cloud-map-stage');if(stage)stage.onchange=async event=>{const target=event.target;if(!target?.matches?.('[data-cloud-overlay]'))return;profile.planning.cloudMapWeatherOverlays={...cloudMapWeatherOverlays(),[target.dataset.cloudOverlay]:target.checked};await saveProfile();drawCloudMap()};
   const step=document.getElementById('cloudMapTimeStep');if(step)step.onchange=async()=>{const oldTimes=cloudDisplayTimes(),oldTime=oldTimes[clamp(Number(profile.planning.cloudMapFrame)||0,0,oldTimes.length-1)];profile.planning.cloudMapTimeStepMinutes=Number(step.value);const newTimes=cloudDisplayTimes(),target=new Date(oldTime).getTime();profile.planning.cloudMapFrame=newTimes.reduce((best,item,index)=>Math.abs(new Date(item).getTime()-target)<Math.abs(new Date(newTimes[best]).getTime()-target)?index:best,0);await saveProfile();render()};
   const slider=document.getElementById('cloudMapTime');if(slider){slider.oninput=()=>applyCloudMapFrame(slider.value,false);slider.onchange=()=>applyCloudMapFrame(slider.value,true)}
   document.getElementById('cloudMapPrev')?.addEventListener('click',()=>applyCloudMapFrame((Number(profile.planning.cloudMapFrame)||0)-1));document.getElementById('cloudMapNext')?.addEventListener('click',()=>applyCloudMapFrame((Number(profile.planning.cloudMapFrame)||0)+1));
@@ -1661,7 +1670,7 @@ function bindPlanProfiles(){
 function sendAladinOverlayUpdate(){
   const frame=document.getElementById('aladinFrame');if(!frame?.contentWindow)return;
   const object=catalog.find(item=>item.id===profile.planning.selectedObjectId),setup=fov();if(!object)return;
-  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name},location.origin);
+  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(profile.planning.objectRotationObjectId===object.id&&Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),catalogRot:normalizedAngle180(Number(object.positionAngleDeg)||0),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name},location.origin);
 }
 function nearestWeatherAt(time,range){
   const rows=weatherRowsForWindow(range,currentWeatherView());
@@ -1685,19 +1694,19 @@ function updateFramingTimeReadouts(fraction){
   if(weather){const setup=fov(),weatherLine=row?`Wolken ${fmt(row.cloud)} % · Seeing Q ${fmt(row.seeing)} · Wind ${fmt(windFromKmh(row.wind),1)} ${windUnitLabel(profile.central.windUnit)}`:'Keine stündlichen Wetterdaten';weather.innerHTML=`${twilightLabelAt(time,night)}<br>${weatherLine}${setup?`<br>Setup ${fmt(setup.width,2)}° × ${fmt(setup.height,2)}°`:''}`}
 }
 function bindFraming(){
-  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
+  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
   const changeEquipment=async(type,value)=>{if(type==='scope')profile.planning.temporaryTelescopeId=value===profile.equipment.selectedTelescopeId?null:value;else profile.planning.temporaryCameraId=value===profile.equipment.selectedCameraId?null:value;const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(object&&framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render()};
   const scope=document.getElementById('framingTelescopeSelect'),camera=document.getElementById('framingCameraSelect');if(scope)scope.onchange=()=>changeEquipment('scope',scope.value);if(camera)camera.onchange=()=>changeEquipment('camera',camera.value);
   const frameVisible=document.getElementById('frameVisible');if(frameVisible)frameVisible.onchange=async()=>{profile.central.frameVisible=frameVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
   const objectVisible=document.getElementById('objectSizeVisible');if(objectVisible)objectVisible.onchange=async()=>{profile.central.objectSizeVisible=objectVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
   const labelsVisible=document.getElementById('aladinLabelsVisible');if(labelsVisible)labelsVisible.onchange=async()=>{profile.central.aladinLabels.visible=labelsVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
   const labelDetail=document.getElementById('aladinLabelDetail');if(labelDetail)labelDetail.onchange=async()=>{profile.central.aladinLabels.detail=labelDetail.value;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
-  const bindAngle=(id,key,labelId)=>{const element=document.getElementById(id),label=document.getElementById(labelId);if(!element)return;element.oninput=()=>{profile.planning[key]=Number(element.value);if(label)label.textContent=`${fmt(profile.planning[key])}°`;sendAladinOverlayUpdate()};element.onchange=async()=>{profile.planning[key]=Number(element.value);await saveProfile();sendAladinOverlayUpdate()}};
+  const bindAngle=(id,key,labelId)=>{const element=document.getElementById(id),label=document.getElementById(labelId);if(!element)return;element.oninput=()=>{profile.planning[key]=Number(element.value);if(key==='objectRotation')profile.planning.objectRotationObjectId=profile.planning.selectedObjectId;if(label)label.textContent=`${fmt(profile.planning[key])}°`;sendAladinOverlayUpdate()};element.onchange=async()=>{profile.planning[key]=Number(element.value);if(key==='objectRotation')profile.planning.objectRotationObjectId=profile.planning.selectedObjectId;await saveProfile();sendAladinOverlayUpdate()}};
   bindAngle('frameRotation','frameRotation','frameRotationValue');bindAngle('objectRotation','objectRotation','objectRotationValue');
   const timeSlider=document.getElementById('framingTime');if(timeSlider){timeSlider.oninput=()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction)};timeSlider.onchange=async()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction);await saveProfile()};updateFramingTimeReadouts(profile.planning.timeFraction)}
   document.getElementById('optimalFrameRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.frameRotation=optimalFrameRotation(object);const slider=document.getElementById('frameRotation'),label=document.getElementById('frameRotationValue');if(slider)slider.value=String(profile.planning.frameRotation);if(label)label.textContent=`${fmt(profile.planning.frameRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
-  document.getElementById('resetObjectRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);const slider=document.getElementById('objectRotation'),label=document.getElementById('objectRotationValue');if(slider)slider.value=String(profile.planning.objectRotation);if(label)label.textContent=`${fmt(profile.planning.objectRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
-  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>document.getElementById('aladinFrame')?.contentWindow?.postMessage({type:'anp-center-frame'},location.origin));
+  document.getElementById('resetObjectRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=object.id;const slider=document.getElementById('objectRotation'),label=document.getElementById('objectRotationValue');if(slider)slider.value=String(profile.planning.objectRotation);if(label)label.textContent=`${fmt(profile.planning.objectRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
+  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame'),button=document.getElementById('centerAladinFrame');if(!frame?.contentWindow)return;if(button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}const send=()=>frame.contentWindow?.postMessage({type:'anp-center-frame'},location.origin);send();window.setTimeout(send,160);window.setTimeout(()=>{if(button?.disabled){button.textContent='Rahmen auf Bildmitte';button.disabled=false}},1800)});
   document.getElementById('reloadAladinImage')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame');if(!frame)return;try{frame.contentWindow.location.reload()}catch{const url=new URL(frame.src);url.searchParams.set('reload',String(Date.now()));frame.src=url.toString()}});
 }
 
@@ -2128,16 +2137,17 @@ function cloudMapColor(value,layer,mode){
   if(!Number.isFinite(value))return'rgba(0,0,0,0)';
   if(mode==='uncertainty'){
     const t=clamp(value/30,0,1),hue=120*(1-t);
-    return`hsla(${hue},82%,50%,${.28+.68*t})`;
+    return`hsla(${hue},82%,50%,${.25+.65*t})`;
   }
   const t=clamp(value/100,0,1);
   if(t<.01)return'rgba(255,255,255,0)';
-  return`rgba(255,255,255,${Math.min(.97,.07+.9*Math.pow(t,.84))})`;
+  // Die Topografie bleibt auch unter dichter Bewölkung leicht erkennbar.
+  return`rgba(255,255,255,${Math.min(.82,.04+.78*Math.pow(t,.88))})`;
 }
 function cloudLegendDefinition(layer,mode){
-  if(mode==='uncertainty')return{left:'geringe Abweichung',right:'starke Abweichung',gradient:'linear-gradient(90deg,#2ed274 0%,#d7d34a 50%,#ef5a5a 100%)',suffix:''};
+  if(mode==='uncertainty')return{left:'geringe Abweichung',right:'starke Abweichung',gradient:'linear-gradient(90deg,#2ed274 0%,#d7d34a 50%,#ef5a5a 100%)'};
   const label=CLOUD_MAP_LAYER_OPTIONS.find(item=>item[0]===layer)?.[1]||'Bewölkung';
-  return{left:`${label}: 0 %`,right:'100 %',gradient:'linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.45) 55%,rgba(255,255,255,.95) 100%)',suffix:'<span class="rain-legend">╱ Niederschlag</span>'};
+  return{left:`${label}`,right:'100 %',gradient:'linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.38) 52%,rgba(255,255,255,.86) 100%)'};
 }
 
 function disposeCloudBaseMap(){
@@ -2149,39 +2159,53 @@ function disposeCloudBaseMap(){
 }
 function applyDarkAstroMapStyle(){
   if(!cloudBaseMap)return;
-  const hidden=/(road|highway|street|building|house|poi|transit|rail|aeroway|airport|parking|path|ferry|shop|amenity|industrial)/i;
-  for(const layer of cloudBaseMap.getStyle().layers||[]){
-    const id=String(layer.id||''),source=String(layer['source-layer']||'');
+  const hideCompletely=/(building|house|poi|transit|rail|aeroway|airport|parking|ferry|shop|amenity|industrial)/i;
+  const minorRoad=/(path|track|service|minor|residential|street)/i;
+  const styleLayers=cloudBaseMap.getStyle().layers||[];
+  for(const layer of styleLayers){
+    const id=String(layer.id||''),source=String(layer['source-layer']||''),key=`${id} ${source}`;
     try{
-      if(hidden.test(`${id} ${source}`)){cloudBaseMap.setLayoutProperty(id,'visibility','none');continue}
+      if(hideCompletely.test(key)){cloudBaseMap.setLayoutProperty(id,'visibility','none');continue}
       if(layer.type==='symbol'){
-        if(!/(place|country|state|city|town|village|settlement)/i.test(`${id} ${source}`)){cloudBaseMap.setLayoutProperty(id,'visibility','none');continue}
-        cloudBaseMap.setPaintProperty(id,'text-color','#7891a4');
-        cloudBaseMap.setPaintProperty(id,'text-halo-color','#06101a');
-        cloudBaseMap.setPaintProperty(id,'text-halo-width',1.4);
-        cloudBaseMap.setPaintProperty(id,'text-opacity',.72);
+        if(!/(place|country|state|city|town|village|settlement)/i.test(key)){cloudBaseMap.setLayoutProperty(id,'visibility','none');continue}
+        cloudBaseMap.setPaintProperty(id,'text-color','#b8d1e3');
+        cloudBaseMap.setPaintProperty(id,'text-halo-color','#071018');
+        cloudBaseMap.setPaintProperty(id,'text-halo-width',1.25);
+        cloudBaseMap.setPaintProperty(id,'text-opacity',.88);
       }else if(layer.type==='background'){
-        cloudBaseMap.setPaintProperty(id,'background-color','#06101a');
+        cloudBaseMap.setPaintProperty(id,'background-color','#18231f');
       }else if(layer.type==='fill'){
-        const isWater=/(water|ocean|lake|river)/i.test(`${id} ${source}`);
-        const isBoundary=/(boundary|admin)/i.test(`${id} ${source}`);
-        cloudBaseMap.setPaintProperty(id,'fill-color',isWater?'#081f2d':isBoundary?'#122334':'#0c1923');
-        cloudBaseMap.setPaintProperty(id,'fill-opacity',isWater?.82:.72);
-        try{cloudBaseMap.setPaintProperty(id,'fill-outline-color',isWater?'#153447':'#1b2c38')}catch{}
+        const water=/(water|ocean|lake|river)/i.test(key),forest=/(wood|forest|park|grass|scrub)/i.test(key),farm=/(farmland|crop|meadow|landcover)/i.test(key),rock=/(rock|sand|glacier|mountain)/i.test(key);
+        if(water){cloudBaseMap.setPaintProperty(id,'fill-color','#0b2b3b');cloudBaseMap.setPaintProperty(id,'fill-opacity',.94)}
+        else if(forest){cloudBaseMap.setPaintProperty(id,'fill-color','#27382b');cloudBaseMap.setPaintProperty(id,'fill-opacity',.88)}
+        else if(farm){cloudBaseMap.setPaintProperty(id,'fill-color','#3b3c2d');cloudBaseMap.setPaintProperty(id,'fill-opacity',.78)}
+        else if(rock){cloudBaseMap.setPaintProperty(id,'fill-color','#4a4337');cloudBaseMap.setPaintProperty(id,'fill-opacity',.76)}
+        else{try{cloudBaseMap.setPaintProperty(id,'fill-opacity',.82)}catch{}}
       }else if(layer.type==='line'){
-        const isBoundary=/(boundary|admin|border)/i.test(`${id} ${source}`);
-        const isWater=/(water|river|stream)/i.test(`${id} ${source}`);
-        cloudBaseMap.setPaintProperty(id,'line-color',isBoundary?'#486173':isWater?'#24485c':'#263845');
-        cloudBaseMap.setPaintProperty(id,'line-opacity',isBoundary?.5:.3);
+        const boundary=/(boundary|admin|border)/i.test(key),water=/(water|river|stream)/i.test(key),road=/(road|highway|motorway|trunk|primary|secondary)/i.test(key);
+        if(minorRoad.test(key)){cloudBaseMap.setPaintProperty(id,'line-opacity',.08);continue}
+        if(boundary){cloudBaseMap.setPaintProperty(id,'line-color','#8aa1ad');cloudBaseMap.setPaintProperty(id,'line-opacity',.62)}
+        else if(water){cloudBaseMap.setPaintProperty(id,'line-color','#3b7188');cloudBaseMap.setPaintProperty(id,'line-opacity',.65)}
+        else if(road){cloudBaseMap.setPaintProperty(id,'line-color','#8a7659');cloudBaseMap.setPaintProperty(id,'line-opacity',.34)}
+        else{try{cloudBaseMap.setPaintProperty(id,'line-opacity',.32)}catch{}}
       }else if(layer.type==='hillshade'){
-        cloudBaseMap.setPaintProperty(id,'hillshade-shadow-color','#02070b');
-        cloudBaseMap.setPaintProperty(id,'hillshade-highlight-color','#31404a');
-        cloudBaseMap.setPaintProperty(id,'hillshade-accent-color','#172833');
-        cloudBaseMap.setPaintProperty(id,'hillshade-exaggeration',.28);
+        cloudBaseMap.setPaintProperty(id,'hillshade-shadow-color','#07100c');
+        cloudBaseMap.setPaintProperty(id,'hillshade-highlight-color','#a7ab85');
+        cloudBaseMap.setPaintProperty(id,'hillshade-accent-color','#53624c');
+        cloudBaseMap.setPaintProperty(id,'hillshade-exaggeration',.58);
       }
     }catch{}
   }
+  // Zusätzliche Geländeschattierung macht die Basiskarte auch unter den Wolken klar topografisch.
+  try{
+    if(!cloudBaseMap.getSource('anp-terrain-dem'))cloudBaseMap.addSource('anp-terrain-dem',{type:'raster-dem',url:'https://demotiles.maplibre.org/terrain-tiles/tiles.json',tileSize:256,maxzoom:12});
+    if(!cloudBaseMap.getLayer('anp-terrain-hillshade')){
+      const firstLabel=(cloudBaseMap.getStyle().layers||[]).find(item=>item.type==='symbol')?.id;
+      cloudBaseMap.addLayer({id:'anp-terrain-hillshade',type:'hillshade',source:'anp-terrain-dem',paint:{'hillshade-shadow-color':'#020706','hillshade-highlight-color':'#b0b38c','hillshade-accent-color':'#5b6950','hillshade-exaggeration':.68,'hillshade-illumination-direction':315}},firstLabel);
+    }
+  }catch(error){console.warn('Geländeschattierung:',error)}
 }
+
 function initCloudBaseMap(){
   const element=document.getElementById('cloudMapBase');
   if(!element||!cloudMapData)return;
@@ -2198,8 +2222,8 @@ function initCloudBaseMap(){
   cloudBaseMapSignature=signature;
   try{
     cloudBaseMap=new maplibregl.Map({container:element,style:'https://tiles.openfreemap.org/styles/liberty',center:[loc.longitude,loc.latitude],attributionControl:true,interactive:false,preserveDrawingBuffer:false,fadeDuration:0});
-    cloudBaseMap.fitBounds([[loc.longitude-lonDelta,loc.latitude-latDelta],[loc.longitude+lonDelta,loc.latitude+latDelta]],{padding:8,duration:0});
-    cloudBaseMap.on('style.load',()=>{applyDarkAstroMapStyle();requestAnimationFrame(()=>cloudBaseMap?.resize())});
+    cloudBaseMap.fitBounds([[loc.longitude-lonDelta,loc.latitude-latDelta],[loc.longitude+lonDelta,loc.latitude+latDelta]],{padding:0,duration:0});
+    cloudBaseMap.on('style.load',()=>{applyDarkAstroMapStyle();requestAnimationFrame(()=>cloudBaseMap?.resize());window.setTimeout(()=>cloudBaseMap?.resize(),180)});
     cloudBaseMap.on('error',event=>console.warn('Topografische Karte:',event?.error||event));
     if('ResizeObserver'in window){cloudBaseResizeObserver=new ResizeObserver(()=>cloudBaseMap?.resize());cloudBaseResizeObserver.observe(element)}
   }catch(error){disposeCloudBaseMap();element.hidden=false;element.innerHTML=`<div class="cloud-map-base-fallback">Topografische Karte konnte nicht geladen werden: ${esc(error?.message||error)}</div>`}
@@ -2223,6 +2247,9 @@ function drawCloudMap(){
   const frame=cloudFrameValues(view,layer,rawPosition);
   const drawValues=mode==='uncertainty'?frame.spread:frame.values;
   const precip=cloudFrameValues(view,'precip',rawPosition).values;
+  const rain=cloudFrameValues(view,'rain',rawPosition).values;
+  const snow=cloudFrameValues(view,'snow',rawPosition).values;
+  const weatherOverlays=cloudMapWeatherOverlays();
   const size=cloudMapData.gridSize;
   const map={x:88,y:54,w:W-176,h:H-126};
   ctx.clearRect(0,0,W,H);
@@ -2255,15 +2282,35 @@ function drawCloudMap(){
   ctx.restore();
 
   if(mode==='clouds'){
-    ctx.globalAlpha=.72;
-    for(let py=0;py<map.h;py+=14){
-      const gy=(py/map.h)*(size-1);
-      for(let px=0;px<map.w;px+=14){
-        const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(precip,size,gx,gy);
-        if(value>.15){ctx.strokeStyle=`rgba(55,170,255,${clamp(value/3,.15,.85)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(map.x+px,map.y+py);ctx.lineTo(map.x+px-7,map.y+py+11);ctx.stroke()}
+    // Niederschlagsarten als getrennt schaltbare, dezente Kartenebenen.
+    if(weatherOverlays.precip){
+      for(let py=0;py<map.h;py+=18){
+        const gy=(py/map.h)*(size-1);
+        for(let px=0;px<map.w;px+=18){
+          const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(precip,size,gx,gy);
+          if(value>.12){ctx.strokeStyle=`rgba(83,190,255,${clamp(.18+value/4,.2,.82)})`;ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(map.x+px+4,map.y+py-4);ctx.lineTo(map.x+px-5,map.y+py+10);ctx.stroke()}
+        }
       }
     }
-    ctx.globalAlpha=1;
+    if(weatherOverlays.rain){
+      for(let py=4;py<map.h;py+=24){
+        const gy=(py/map.h)*(size-1);
+        for(let px=6;px<map.w;px+=24){
+          const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(rain,size,gx,gy);
+          if(value>.08){ctx.strokeStyle=`rgba(32,139,255,${clamp(.18+value/3,.22,.9)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(map.x+px,map.y+py);ctx.lineTo(map.x+px-3,map.y+py+9);ctx.stroke()}
+        }
+      }
+    }
+    if(weatherOverlays.snow){
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px system-ui';
+      for(let py=10;py<map.h;py+=30){
+        const gy=(py/map.h)*(size-1);
+        for(let px=10;px<map.w;px+=30){
+          const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(snow,size,gx,gy);
+          if(value>.03){ctx.fillStyle=`rgba(188,112,255,${clamp(.28+value/2,.3,.95)})`;ctx.fillText('✦',map.x+px,map.y+py)}
+        }
+      }
+    }
   }
   ctx.strokeStyle='rgba(135,190,225,.20)';ctx.lineWidth=1.2;
   for(let i=1;i<4;i++){ctx.beginPath();ctx.ellipse(map.x+map.w/2,map.y+map.h/2,map.w*i/8,map.h*i/8,0,0,Math.PI*2);ctx.stroke()}
@@ -2301,7 +2348,10 @@ function drawCloudMap(){
   ctx.textAlign='center';ctx.font='700 22px system-ui';ctx.fillStyle='#ffe08a';ctx.fillText(cloudMapData.locationName,cx,cy+44);
 
   const legend=document.getElementById('cloudMapLegend');
-  if(legend){const definition=cloudLegendDefinition(layer,mode);legend.innerHTML=`<span>${definition.left}</span><div class="legend-gradient dynamic" style="background:${definition.gradient}"></div><span>${definition.right}</span>${definition.suffix||''}<span class="cloud-value-legend">Orange: Wolkenanteil am Prognosepunkt</span>`}
+  if(legend){
+    const definition=cloudLegendDefinition(layer,mode),overlays=cloudMapWeatherOverlays();
+    legend.innerHTML=`<div class="cloud-scale"><span>${definition.left}</span><span class="cloud-scale-zero">0 %</span><div class="legend-gradient dynamic" style="background:${definition.gradient}"></div><span>${definition.right}</span></div>${mode==='clouds'?`<div class="cloud-phenomena" aria-label="Niederschlagsarten"><label class="cloud-phenomenon precip"><input type="checkbox" data-cloud-overlay="precip" ${overlays.precip?'checked':''}><i></i>Niederschlag</label><label class="cloud-phenomenon rain"><input type="checkbox" data-cloud-overlay="rain" ${overlays.rain?'checked':''}><i></i>Regen</label><label class="cloud-phenomenon snow"><input type="checkbox" data-cloud-overlay="snow" ${overlays.snow?'checked':''}><i></i>Schnee</label></div>`:''}<div class="cloud-value-legend"><b>xx%</b><span>Wolkenanteil<br>am Prognosepunkt</span></div>`;
+  }
 }
 function drawMiniCharts(){document.querySelectorAll('.mini-chart').forEach(canvas=>{const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;const points=JSON.parse(decodeURIComponent(canvas.dataset.points));const start=Number(canvas.dataset.start),end=Number(canvas.dataset.end),civilS=Number(canvas.dataset.civilStart),civilE=Number(canvas.dataset.civilEnd),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),minAlt=Number(canvas.dataset.minAlt);ctx.clearRect(0,0,w,h);const x=t=>(t-start)/(end-start)*w,y=a=>h-8-clamp(a,0,90)/90*(h-16);ctx.fillStyle='#3a3227';ctx.fillRect(0,0,w,h);const band=(s,e,fill)=>{const left=clamp(x(s),0,w),right=clamp(x(e),0,w);if(right<=left)return;ctx.fillStyle=fill;ctx.fillRect(left,0,right-left,h)};band(civilS,civilE,'#1b2a3d');band(nautS,nautE,'#142235');band(astroS,astroE,'#08121f');for(const t of [civilS,nautS,astroS,astroE,nautE,civilE]){ctx.beginPath();ctx.strokeStyle='#73849a';ctx.setLineDash([3,3]);ctx.moveTo(x(t),0);ctx.lineTo(x(t),h);ctx.stroke()}ctx.setLineDash([5,4]);ctx.strokeStyle='#d7ad47';ctx.beginPath();ctx.moveTo(0,y(minAlt));ctx.lineTo(w,y(minAlt));ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#7ec1ff';ctx.lineWidth=2;ctx.beginPath();points.forEach(([t,a],i)=>i?ctx.lineTo(x(t),y(a)):ctx.moveTo(x(t),y(a)));ctx.stroke();const max=points.reduce((m,p)=>p[1]>m[1]?p:m,points[0]);ctx.fillStyle='#f0c75e';ctx.beginPath();ctx.arc(x(max[0]),y(max[1]),3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aabbd0';ctx.font='10px sans-serif';ctx.fillText('0°',2,h-2);ctx.fillText('90°',2,10)})}
 
@@ -2579,9 +2629,15 @@ window.addEventListener('message',event=>{
   if(event.data?.type==='anp-frame-centered'){
     const button=document.getElementById('centerAladinFrame');
     if(!button)return;
-    const previous=button.textContent;
     button.textContent='Rahmen zentriert ✓';button.disabled=true;
-    window.setTimeout(()=>{button.textContent=previous;button.disabled=false},1800);
+    window.setTimeout(()=>{button.textContent='Rahmen auf Bildmitte';button.disabled=false},1800);
+    return;
+  }
+  if(event.data?.type==='anp-frame-center-error'){
+    const button=document.getElementById('centerAladinFrame');
+    if(!button)return;
+    button.textContent='Bildmitte nicht verfügbar';button.disabled=true;
+    window.setTimeout(()=>{button.textContent='Rahmen auf Bildmitte';button.disabled=false},1800);
   }
 });
 
