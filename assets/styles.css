@@ -435,3 +435,54 @@ label>input,label>select,label>textarea{display:block}
 .target-list{display:grid;gap:14px;margin-top:16px}.target-row{display:grid;grid-template-columns:1fr;gap:12px;align-items:start;border:1px solid rgba(144,190,230,.22);border-radius:14px;background:rgba(7,21,36,.55);padding:14px}.target-row.is-dirty{border-color:rgba(240,199,94,.68);box-shadow:0 0 0 2px rgba(240,199,94,.08)}.target-row .target-main{display:grid;gap:4px}.target-edit-grid{display:grid;grid-template-columns:max-content max-content minmax(320px,.75fr) minmax(420px,1.5fr);gap:12px;align-items:start}.target-priority-field{width:12ch}.target-status-field{width:20ch}.target-reference-field{min-width:220px}.target-note-field{min-width:320px}.target-note-field textarea{min-height:150px}.target-reference-field textarea{min-height:92px}.reference-link-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.small-button{font-size:.82rem;padding:7px 10px}.target-actions{display:flex;justify-content:flex-end;gap:10px;align-items:center}.target-row-status{min-height:1.1em;color:var(--warn)}
 @media(max-width:1150px){.filter-main-grid{grid-template-columns:minmax(260px,1fr) repeat(2,max-content)}.size-filter-row{grid-template-columns:minmax(260px,1fr) repeat(2,max-content)}.size-profile-field{grid-column:1/-1}.target-filter-grid{grid-template-columns:minmax(260px,1fr) repeat(2,minmax(120px,max-content))}.target-edit-grid{grid-template-columns:max-content max-content minmax(300px,1fr)}.target-note-field{grid-column:1/-1}.target-reference-field{grid-column:1/-1}}
 @media(max-width:720px){.filter-main-grid,.size-filter-row,.surface-filter-grid,.target-filter-grid,.target-edit-grid{grid-template-columns:1fr}.filter-search-field,.target-filter-search,.size-filter-row .size-profile-field,.target-priority-field,.target-status-field,.target-reference-field,.target-note-field{width:100%;min-width:0}.numeric-compact{width:100%}.numeric-compact input[type=number]{width:100%;max-width:none}.filter-action-row,.target-filter-actions,.target-actions{justify-content:stretch;flex-direction:column}.filter-action-row button,.target-filter-actions button,.target-actions button{width:100%}}
+
+/* Test 14: Filterfelder konsequent ausrichten, Helligkeitsfilter zusammenführen */
+.filter-main-grid{
+  display:grid;
+  grid-template-columns:minmax(360px,2.2fr) max-content max-content max-content max-content;
+  grid-template-areas:
+    "search score mag surface altitude"
+    "visible basis basis basis moon";
+  gap:18px 24px;
+  align-items:start;
+}
+.filter-main-grid label,.size-filter-row label{align-self:start}
+.filter-area-search{grid-area:search;min-width:min(100%,520px)}
+.filter-area-score{grid-area:score}
+.filter-area-mag{grid-area:mag}
+.filter-area-surface{grid-area:surface}
+.filter-area-alt{grid-area:altitude}
+.filter-area-visible{grid-area:visible}
+.filter-area-basis{grid-area:basis;min-width:min(100%,420px)}
+.filter-area-moon{grid-area:moon}
+.filter-main-grid label>input,.filter-main-grid label>select,.size-filter-row label>input,.size-filter-row label>select{margin-top:7px}
+.numeric-compact input[type=number],.filters label.numeric-compact input[type=number],.settings-row input[type=number]{width:auto;min-width:7ch;max-width:12ch}
+.filter-area-surface .small{max-width:190px}
+.size-filter-row{align-items:start;margin-top:18px}
+@media(max-width:1280px){
+  .filter-main-grid{
+    grid-template-columns:minmax(300px,1.6fr) repeat(3,max-content);
+    grid-template-areas:
+      "search score mag altitude"
+      "visible basis surface moon";
+  }
+  .filter-area-basis{min-width:min(100%,360px)}
+}
+@media(max-width:920px){
+  .filter-main-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-areas:
+      "search search"
+      "score mag"
+      "surface altitude"
+      "visible moon"
+      "basis basis";
+  }
+  .filter-area-search,.filter-area-basis{min-width:0}
+}
+@media(max-width:720px){
+  .filter-main-grid{
+    grid-template-columns:1fr;
+    grid-template-areas:"search" "score" "mag" "surface" "altitude" "visible" "basis" "moon";
+  }
+}

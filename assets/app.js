@@ -1150,13 +1150,14 @@ function renderFilters(){
   return `<details ${profile.central.collapsed.filters?'':'open'} id="filterDetails">
     <summary>Filter</summary>
     <div class="filters filter-main-grid" style="margin-top:13px">
-      <label class="filter-search-field">Suche<input id="objectSearch" value="${esc(profile.planning.search)}" placeholder="M31, NGC, Rosette …"><span class="small muted">Automatische Aktualisierung nach 0,9 Sekunden; Enter sucht sofort.</span></label>
-      <label class="numeric-compact">Mindestbewertung<input id="minScore" type="number" min="0" max="100" step="1" value="${Number(profile.planning.minScore)||0}"><span class="small muted">0 = keine Einschränkung</span></label>
-      <label class="numeric-compact">Max. Magnitude (mag)<input id="maxMagnitude" type="number" step="0.1" value="${profile.planning.maxMagnitude}"></label>
-      <label class="numeric-compact">Mindesthöhe (°)<input id="minAltitude" type="number" min="0" max="90" value="${profile.planning.minAltitude}"></label>
-      <label class="numeric-compact">Mindestdauer sichtbar (h)<input id="minVisibleHours" type="number" step="0.25" min="0" value="${profile.planning.minVisibleHours}"></label>
-      <label>Basis der Mindestdauer<select id="visibilityBasis"><option value="nautical" ${profile.planning.visibilityBasis==='nautical'?'selected':''}>Nautischer Planungszeitraum</option><option value="astronomicalNight" ${profile.planning.visibilityBasis==='astronomicalNight'?'selected':''}>Astronomische Nacht</option><option value="sunset" ${profile.planning.visibilityBasis==='sunset'?'selected':''}>Sonnenuntergang bis Sonnenaufgang</option><option value="current" ${profile.planning.visibilityBasis==='current'?'selected':''}>Aktuell gewählter Planungszeitraum</option></select><span class="small muted">Mindestzeit über Mindesthöhe und persönlichem Horizont.</span></label>
-      <label class="numeric-compact">Mind. Mondabstand (°)<input id="minMoonDistance" type="number" min="0" max="180" value="${profile.planning.minMoonDistance}"></label>
+      <label class="filter-search-field filter-area-search">Suche<input id="objectSearch" value="${esc(profile.planning.search)}" placeholder="M31, NGC, Rosette …"><span class="small muted">Automatische Aktualisierung nach 0,9 Sekunden; Enter sucht sofort.</span></label>
+      <label class="numeric-compact filter-area-score">Mindestbewertung<input id="minScore" type="number" min="0" max="100" step="1" value="${Number(profile.planning.minScore)||0}"><span class="small muted">0 = keine Einschränkung</span></label>
+      <label class="numeric-compact filter-area-mag">Max. Magnitude (mag)<input id="maxMagnitude" type="number" step="0.1" value="${profile.planning.maxMagnitude}"></label>
+      <label class="numeric-compact filter-area-surface">Max. Flächenhelligkeit<input id="surfaceBrightnessMax" type="number" step="0.1" value="${Number(profile.planning.surfaceBrightnessMax)||99}"><span class="small muted">Objekte mit fehlender Angabe bleiben sichtbar.</span></label>
+      <label class="numeric-compact filter-area-alt">Mindesthöhe (°)<input id="minAltitude" type="number" min="0" max="90" value="${profile.planning.minAltitude}"></label>
+      <label class="numeric-compact filter-area-visible">Mindestdauer sichtbar (h)<input id="minVisibleHours" type="number" step="0.25" min="0" value="${profile.planning.minVisibleHours}"></label>
+      <label class="filter-area-basis">Basis der Mindestdauer<select id="visibilityBasis"><option value="nautical" ${profile.planning.visibilityBasis==='nautical'?'selected':''}>Nautischer Planungszeitraum</option><option value="astronomicalNight" ${profile.planning.visibilityBasis==='astronomicalNight'?'selected':''}>Astronomische Nacht</option><option value="sunset" ${profile.planning.visibilityBasis==='sunset'?'selected':''}>Sonnenuntergang bis Sonnenaufgang</option><option value="current" ${profile.planning.visibilityBasis==='current'?'selected':''}>Aktuell gewählter Planungszeitraum</option></select><span class="small muted">Mindestzeit über Mindesthöhe und persönlichem Horizont.</span></label>
+      <label class="numeric-compact filter-area-moon">Mind. Mondabstand (°)<input id="minMoonDistance" type="number" min="0" max="180" value="${profile.planning.minMoonDistance}"></label>
     </div>
     <div class="size-filter-row">
       <label class="size-profile-field">Objektgrößenprofil<select id="sizeProfileSelect"><option value="">Benutzerdefiniert</option>${sizeOptions}</select></label>
@@ -1165,7 +1166,6 @@ function renderFilters(){
       <label class="numeric-compact">Maximalgröße Grad<input id="maxSizeDeg" type="number" min="0" max="60" value="${maxDM.deg}"></label>
       <label class="numeric-compact">Maximalgröße Bogenminuten<input id="maxSizeMin" type="number" min="0" max="59" value="${maxDM.min}"></label>
     </div>
-    <div class="filters surface-filter-grid" style="margin-top:12px"><label class="numeric-compact">Max. Flächenhelligkeit<input id="surfaceBrightnessMax" type="number" step="0.1" value="${Number(profile.planning.surfaceBrightnessMax)||99}"><span class="small muted">Objekte mit fehlender Angabe bleiben standardmäßig sichtbar.</span></label></div>
     <div class="chip-list" style="margin-top:12px"><label class="chip"><input id="excludeNoSize" type="checkbox" ${profile.planning.excludeNoSize?'checked':''}>Objekte ohne Größenangabe ausschließen</label><label class="chip"><input id="showNoSurfaceBrightness" type="checkbox" ${profile.planning.showNoSurfaceBrightness!==false?'checked':''}>Objekte ohne Flächenhelligkeit anzeigen</label></div>
     <div class="filter-action-row"><button id="applyObjectFilters" type="button">Filter anwenden</button></div>
     <div class="divider"></div>
