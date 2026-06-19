@@ -18,8 +18,8 @@
   (()=>{
     const params=new URLSearchParams(location.search),ra=Number(params.get('ra')),dec=Number(params.get('dec')),initialFov=Math.max(.02,Number(params.get('fov'))||2),survey=params.get('survey')||'P/DSS2/color',catalogRot=Number(params.get('catalogRot'));
     const loading=document.getElementById('loading'),error=document.getElementById('error');
-    let viewer=null,frameOverlay=null,objectOverlay=null,labelCatalog=null,catalogRows=[],labelTimer=null,lastViewKey='',frameCenter={ra,dec};
-    let overlayState={frameW:Number(params.get('frameW'))||0,frameH:Number(params.get('frameH'))||0,frameRot:Number(params.get('frameRot'))||0,showFrame:params.get('showFrame')==='true',objectW:Number(params.get('objectW'))||0,objectH:Number(params.get('objectH'))||0,objectRot:Number(params.get('objectRot'))||0,showObject:params.get('showObject')==='true',showLabels:params.get('showLabels')!=='false',labelDetail:params.get('labelDetail')||'auto',targetId:params.get('targetId')||'',targetName:params.get('targetName')||''};
+    let viewer=null,frameOverlay=null,objectOverlay=null,moonOverlay=null,labelCatalog=null,catalogRows=[],labelTimer=null,lastViewKey='',frameCenter={ra,dec};
+    let overlayState={frameW:Number(params.get('frameW'))||0,frameH:Number(params.get('frameH'))||0,frameRot:Number(params.get('frameRot'))||0,showFrame:params.get('showFrame')==='true',objectW:Number(params.get('objectW'))||0,objectH:Number(params.get('objectH'))||0,objectRot:Number(params.get('objectRot'))||0,showObject:params.get('showObject')==='true',showLabels:params.get('showLabels')!=='false',labelDetail:params.get('labelDetail')||'auto',targetId:params.get('targetId')||'',targetName:params.get('targetName')||'',showMoon:params.get('showMoon')==='true',moonRa:Number(params.get('moonRa')),moonDec:Number(params.get('moonDec')),moonLabel:params.get('moonLabel')||'Mond'};
     const fail=message=>{loading.style.display='none';error.textContent=`Aladin Lite konnte nicht geladen werden: ${message}`;error.style.display='block'};
     const skyPoint=(centerRa,centerDec,east,north)=>{const d2r=Math.PI/180,r2d=180/Math.PI,ra0=centerRa*d2r,dec0=centerDec*d2r,e=east*d2r,n=north*d2r,rho=Math.hypot(e,n);if(rho<1e-12)return[centerRa,centerDec];const bearing=Math.atan2(e,n),sinDec=Math.sin(dec0)*Math.cos(rho)+Math.cos(dec0)*Math.sin(rho)*Math.cos(bearing),outDec=Math.asin(Math.max(-1,Math.min(1,sinDec))),outRa=ra0+Math.atan2(Math.sin(bearing)*Math.sin(rho)*Math.cos(dec0),Math.cos(rho)-Math.sin(dec0)*Math.sin(outDec));return[((outRa*r2d)%360+360)%360,outDec*r2d]};
     const axes=angle=>{const rad=angle*Math.PI/180;return{ux:Math.sin(rad),uy:Math.cos(rad),vx:Math.cos(rad),vy:-Math.sin(rad)}};
@@ -29,11 +29,18 @@
     const redraw=()=>{if(!viewer||!window.A)return;try{
       if(!frameOverlay){frameOverlay=A.graphicOverlay({name:'Kamerarahmen',color:'#67cbff',lineWidth:2});viewer.addOverlay(frameOverlay)}
       if(!objectOverlay){objectOverlay=A.graphicOverlay({name:'Objektgröße',color:'#f0c75e',lineWidth:2});viewer.addOverlay(objectOverlay)}
-      clearOverlay(frameOverlay);clearOverlay(objectOverlay);
+      if(!moonOverlay){moonOverlay=A.graphicOverlay({name:'Mond',color:'#ffd66b',lineWidth:2});viewer.addOverlay(moonOverlay)}
+      clearOverlay(frameOverlay);clearOverlay(objectOverlay);clearOverlay(moonOverlay);
       if(overlayState.showFrame&&overlayState.frameW>0&&overlayState.frameH>0)frameOverlay.add(A.polygon(rectangle(frameCenter.ra,frameCenter.dec,overlayState.frameW,overlayState.frameH,overlayState.frameRot),{color:'#67cbff',lineWidth:2,fillColor:'rgba(40,183,215,.08)'}));
       if(overlayState.showObject&&overlayState.objectW>0&&overlayState.objectH>0){
         // Polygon in Himmelskoordinaten: volle Katalogachsen und Positionswinkel Nord über Ost.
         objectOverlay.add(A.polygon(ellipsePolygon(ra,dec,overlayState.objectW,overlayState.objectH,overlayState.objectRot),{color:'#f0c75e',lineWidth:2,fillColor:'rgba(240,199,94,.035)'}));
+      }
+      if(overlayState.showMoon&&Number.isFinite(overlayState.moonRa)&&Number.isFinite(overlayState.moonDec)){
+        const radius=Math.max(0.08,Math.min(1.2,initialFov*0.035));
+        moonOverlay.add(A.polygon(ellipsePolygon(overlayState.moonRa,overlayState.moonDec,radius,radius,0,48),{color:'#ffd66b',lineWidth:3,fillColor:'rgba(255,214,107,.18)'}));
+        moonOverlay.add(A.polyline([skyPoint(overlayState.moonRa,overlayState.moonDec,-radius*1.7,0),skyPoint(overlayState.moonRa,overlayState.moonDec,radius*1.7,0)],{color:'#ffd66b',lineWidth:2}));
+        moonOverlay.add(A.polyline([skyPoint(overlayState.moonRa,overlayState.moonDec,0,-radius*1.7),skyPoint(overlayState.moonRa,overlayState.moonDec,0,radius*1.7)],{color:'#ffd66b',lineWidth:2}));
       }
     }catch(e){console.warn('Overlay konnte nicht gezeichnet werden',e)}};
     const angleDistance=(ra1,dec1,ra2,dec2)=>{const r=Math.PI/180,d1=dec1*r,d2=dec2*r,dr=(ra1-ra2)*r;return Math.acos(Math.max(-1,Math.min(1,Math.sin(d1)*Math.sin(d2)+Math.cos(d1)*Math.cos(d2)*Math.cos(dr))))/r};

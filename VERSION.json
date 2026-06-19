@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.9",
+  "version": "1.0.0-test.11",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 6,
   "releasedAt": "2026-06-18",
-  "notes": "Korrekturrunde 9: deutlich erkennbare dunkle Topografiekarte unter transparenten Wolkenfeldern; zuschaltbare Niederschlags-, Regen- und Schneedarstellung; orange Wolkenanteile an den Prognosepunkten; stabilere Karteninitialisierung; funktionierendes Zentrieren des Kamerarahmens auf die aktuelle Aladin-Bildmitte; automatische Katalogausrichtung der Objektellipse beim ersten Öffnen; verständlicher Rücksetzbutton; Aufklapp-Pfeile links."
+  "notes": "Korrekturrunde 10: Sprachumschalter 🌐 DE | EN mit Browser-Spracherkennung beim ersten Start; gespeicherte Sprachauswahl; deutsch- und englischsprachige browserbasierte Hilfe sowie PDF-Handbücher; Hilfe-/Handbuchlinks folgen der aktiven Sprache; erweiterte praxisorientierte Dokumentation mit Handlungsempfehlungen, Beispielen und Begründungen."
 }

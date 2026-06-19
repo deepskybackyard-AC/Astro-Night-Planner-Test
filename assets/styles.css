@@ -388,3 +388,22 @@ button.save-success,button.save-success:disabled{opacity:1;background:linear-gra
   .cloud-phenomena{width:100%;justify-content:center;border-left:0;padding-left:0}
   .cloud-value-legend{border-left:0;padding-left:0}
 }
+
+/* Version 1.0 – Testkorrektur 10: Sprachumschalter DE/EN */
+.language-switch{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(121,184,255,.28);border-radius:999px;background:rgba(7,17,31,.62);padding:4px 7px;color:var(--muted);font-size:.78rem;font-weight:800;white-space:nowrap}
+.language-switch button{min-width:34px;min-height:28px;padding:3px 7px;border:0;background:transparent;color:var(--muted);border-radius:999px;box-shadow:none}
+.language-switch button:hover{transform:none;background:rgba(121,184,255,.12);color:var(--text)}
+.language-switch button.active{background:var(--accent);color:#06101b}
+html[data-language="en"] .language-switch button[data-language="en"],html[data-language="de"] .language-switch button[data-language="de"]{background:var(--accent);color:#06101b}
+.help-language-note{margin-top:10px;color:var(--muted);font-size:.82rem}
+/* Test 11: settings subtabs and extended filters */
+.settings-tabs.subtabs{margin:0 0 16px 0;overflow-x:auto;display:flex;gap:8px;padding-bottom:4px}
+.settings-tabs.subtabs button{white-space:nowrap}
+.subtab-panel{display:none}
+.subtab-panel.active{display:block}
+.inline-select{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.settings-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;border:1px solid rgba(146,189,233,.22);border-radius:12px;padding:12px;margin:10px 0;background:rgba(5,18,32,.35)}
+.object-detail-header .data-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button.active,[data-toggle-target].active{border-color:#ffd66b;color:#ffd66b}
+.moon-note{color:#ffd66b}
+.target-list{display:grid;gap:14px;margin-top:16px}.target-row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(120px,160px) minmax(140px,180px);gap:12px;align-items:start;border:1px solid rgba(144,190,230,.22);border-radius:14px;background:rgba(7,21,36,.55);padding:14px}.target-row .target-main{grid-column:1/-1;display:grid;gap:4px}.target-row textarea{min-height:58px;resize:vertical}.target-row .danger{align-self:end}@media(max-width:900px){.target-row{grid-template-columns:1fr}.target-row .target-main{grid-column:auto}}
