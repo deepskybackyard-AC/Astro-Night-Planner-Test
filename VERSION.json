@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.11",
+  "version": "1.0.0-test.12",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
-  "schemaVersion": 6,
-  "releasedAt": "2026-06-18",
-  "notes": "Korrekturrunde 10: Sprachumschalter 🌐 DE | EN mit Browser-Spracherkennung beim ersten Start; gespeicherte Sprachauswahl; deutsch- und englischsprachige browserbasierte Hilfe sowie PDF-Handbücher; Hilfe-/Handbuchlinks folgen der aktiven Sprache; erweiterte praxisorientierte Dokumentation mit Handlungsempfehlungen, Beispielen und Begründungen."
+  "schemaVersion": 7,
+  "releasedAt": "2026-06-19",
+  "notes": "Korrekturrunde 12: stabilisierte Meine-Aufnahmeziele-Suche mit Dialog, Fehler framingStatusLabel behoben, direkte Aufnahmeziel-Aktion in der Objektliste, kompakteres Filterlayout, klare Objekttyp-Logik, Objektlisten-Konfiguration ohne übergeordnete Aufklapp-Rubrik und erweiterte englische UI-Texte."
 }

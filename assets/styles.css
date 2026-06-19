@@ -407,3 +407,17 @@ html[data-language="en"] .language-switch button[data-language="en"],html[data-l
 button.active,[data-toggle-target].active{border-color:#ffd66b;color:#ffd66b}
 .moon-note{color:#ffd66b}
 .target-list{display:grid;gap:14px;margin-top:16px}.target-row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(120px,160px) minmax(140px,180px);gap:12px;align-items:start;border:1px solid rgba(144,190,230,.22);border-radius:14px;background:rgba(7,21,36,.55);padding:14px}.target-row .target-main{grid-column:1/-1;display:grid;gap:4px}.target-row textarea{min-height:58px;resize:vertical}.target-row .danger{align-self:end}@media(max-width:900px){.target-row{grid-template-columns:1fr}.target-row .target-main{grid-column:auto}}
+
+/* Test 12: stabilere Aufnahmeziele, kompaktere Filter und statische Objektlisten-Konfiguration */
+.filter-main-grid{grid-template-columns:minmax(260px,1.5fr) repeat(3,minmax(120px,.75fr));align-items:end}
+.filter-search-field input{max-width:none}
+.numeric-compact input[type=number], .filters label.numeric-compact input[type=number], .settings-row input[type=number]{width:14ch;max-width:100%}
+.size-filter-row{display:grid;grid-template-columns:minmax(280px,2fr) repeat(4,minmax(96px,.55fr));gap:12px;align-items:end;margin-top:12px}
+.size-profile-field select{max-width:none}.surface-filter-grid{grid-template-columns:minmax(180px,360px)}
+.filter-action-row{display:flex;justify-content:flex-end;margin-top:14px}.filter-action-row button{min-width:190px}
+.target-inline-button{margin-top:8px;padding:6px 9px;font-size:.78rem;min-height:32px}.target-inline-button.active{background:#322910}
+.display-config-selector.static{margin-top:16px;border-top:1px solid rgba(121,184,255,.18);padding-top:14px}.display-config-selector.static .section-title-row{align-items:end}.display-config-selector.static .section-title-row label{min-width:min(360px,100%)}
+.target-search-dialog{width:min(760px,calc(100% - 28px));max-height:min(86vh,880px);padding:0;color:var(--text);border:1px solid var(--line);border-radius:18px;background:#0a1624;box-shadow:0 26px 80px rgba(0,0,0,.62)}
+.target-search-dialog::backdrop{background:rgba(0,4,10,.78);backdrop-filter:blur(4px)}.target-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.target-search-results{display:grid;gap:8px;margin-top:12px}.target-search-result{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:3px;width:100%;background:#0a1b2d}.target-search-result span{font-size:.78rem;color:var(--muted)}
+@media(max-width:980px){.filter-main-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.size-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.size-profile-field{grid-column:1/-1}}
+@media(max-width:720px){.filter-main-grid,.size-filter-row,.surface-filter-grid{grid-template-columns:1fr}.numeric-compact input[type=number],.filters label.numeric-compact input[type=number]{width:100%;max-width:none}.filter-action-row{justify-content:stretch}.filter-action-row button{width:100%}.target-search-row{grid-template-columns:1fr}}
