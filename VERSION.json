@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.12",
+  "version": "1.0.0-test.13",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 7,
   "releasedAt": "2026-06-19",
-  "notes": "Korrekturrunde 12: stabilisierte Meine-Aufnahmeziele-Suche mit Dialog, Fehler framingStatusLabel behoben, direkte Aufnahmeziel-Aktion in der Objektliste, kompakteres Filterlayout, klare Objekttyp-Logik, Objektlisten-Konfiguration ohne übergeordnete Aufklapp-Rubrik und erweiterte englische UI-Texte."
+  "notes": "Korrekturrunde 13: übersichtlicheres Filterlayout mit Beschriftungen oberhalb der Felder, kompaktere Zahlenfelder, erweitertes Filtern von Meine Aufnahmeziele, größeres Notizfeld, kleinere Prioritäts-/Statusfelder, Referenzlink-Öffnen und sichtbarer Speicherbutton je Aufnahmeziel."
 }
