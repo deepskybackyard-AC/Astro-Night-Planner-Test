@@ -1,7 +1,7 @@
 {
   "name": "astro-night-planner",
   "private": true,
-  "version": "1.0.0-test.15",
+  "version": "1.0.0-test.16",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

@@ -500,3 +500,10 @@ label>input,label>select,label>textarea{display:block}
 #openAladinExternal{min-width:220px}.framing-controls label:has(#aladinSurveySelect){min-width:230px}
 @media(max-width:900px){.filter-main-grid,.size-filter-row{grid-template-columns:1fr 1fr}.filter-area-search,.filter-area-basis,.size-profile-field{grid-column:1/-1}.numeric-compact input{max-width:100%}.setup-row{grid-template-columns:1fr}}
 .comparison-frame-picker{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#081726}.comparison-frame-picker>span{font-weight:800;color:#a9c7e9;margin-right:6px}.comparison-frame-picker .chip{margin:0}
+.aladin-survey-settings{overflow:hidden}
+.aladin-survey-list{display:grid;gap:8px;margin-top:12px}
+.survey-config-row{display:grid;grid-template-columns:auto minmax(140px,1.1fr) minmax(220px,1.5fr) minmax(130px,.9fr) auto;gap:8px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(5,14,24,.35)}
+.survey-config-row label{margin:0}
+.survey-config-row input[readonly]{opacity:.78}
+@media(max-width:980px){.survey-config-row{grid-template-columns:1fr 1fr}.survey-config-row .chip{align-self:center}}
+@media(max-width:620px){.survey-config-row{grid-template-columns:1fr}}
