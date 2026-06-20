@@ -486,3 +486,17 @@ label>input,label>select,label>textarea{display:block}
     grid-template-areas:"search" "score" "mag" "surface" "altitude" "visible" "basis" "moon";
   }
 }
+
+/* Test 15: Filter-Tabs, Setup-Kombinationen und Aladin-Erweiterungen */
+.filter-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.filter-tabs button{border:1px solid var(--line);background:#0b1a2a;color:var(--muted);border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer}
+.filter-tabs button.active{background:#173756;color:#f0c75e;border-color:#4387c9;box-shadow:0 0 0 1px rgba(67,135,201,.25) inset}
+.filter-tab-panel{display:none;margin-top:12px}
+.filter-tab-panel.active{display:block}
+.filter-main-grid{align-items:start;grid-template-columns:minmax(260px,2fr) repeat(4,minmax(110px,.42fr));gap:18px 22px}
+.filter-main-grid label{align-self:start}.filter-main-grid input,.filter-main-grid select{margin-top:6px}.numeric-compact input{max-width:140px}.filter-area-search input{max-width:none}.filter-area-basis{grid-column:span 2}.filter-area-basis select{max-width:520px}.size-filter-row{display:grid;grid-template-columns:minmax(280px,2fr) repeat(4,minmax(110px,.36fr));gap:16px 20px;align-items:start;margin-top:16px}.size-profile-field select{max-width:none}.filter-action-row{display:flex;justify-content:flex-end;margin-top:18px;padding-top:12px;border-top:1px solid rgba(80,116,150,.25)}
+.setup-row{grid-template-columns:minmax(180px,1.3fr) minmax(160px,1fr) minmax(160px,1fr) minmax(160px,1fr) auto auto}
+.moon-event-value{font-size:clamp(1rem,1.7vw,1.7rem)}
+#openAladinExternal{min-width:220px}.framing-controls label:has(#aladinSurveySelect){min-width:230px}
+@media(max-width:900px){.filter-main-grid,.size-filter-row{grid-template-columns:1fr 1fr}.filter-area-search,.filter-area-basis,.size-profile-field{grid-column:1/-1}.numeric-compact input{max-width:100%}.setup-row{grid-template-columns:1fr}}
+.comparison-frame-picker{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#081726}.comparison-frame-picker>span{font-weight:800;color:#a9c7e9;margin-right:6px}.comparison-frame-picker .chip{margin:0}
