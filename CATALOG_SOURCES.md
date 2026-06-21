@@ -12,6 +12,17 @@ Fehlende Werte werden in der App nicht künstlich ergänzt. Die Datei `src/data/
 
 Falls diese Quelldatei nicht vorhanden ist, versucht Version 1.0 den Katalog aus dem öffentlichen Haupt-Repository zu laden und verwendet bei Nichterreichbarkeit einen kleinen integrierten Basiskatalog.
 
+
+## Test 1.0.1 Ergänzung: LDN-Katalog
+
+Ab Version `1.0.1-test.1` enthält der lokale Objektkatalog 1787 benannte Einträge aus Lynds' Catalogue of Dark Nebulae (LDN). Die Datenbasis stammt aus dem HEASARC/CDS/VizieR-LDN-Katalog `VII/7A`; die importierten Zeilen enthalten Objektzentrum, galaktische Koordinaten, Flächenangabe und Opazitätsklasse. Für die Planung nutzt die App das Objektzentrum und berechnet aus der Flächenangabe einen äquivalenten Kreis-Durchmesser in Bogenminuten. Dieser Wert ist eine praktische Rahmungs- und Filterhilfe, keine exakte morphologische Objektgrenze.
+
+Importiert wurden benannte `LDN`-Objekte. Die vier im HEASARC-Hinweis erwähnten unbenannten `NN`-Objekte, LBN-Objekte und Barnard-Cross-IDs sind in diesem Import noch nicht als eigene Katalogobjekte berücksichtigt. Die bestehende Filteroption `LDN/LBN` findet in dieser Testversion daher die LDN-Einträge; LBN bleibt für eine spätere Katalogergänzung vorgemerkt.
+
+Quellen:
+- NASA HEASARC LDN description: https://heasarc.gsfc.nasa.gov/W3Browse/nebula-catalog/ldn.html
+- CDS/VizieR VII/7A LDN catalogue: https://cdsarc.cds.unistra.fr/viz-bin/cat/VII/7A
+
 ## Kuratierte Objektumrisse
 
 Ab Testversion 1.0.0-test.16 kann die Aladin-Ansicht kuratierte Objektumrisse aus lokalen Koordinatenpolygondaten verwenden. Diese Umrisse sind Planungs- und Orientierungshilfen und keine wissenschaftlichen Grenzdefinitionen. Sie werden manuell aus öffentlich sichtbaren Himmelsbilddarstellungen in der App/Aladin-Ansicht kuratiert; eine ungeprüfte Übernahme fremder Stellarium-/Katalogdaten erfolgt nicht.

@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.23",
-  "release": "1.0",
+  "version": "1.0.1-test.1",
+  "release": "1.0.1",
   "environment": "test",
   "repositoryRole": "test",
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "releasedAt": "2026-06-21",
-  "notes": "Korrekturrunde 23: Mondanzeige in Aladin pixelstabil und exakt an die berechnete Mondposition gekoppelt; neuer Button zum Zurücksetzen ausschließlich der Basisfilter."
+  "notes": "Test 1 für Version 1.0.1: Hauptnavigation in die feste Titelzeile verschoben; LDN-Katalog mit 1787 benannten Lynds-Dunkelnebeln ergänzt."
 }

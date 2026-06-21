@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.0 – expliziter Test-Cache */
+/* Astro Night Planner 1.0.1 – expliziter Test-Cache */
 'use strict';
 const ENV = 'test';
-const VERSION = '1.0.0-test.23';
+const VERSION = '1.0.1-test.1';
 const CACHE_NAME = `astro-night-planner-${ENV}-${VERSION}`;
 const CORE = [
   './', './index.html', './manifest.webmanifest', './VERSION.json', './icon.svg', './icon-192.png', './icon-512.png',
