@@ -569,3 +569,10 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .filter-area-basis{min-width:min(100%,620px)}
 .filter-area-basis .basis-duration-hint{white-space:nowrap;max-width:none}
 @media(max-width:720px){.filter-area-basis .basis-duration-hint{white-space:normal}}
+
+/* Testversion 23: Basisfilter-Reset und stabilere Aktionszeile */
+.filter-action-row{align-items:center;gap:10px;flex-wrap:wrap}
+.filter-action-row .secondary{background:#102235;border-color:#45688a;color:#dcecff}
+.filter-action-row .secondary:hover{background:#17304a}
+.filter-reset-feedback{margin-top:10px}
+@media(max-width:720px){.filter-action-row{justify-content:stretch}.filter-action-row button{width:100%}}

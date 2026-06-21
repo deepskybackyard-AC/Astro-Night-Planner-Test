@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.22",
+  "version": "1.0.0-test.23",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 7,
   "releasedAt": "2026-06-21",
-  "notes": "Korrekturrunde 22: Mondanzeige in Aladin als dynamisches Phasensymbol mit Beschriftung, einzeiliger Hinweis zur Basis der Mindestdauer und ausgeblendete Zahlenfeld-Pfeile in Firefox."
+  "notes": "Korrekturrunde 23: Mondanzeige in Aladin pixelstabil und exakt an die berechnete Mondposition gekoppelt; neuer Button zum Zurücksetzen ausschließlich der Basisfilter."
 }
