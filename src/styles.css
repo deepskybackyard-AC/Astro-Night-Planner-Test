@@ -526,3 +526,16 @@ label>input,label>select,label>textarea{display:block}
 .object-row .wiki-inline-button:hover{background:#173756;color:#fff;border-color:#7caee5}
 @media(max-width:1100px){.filter-main-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"score mag surface" "altitude visible moon" "basis basis basis"}.location-add-search-row{grid-template-columns:1fr 1fr}.location-add-search-row .inline{justify-content:flex-start}}
 @media(max-width:720px){.filter-main-grid{grid-template-columns:1fr;grid-template-areas:"score" "mag" "surface" "altitude" "visible" "moon" "basis"}.filter-search-bottom-row .filter-search-field{width:100%}.location-add-search-row{grid-template-columns:1fr}}
+
+/* Test 20: klarere Disclosure-Pfeile, ausgerichtete Basisfilter und Wikipedia-Spalte */
+.disclosure-arrow::before{content:'▼';display:inline-block;margin-right:8px;color:var(--accent);font-weight:900;transition:transform .18s ease}
+details:not([open]) > summary .disclosure-arrow::before{transform:rotate(-90deg)}
+.aladin-survey-settings>summary,.display-column-config>summary{cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none}
+.aladin-survey-settings>summary::-webkit-details-marker,.display-column-config>summary::-webkit-details-marker{display:none}
+.filter-main-grid label{display:grid;grid-template-rows:2.5em 48px minmax(1.3em,auto);align-content:start;gap:6px;min-height:108px}
+.filter-main-grid .field-label{display:block;line-height:1.18;min-height:2.35em;color:var(--muted)}
+.filter-main-grid label>input,.filter-main-grid label>select{margin-top:0!important;height:44px;align-self:start}
+.filter-main-grid label>.small{line-height:1.25;min-height:1.25em}
+.wiki-cell{text-align:center;width:56px}.object-table th:nth-child(3),.object-table td.wiki-cell{white-space:nowrap}
+.wiki-inline-button{font-family:Georgia,serif;font-weight:900}
+@media(max-width:900px){.filter-main-grid label{min-height:auto;grid-template-rows:auto 46px auto}.filter-main-grid .field-label{min-height:auto}}

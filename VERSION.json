@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.19",
+  "version": "1.0.0-test.20",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 7,
   "releasedAt": "2026-06-21",
-  "notes": "Korrekturrunde 19: Standortdialog Variante A, Suchfeld unten im Basisfilter, Aladin-Popup ohne Schließen, erweiterte Objektinfos, reparierte Umrisszeichnung, Survey-Liste einklappbar."
+  "notes": "Korrekturrunde 20: sichtbare Disclosure-Pfeile, ausgerichtete Basisfilter, Wikipedia-Spalte, bereinigte Objektbezeichnungen/Wikipedia-Suche, Popup-Schließen und robuste Speicherung/Laden/Löschen eigener Objektumrisse."
 }
