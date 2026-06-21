@@ -28,9 +28,9 @@
   (()=>{
     const params=new URLSearchParams(location.search),ra=Number(params.get('ra')),dec=Number(params.get('dec')),initialFov=Math.max(.02,Number(params.get('fov'))||2),survey=params.get('survey')||'P/DSS2/color',catalogRot=Number(params.get('catalogRot')),external=params.get('external')==='1',lang=params.get('lang')==='en'?'en':'de',dbName=params.get('dbName')||'astro-night-planner-test-v1';document.documentElement.lang=lang;
     const loading=document.getElementById('loading'),error=document.getElementById('error');
-    let viewer=null,frameOverlay=null,comparisonOverlay=null,objectOverlay=null,moonOverlay=null,measureOverlay=null,outlineDrawingOverlay=null,labelCatalog=null,catalogRows=[],labelTimer=null,lastViewKey='',frameCenter={ra,dec};
+    let viewer=null,frameOverlay=null,comparisonOverlay=null,objectOverlay=null,moonOverlay=null,measureOverlay=null,outlineDrawingOverlay=null,labelCatalog=null,moonLabelCatalog=null,catalogRows=[],labelTimer=null,lastViewKey='',frameCenter={ra,dec};
     let userOutlinePolygons=null,selectedCatalogObject=null;
-    let overlayState={frameW:Number(params.get('frameW'))||0,frameH:Number(params.get('frameH'))||0,frameRot:Number(params.get('frameRot'))||0,showFrame:params.get('showFrame')==='true',objectW:Number(params.get('objectW'))||0,objectH:Number(params.get('objectH'))||0,objectRot:Number(params.get('objectRot'))||0,showObject:params.get('showObject')==='true',showLabels:params.get('showLabels')!=='false',labelDetail:params.get('labelDetail')||'auto',targetId:params.get('targetId')||'',targetName:params.get('targetName')||'',showMoon:params.get('showMoon')==='true',moonRa:Number(params.get('moonRa')),moonDec:Number(params.get('moonDec')),moonLabel:params.get('moonLabel')||'Mond',outlinePolygons:null,outlineSource:params.get('outlineSource')||'',comparisonFrames:[]};
+    let overlayState={frameW:Number(params.get('frameW'))||0,frameH:Number(params.get('frameH'))||0,frameRot:Number(params.get('frameRot'))||0,showFrame:params.get('showFrame')==='true',objectW:Number(params.get('objectW'))||0,objectH:Number(params.get('objectH'))||0,objectRot:Number(params.get('objectRot'))||0,showObject:params.get('showObject')==='true',showLabels:params.get('showLabels')!=='false',labelDetail:params.get('labelDetail')||'auto',targetId:params.get('targetId')||'',targetName:params.get('targetName')||'',showMoon:params.get('showMoon')==='true',moonRa:Number(params.get('moonRa')),moonDec:Number(params.get('moonDec')),moonLabel:params.get('moonLabel')||'Mond',moonName:params.get('moonName')||(lang==='en'?'Moon':'Mond'),moonIllumination:Number(params.get('moonIllumination')),moonAge:Number(params.get('moonAge')),moonWaxing:params.get('moonWaxing')==='true',outlinePolygons:null,outlineSource:params.get('outlineSource')||'',comparisonFrames:[]};
     try{overlayState.outlinePolygons=JSON.parse(params.get('outlinePolygons')||'null')}catch{}
     try{overlayState.comparisonFrames=JSON.parse(params.get('comparisonFrames')||'[]')}catch{}
     const fail=message=>{loading.style.display='none';error.textContent=`Aladin Lite konnte nicht geladen werden: ${message}`;error.style.display='block'};
@@ -79,6 +79,20 @@
     const axes=angle=>{const rad=angle*Math.PI/180;return{ux:Math.sin(rad),uy:Math.cos(rad),vx:Math.cos(rad),vy:-Math.sin(rad)}};
     const rectangle=(centerRa,centerDec,width,height,rotation)=>{const {ux,uy,vx,vy}=axes(rotation),hw=width/2,hh=height/2;return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([su,sv])=>skyPoint(centerRa,centerDec,su*hw*ux+sv*hh*vx,su*hw*uy+sv*hh*vy))};
     const ellipsePolygon=(centerRa,centerDec,width,height,rotation,steps=120)=>{const {ux,uy,vx,vy}=axes(rotation),a=width/2,b=height/2,points=[];for(let index=0;index<steps;index++){const angle=2*Math.PI*index/steps,u=a*Math.cos(angle),v=b*Math.sin(angle);points.push(skyPoint(centerRa,centerDec,u*ux+v*vx,u*uy+v*vy))}return points};
+    const moonPhasePolygon=(centerRa,centerDec,radius,illumination,waxing)=>{
+      const k=Math.max(0,Math.min(1,(Number.isFinite(Number(illumination))?Number(illumination):50)/100));
+      const dir=waxing?1:-1,points=[],steps=64;
+      if(k>.985)return ellipsePolygon(centerRa,centerDec,radius*2,radius*2,0,96);
+      if(k<.015){
+        const thin=.08;
+        for(let i=0;i<=steps;i++){const y=-1+2*i/steps,x=dir*Math.sqrt(Math.max(0,1-y*y));points.push(skyPoint(centerRa,centerDec,x*radius,y*radius))}
+        for(let i=steps;i>=0;i--){const y=-1+2*i/steps,x=dir*(1-thin)*Math.sqrt(Math.max(0,1-y*y));points.push(skyPoint(centerRa,centerDec,x*radius,y*radius))}
+        return points;
+      }
+      for(let i=0;i<=steps;i++){const y=-1+2*i/steps,x=dir*Math.sqrt(Math.max(0,1-y*y));points.push(skyPoint(centerRa,centerDec,x*radius,y*radius))}
+      for(let i=steps;i>=0;i--){const y=-1+2*i/steps,x=dir*(1-2*k)*Math.sqrt(Math.max(0,1-y*y));points.push(skyPoint(centerRa,centerDec,x*radius,y*radius))}
+      return points;
+    };
     const clearOverlay=overlay=>{try{overlay?.removeAll?.()}catch{}};
     const smoothClosedPolyline=points=>{const clean=sanitizePolygon(points);if(clean.length<4)return clean;const out=[];const n=clean.length;for(let i=0;i<n;i++){const p0=clean[(i-1+n)%n],p1=clean[i],p2=clean[(i+1)%n],p3=clean[(i+2)%n];for(let step=0;step<10;step++){const t=step/10,t2=t*t,t3=t2*t;const ra=.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3);const dec=.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3);if(Number.isFinite(ra)&&Number.isFinite(dec))out.push([ra,dec])}}return out.length>=3?out:clean};
     const redraw=()=>{if(!viewer||!window.A)return;try{
@@ -86,9 +100,10 @@
       if(!comparisonOverlay){comparisonOverlay=A.graphicOverlay({name:'Vergleichsrahmen',color:'#ffcf5a',lineWidth:2});viewer.addOverlay(comparisonOverlay)}
       if(!objectOverlay){objectOverlay=A.graphicOverlay({name:'Objektgröße',color:'#f0c75e',lineWidth:2});viewer.addOverlay(objectOverlay)}
       if(!moonOverlay){moonOverlay=A.graphicOverlay({name:'Mond',color:'#ffd66b',lineWidth:2});viewer.addOverlay(moonOverlay)}
+      if(!moonLabelCatalog){moonLabelCatalog=A.catalog({name:'Mondbeschriftung',sourceSize:0,color:'#ffd66b',displayLabel:true,labelColumn:'label',labelColor:'#ffd66b',labelFont:'bold 13px sans-serif'});viewer.addCatalog(moonLabelCatalog)}
       if(!measureOverlay){measureOverlay=A.graphicOverlay({name:'Messlinie',color:'#ffd66b',lineWidth:3});viewer.addOverlay(measureOverlay)}
       if(!outlineDrawingOverlay){outlineDrawingOverlay=A.graphicOverlay({name:'Umrisszeichnung',color:'#4da3ff',lineWidth:3});viewer.addOverlay(outlineDrawingOverlay)}
-      clearOverlay(frameOverlay);clearOverlay(comparisonOverlay);clearOverlay(objectOverlay);clearOverlay(moonOverlay);clearOverlay(measureOverlay);clearOverlay(outlineDrawingOverlay);
+      clearOverlay(frameOverlay);clearOverlay(comparisonOverlay);clearOverlay(objectOverlay);clearOverlay(moonOverlay);clearOverlay(measureOverlay);clearOverlay(outlineDrawingOverlay);try{moonLabelCatalog?.removeAll?.()}catch{}
       if(overlayState.showFrame&&overlayState.frameW>0&&overlayState.frameH>0)frameOverlay.add(A.polygon(rectangle(frameCenter.ra,frameCenter.dec,overlayState.frameW,overlayState.frameH,overlayState.frameRot),{color:'#67cbff',lineWidth:2,fillColor:'rgba(40,183,215,.08)'}));
       if(Array.isArray(overlayState.comparisonFrames))overlayState.comparisonFrames.slice(0,3).forEach(item=>{if(Number(item.width)>0&&Number(item.height)>0)comparisonOverlay.add(A.polygon(rectangle(frameCenter.ra,frameCenter.dec,Number(item.width),Number(item.height),Number(item.rotation)||0),{color:item.color||'#ffcf5a',lineWidth:2,fillColor:'rgba(255,207,90,.035)'}))});
       if(overlayState.showObject){
@@ -101,10 +116,11 @@
         }
       }
       if(overlayState.showMoon&&Number.isFinite(overlayState.moonRa)&&Number.isFinite(overlayState.moonDec)){
-        const radius=Math.max(0.08,Math.min(1.2,initialFov*0.035));
-        moonOverlay.add(A.polygon(ellipsePolygon(overlayState.moonRa,overlayState.moonDec,radius,radius,0,48),{color:'#ffd66b',lineWidth:3,fillColor:'rgba(255,214,107,.18)'}));
-        moonOverlay.add(A.polyline([skyPoint(overlayState.moonRa,overlayState.moonDec,-radius*1.7,0),skyPoint(overlayState.moonRa,overlayState.moonDec,radius*1.7,0)],{color:'#ffd66b',lineWidth:2}));
-        moonOverlay.add(A.polyline([skyPoint(overlayState.moonRa,overlayState.moonDec,0,-radius*1.7),skyPoint(overlayState.moonRa,overlayState.moonDec,0,radius*1.7)],{color:'#ffd66b',lineWidth:2}));
+        const radius=Math.max(0.10,Math.min(1.25,initialFov*0.04)),illum=Number(overlayState.moonIllumination),age=Number(overlayState.moonAge),waxing=Number.isFinite(age)?age<14.765294335:Boolean(overlayState.moonWaxing);
+        moonOverlay.add(A.polygon(ellipsePolygon(overlayState.moonRa,overlayState.moonDec,radius*2,radius*2,0,96),{color:'#ffd66b',lineWidth:2.6,fillColor:'rgba(2,6,12,.74)'}));
+        moonOverlay.add(A.polygon(moonPhasePolygon(overlayState.moonRa,overlayState.moonDec,radius,illum,waxing),{color:'#fff1a8',lineWidth:1.2,fillColor:'rgba(255,238,157,.86)'}));
+        const labelPoint=skyPoint(overlayState.moonRa,overlayState.moonDec,radius*2.35,-radius*.25),label=String(overlayState.moonName||(lang==='en'?'Moon':'Mond'));
+        try{moonLabelCatalog?.addSources?.([A.source(labelPoint[0],labelPoint[1],{label})])}catch{}
       }
       if(typeof drawMeasure==='function')drawMeasure();
       if(typeof drawOutlineDrawing==='function')drawOutlineDrawing();
