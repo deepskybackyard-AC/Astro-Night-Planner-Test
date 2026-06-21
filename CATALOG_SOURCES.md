@@ -27,4 +27,21 @@ Weitere Umrisse werden nur ergänzt, wenn Herkunft, fachliche Plausibilität und
 
 Aladin-Lite-Surveys werden als externe HiPS-Datensätze über die jeweilige HiPS-ID genutzt. Die Survey-Auswahl der App kann in den Einstellungen konfiguriert und um eigene HiPS-IDs ergänzt werden. Für die rechtliche Bewertung gelten die Nutzungs- und Lizenzbedingungen der jeweiligen Survey-Anbieter sowie die Hinweise von CDS/Aladin Lite.
 
-Ab Testversion 1.0.0-test.17 erzwingt die App keine künstliche Farbskala für Aladin-Surveys. Monochrome Surveys wie DSS2 red oder DSS2 blue werden in der nativen Aladin-Darstellung geladen; farbige Surveys erscheinen nur dann farbig, wenn der Anbieter selbst einen Farbsurvey oder eine Farbkombination bereitstellt. Bei eigenen HiPS-IDs ist der Anwender dafür verantwortlich, die jeweilige Datenquelle und deren Nutzungshinweise zu prüfen.
+Ab Testversion 1.0.0-test.18 erzwingt die App keine künstliche Farbskala für Aladin-Surveys. Monochrome Surveys wie DSS2 red oder DSS2 blue werden in der nativen Aladin-Darstellung geladen; farbige Surveys erscheinen nur dann farbig, wenn der Anbieter selbst einen Farbsurvey oder eine Farbkombination bereitstellt. Bei eigenen HiPS-IDs ist der Anwender dafür verantwortlich, die jeweilige Datenquelle und deren Nutzungshinweise zu prüfen.
+
+## Test 18 Ergänzung: Northern Sky Narrowband Survey (NSNS)
+
+Für die Aladin-Survey-Auswahl werden zusätzlich HiPS-Einträge der Northern Sky Narrowband Survey (NSNS DR0.2) vorbereitet. Die ersten vier Einträge sind in der Standardauswahl aktiv:
+
+- NSNS DR0.2 · H-alpha — `simg.de/P/NSNS/DR0_2/halpha8`
+- NSNS DR0.2 · OIII — `simg.de/P/NSNS/DR0_2/oiii8`
+- NSNS DR0.2 · SII — `simg.de/P/NSNS/DR0_2/sii8`
+- NSNS DR0.2 · OIII/H-alpha/SII — `simg.de/P/NSNS/DR0_2/ohs8`
+- NSNS DR0.2 · H-alpha + Kontinuum — `simg.de/P/NSNS/DR0_2/hbr8`
+- NSNS DR0.2 · RGB-Kontinuum — `simg.de/P/NSNS/DR0_2/rgb8`
+
+Lizenz- und Quellenhinweise sind in der Hilfe und im Handbuch zu dokumentieren. Benutzerdefinierte HiPS-Surveys werden vom Nutzer selbst eingetragen; für deren Nutzbarkeit und Lizenzlage ist die jeweilige Quelle maßgeblich.
+
+## Test 18 Ergänzung: Nutzergezeichnete Objektumrisse
+
+Mitgelieferte Beispielumrisse für NGC 7000 wurden entfernt. Objektumrisse entstehen künftig durch nutzerseitige Zeichnung im externen Aladin-Tab und werden lokal in IndexedDB gespeichert. Bei vorhandenen Einträgen werden sie automatisch angezeigt; sonst wird die Katalogellipse als Fallback genutzt.

@@ -1,10 +1,10 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.0-test.17",
+  "version": "1.0.0-test.18",
   "release": "1.0",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 7,
   "releasedAt": "2026-06-19",
-  "notes": "Korrekturrunde 17: native Aladin-Survey-Darstellung konsequent angewendet, DSS2 red/blue ohne künstliche Einfärbung, Hilfe und Handbuch mit Konfigurationsbeispielen zu Surveys, Setups, Vergleichsrahmen und Messwerkzeug erweitert."
+  "notes": "Korrekturrunde 18: NSNS-Surveys, Standortdialog, manuelle Umrisszeichnung, anklickbare Aladin-Objekte, Wikipedia-Funktion und erweiterte Hilfe."
 }
