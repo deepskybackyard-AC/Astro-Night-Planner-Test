@@ -26,6 +26,21 @@
     try{overlayState.outlinePolygons=JSON.parse(params.get('outlinePolygons')||'null')}catch{}
     try{overlayState.comparisonFrames=JSON.parse(params.get('comparisonFrames')||'[]')}catch{}
     const fail=message=>{loading.style.display='none';error.textContent=`Aladin Lite konnte nicht geladen werden: ${message}`;error.style.display='block'};
+
+    const applyNativeSurveyRendering=(attempt=0)=>{
+      try{
+        const layer=viewer?.getBaseImageLayer?.();
+        if(layer){
+          // Use the survey provider's native rendering. For DSS2 red/blue this is grayscale in Aladin,
+          // even though the band name contains a color. Prefer JPEG tiles where available because they
+          // carry the native preview colors used by Aladin's survey browser.
+          try{layer.setImageFormat?.('jpeg')}catch{}
+          try{layer.setColormap?.('native',{stretch:'linear',reversed:false})}catch{try{layer.setColormap?.('native')}catch{}}
+          try{layer.setAlpha?.(1)}catch{try{layer.setOpacity?.(1)}catch{}}
+        }
+      }catch(e){console.warn('Native Survey-Darstellung konnte nicht gesetzt werden',e)}
+      if(attempt<8)window.setTimeout(()=>applyNativeSurveyRendering(attempt+1),[80,180,360,700,1200,2000,3500,5500][attempt]||800);
+    };
     const skyPoint=(centerRa,centerDec,east,north)=>{const d2r=Math.PI/180,r2d=180/Math.PI,ra0=centerRa*d2r,dec0=centerDec*d2r,e=east*d2r,n=north*d2r,rho=Math.hypot(e,n);if(rho<1e-12)return[centerRa,centerDec];const bearing=Math.atan2(e,n),sinDec=Math.sin(dec0)*Math.cos(rho)+Math.cos(dec0)*Math.sin(rho)*Math.cos(bearing),outDec=Math.asin(Math.max(-1,Math.min(1,sinDec))),outRa=ra0+Math.atan2(Math.sin(bearing)*Math.sin(rho)*Math.cos(dec0),Math.cos(rho)-Math.sin(dec0)*Math.sin(outDec));return[((outRa*r2d)%360+360)%360,outDec*r2d]};
     const axes=angle=>{const rad=angle*Math.PI/180;return{ux:Math.sin(rad),uy:Math.cos(rad),vx:Math.cos(rad),vy:-Math.sin(rad)}};
     const rectangle=(centerRa,centerDec,width,height,rotation)=>{const {ux,uy,vx,vy}=axes(rotation),hw=width/2,hh=height/2;return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([su,sv])=>skyPoint(centerRa,centerDec,su*hw*ux+sv*hh*vx,su*hw*uy+sv*hh*vy))};
@@ -89,7 +104,7 @@
     window.addEventListener('message',event=>{if(event.origin!==location.origin)return;const type=event.data?.type;if(type==='anp-overlay'){overlayState={...overlayState,...event.data};if(typeof overlayState.outlinePolygons==='string'){try{overlayState.outlinePolygons=JSON.parse(overlayState.outlinePolygons||'null')}catch{overlayState.outlinePolygons=null}}if(typeof overlayState.comparisonFrames==='string'){try{overlayState.comparisonFrames=JSON.parse(overlayState.comparisonFrames||'[]')}catch{overlayState.comparisonFrames=[]}}redraw();lastViewKey='';scheduleLabels();return}if(type==='anp-center-frame'&&viewer){const center=viewCenter();if(center){frameCenter=center;redraw();window.setTimeout(redraw,80);parent.postMessage({type:'anp-frame-centered',ra:frameCenter.ra,dec:frameCenter.dec},location.origin)}else parent.postMessage({type:'anp-frame-center-error'},location.origin)}});
     if(!Number.isFinite(ra)||!Number.isFinite(dec)){fail('Ungültige Objektkoordinaten.');return}
     const loadCatalog=async()=>{try{const response=await fetch('assets/catalog.generated.json',{cache:'force-cache'});if(response.ok)catalogRows=parseCatalog(await response.json())}catch{}finally{scheduleLabels()}};
-    const start=()=>{try{viewer=A.aladin('#aladin-lite-div',{survey,target:`${ra} ${dec}`,fov:initialFov,projection:'TAN',cooFrame:'ICRS',showReticle:true,showZoomControl:true,showFullscreenControl:true,showLayersControl:true,showSimbadPointerControl:true,showCooGridControl:true,showShareControl:true,showGotoControl:true});if(Number.isFinite(catalogRot))overlayState.objectRot=catalogRot;const recenter=()=>{try{viewer.gotoRaDec(ra,dec);viewer.setFoV(initialFov);frameCenter={ra,dec};redraw();scheduleLabels();loading.style.display='none';parent.postMessage({type:'anp-aladin-ready'},location.origin)}catch(e){fail(e.message||String(e))}};setTimeout(recenter,180);setTimeout(()=>{redraw();scheduleLabels()},420);setTimeout(recenter,700);setTimeout(()=>{redraw();scheduleLabels()},1250);setInterval(scheduleLabels,500);loadCatalog()}catch(e){fail(e.message||String(e))}};
+    const start=()=>{try{viewer=A.aladin('#aladin-lite-div',{survey,target:`${ra} ${dec}`,fov:initialFov,projection:'TAN',cooFrame:'ICRS',showReticle:true,showZoomControl:true,showFullscreenControl:true,showLayersControl:true,showSimbadPointerControl:true,showCooGridControl:true,showShareControl:true,showGotoControl:true});applyNativeSurveyRendering();if(Number.isFinite(catalogRot))overlayState.objectRot=catalogRot;const recenter=()=>{try{viewer.gotoRaDec(ra,dec);viewer.setFoV(initialFov);applyNativeSurveyRendering(0);frameCenter={ra,dec};redraw();scheduleLabels();loading.style.display='none';parent.postMessage({type:'anp-aladin-ready'},location.origin)}catch(e){fail(e.message||String(e))}};setTimeout(recenter,180);setTimeout(()=>{redraw();scheduleLabels()},420);setTimeout(recenter,700);setTimeout(()=>{redraw();scheduleLabels()},1250);setInterval(scheduleLabels,500);loadCatalog()}catch(e){fail(e.message||String(e))}};
     if(window.A&&A.init&&typeof A.init.then==='function')A.init.then(start).catch(e=>fail(e.message||String(e)));else if(window.A)start();else fail('Bibliothek nicht verfügbar.');
   })();
   </script>

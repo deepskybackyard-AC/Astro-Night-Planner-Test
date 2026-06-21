@@ -12,21 +12,19 @@ Fehlende Werte werden in der App nicht künstlich ergänzt. Die Datei `src/data/
 
 Falls diese Quelldatei nicht vorhanden ist, versucht Version 1.0 den Katalog aus dem öffentlichen Haupt-Repository zu laden und verwendet bei Nichterreichbarkeit einen kleinen integrierten Basiskatalog.
 
-## Kuratierte Objektumrisse (ab 1.0.0-test.16)
+## Kuratierte Objektumrisse
 
-Die Datei/Funktion der kuratierten Objektumrisse wird bewusst klein gehalten. Erste Umrisse sind manuell für Planungszwecke skizziert und dienen nicht als wissenschaftliche Grenzdefinition. Grundlage ist die eigene visuelle Kuratierung anhand frei zugänglicher Himmelsbilddarstellungen in der App/Aladin-Ansicht; es werden keine Stellarium-Umrissdaten ungeprüft übernommen.
+Ab Testversion 1.0.0-test.16 kann die Aladin-Ansicht kuratierte Objektumrisse aus lokalen Koordinatenpolygondaten verwenden. Diese Umrisse sind Planungs- und Orientierungshilfen und keine wissenschaftlichen Grenzdefinitionen. Sie werden manuell aus öffentlich sichtbaren Himmelsbilddarstellungen in der App/Aladin-Ansicht kuratiert; eine ungeprüfte Übernahme fremder Stellarium-/Katalogdaten erfolgt nicht.
 
 Aktuell enthaltene Startobjekte:
 
-- NGC 7000 – Nordamerikanebel, ungefährer Planungsumriss
-- M42 – Orionnebel, ungefährer Planungsumriss
+- NGC 7000 - Nordamerikanebel, ungefährer Planungsumriss
+- M42 - Orionnebel, ungefährer Planungsumriss
 
 Weitere Umrisse werden nur ergänzt, wenn Herkunft, fachliche Plausibilität und Nutzungs-/Lizenzhinweise eindeutig dokumentiert werden können.
-
-## Kuratierte Objektumrisse
-
-Ab Testversion 1.0.0-test.16 kann die Aladin-Ansicht kuratierte Objektumrisse aus lokalen Koordinatenpolygondaten verwenden. Diese Umrisse sind Planungs- und Orientierungshilfen und keine wissenschaftlichen Grenzdefinitionen. Sie werden manuell aus öffentlich sichtbaren Himmelsbilddarstellungen kuratiert und in der App dokumentiert. Eine ungeprüfte Übernahme fremder Stellarium-/Katalogdaten erfolgt nicht. Für jede später erweiterte Umrissdatei sind Herkunft, Lizenzstatus und Kuratierungshinweise zu dokumentieren.
 
 ## Aladin-Surveys
 
 Aladin-Lite-Surveys werden als externe HiPS-Datensätze über die jeweilige HiPS-ID genutzt. Die Survey-Auswahl der App kann in den Einstellungen konfiguriert und um eigene HiPS-IDs ergänzt werden. Für die rechtliche Bewertung gelten die Nutzungs- und Lizenzbedingungen der jeweiligen Survey-Anbieter sowie die Hinweise von CDS/Aladin Lite.
+
+Ab Testversion 1.0.0-test.17 erzwingt die App keine künstliche Farbskala für Aladin-Surveys. Monochrome Surveys wie DSS2 red oder DSS2 blue werden in der nativen Aladin-Darstellung geladen; farbige Surveys erscheinen nur dann farbig, wenn der Anbieter selbst einen Farbsurvey oder eine Farbkombination bereitstellt. Bei eigenen HiPS-IDs ist der Anwender dafür verantwortlich, die jeweilige Datenquelle und deren Nutzungshinweise zu prüfen.
