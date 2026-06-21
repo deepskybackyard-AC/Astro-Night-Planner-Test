@@ -539,3 +539,25 @@ details:not([open]) > summary .disclosure-arrow::before{transform:rotate(-90deg)
 .wiki-cell{text-align:center;width:56px}.object-table th:nth-child(3),.object-table td.wiki-cell{white-space:nowrap}
 .wiki-inline-button{font-family:Georgia,serif;font-weight:900}
 @media(max-width:900px){.filter-main-grid label{min-height:auto;grid-template-rows:auto 46px auto}.filter-main-grid .field-label{min-height:auto}}
+
+/* Test 21: Direktsuche, aktive Suchfelder und kompaktere Zahlenfelder */
+.numeric-compact input[type=number],
+.filters label.numeric-compact input[type=number],
+.settings-row input[type=number]{width:8ch;min-width:7ch;max-width:8ch;text-align:right}
+.filter-main-grid{grid-template-columns:repeat(6,minmax(88px,max-content));gap:14px 16px;align-items:start}
+.filter-main-grid label{min-width:0}
+.filter-main-grid label>input,.filter-main-grid label>select{height:42px}
+.filter-main-grid .field-label{min-height:2.35em}
+.filter-main-grid label>.small{max-width:14ch}
+.filter-area-surface .small{max-width:17ch}
+.filter-area-basis{grid-column:1/-1;min-width:min(100%,520px)}
+.size-filter-row{grid-template-columns:minmax(260px,1.45fr) repeat(4,minmax(82px,max-content));gap:12px 14px;align-items:start;margin-top:16px}
+.size-filter-row label{min-width:0}.size-filter-row .size-profile-field{min-width:min(100%,340px)}
+.size-filter-row .numeric-compact{width:min-content}.size-filter-row .numeric-compact input[type=number]{width:7.5ch;min-width:7ch;max-width:7.5ch;text-align:right}
+.filter-search-bottom-row.dual-search-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.dual-search-row .filter-search-field{display:grid;width:100%;min-width:0;border:1px solid rgba(121,184,255,.18);border-radius:12px;padding:10px 12px;background:rgba(5,15,28,.28)}
+.dual-search-row .filter-search-field input{width:100%;max-width:none;margin-top:7px}
+.dual-search-row .filter-search-field.search-active{border-color:rgba(240,199,94,.82);background:rgba(55,41,9,.55);box-shadow:0 0 0 2px rgba(240,199,94,.12)}
+.direct-search-notice{margin-top:10px}
+@media(max-width:1100px){.filter-main-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.size-filter-row{grid-template-columns:minmax(240px,1fr) repeat(2,minmax(82px,max-content))}.size-profile-field{grid-column:1/-1}.filter-search-bottom-row.dual-search-row{grid-template-columns:1fr}}
+@media(max-width:720px){.filter-main-grid,.size-filter-row{grid-template-columns:1fr}.numeric-compact input[type=number],.filters label.numeric-compact input[type=number],.settings-row input[type=number],.size-filter-row .numeric-compact input[type=number]{width:100%;min-width:0;max-width:none}.filter-area-basis,.size-profile-field{grid-column:auto}.dual-search-row .filter-search-field{padding:9px 10px}}

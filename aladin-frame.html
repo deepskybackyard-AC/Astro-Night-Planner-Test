@@ -56,7 +56,9 @@
     const displayName=row=>row?.name&&normalizeToken(row.name)!==normalizeToken(row.id)?row.name:'';
     const objectTitle=row=>displayName(row)?`${row.id} · ${displayName(row)}`:row.id;
     const aliasesText=row=>uniqueTerms(row.aliases||[]).filter(v=>normalizeToken(v)!==normalizeToken(row.id)&&normalizeToken(v)!==normalizeToken(row.name)).join(', ')||'–';
-    const wikiTerm=row=>{const extra=OBJECT_EXTRAS[row.id]||{};if(lang==='en'&&extra.enName)return extra.enName;if(lang!=='en'&&extra.deName)return extra.deName;const terms=uniqueTerms([displayName(row),...(row.aliases||[]),row.id]);const common=terms.find(v=>!/^(M\s*\d+|NGC\s*\d+|IC\s*\d+|SH\s*2\s*-?\s*\d+|SH2\s*-?\s*\d+|LBN\s*\d+|LDN\s*\d+|B\s*\d+)$/i.test(v));return common||terms[0]||row.id};
+    const formatCatalogId=value=>{const compact=normalizeToken(value);let m=compact.match(/^SH2(\d+[A-Z]?)$/);if(m)return`SH 2-${m[1]}`;m=compact.match(/^NGC(\d+[A-Z]?)$/);if(m)return`NGC ${m[1]}`;m=compact.match(/^IC(\d+[A-Z]?)$/);if(m)return`IC ${m[1]}`;m=compact.match(/^M(\d+[A-Z]?)$/);if(m)return`M ${m[1]}`;m=compact.match(/^ABELL(\d+[A-Z]?)$/);if(m)return`Abell ${m[1]}`;m=compact.match(/^LDN(\d+[A-Z]?)$/);if(m)return`LDN ${m[1]}`;m=compact.match(/^LBN(\d+[A-Z]?)$/);if(m)return`LBN ${m[1]}`;m=compact.match(/^B(\d+[A-Z]?)$/);if(m)return`Barnard ${m[1]}`;return String(value||'').trim()};
+    const catalogIdTerms=row=>uniqueTerms([row?.id,...(row?.aliases||[])].map(formatCatalogId).filter(v=>/^((SH\s*2-|NGC|IC|M|Abell|LDN|LBN|Barnard)\s*\d+)/i.test(v)));
+    const wikiTerm=row=>catalogIdTerms(row)[0]||displayName(row)||uniqueTerms([...(row?.aliases||[]),row?.id])[0]||row?.id||'';
     const wikiUrl=row=>{const langCode=(document.documentElement.lang||navigator.language||'de').toLowerCase().startsWith('en')?'en':'de';const query=wikiTerm(row);return `https://${langCode}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`};
 
     const applyNativeSurveyRendering=(attempt=0)=>{
