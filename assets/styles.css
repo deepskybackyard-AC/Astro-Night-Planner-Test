@@ -511,3 +511,18 @@ label>input,label>select,label>textarea{display:block}
 /* Test 18: Aladin-Interaktion, Standortdialog, Wikipedia und Umrisszeichnung */
 .external-aladin-note{align-self:center;max-width:260px;line-height:1.3}.compact-framing-controls{align-items:end}.compact-framing-controls .outline-control{order:30}.wiki-inline-button{margin-left:8px;min-width:2.4rem;padding:6px 9px;border-radius:999px;font-weight:900}.location-add-dialog{margin:14px 0;padding:14px;border:1px solid rgba(240,199,94,.45);border-radius:14px;background:rgba(35,28,6,.45)}.location-add-dialog h3{margin:0}.location-add-dialog .section-title-row{margin-bottom:10px}.object-row .wiki-inline-button{font-family:Georgia,serif;background:#0e2438;color:#e9f6ff;border:1px solid #466b91}.object-row .wiki-inline-button:hover{background:#173756}.data-actions [data-wikipedia-object]{background:#153653;border-color:#4d82bb}.framing-controls #centerAladinFrame{min-width:210px}
 @media(max-width:800px){.external-aladin-note{max-width:none;grid-column:1/-1}.framing-controls #centerAladinFrame,#openAladinExternal{min-width:0;width:100%}}
+
+/* Test 19: Basisfilter-Suche ans Ende, Standortdialog Variante A, Surveyverwaltung einklappbar */
+.filter-search-bottom-row{margin-top:18px;padding-top:14px;border-top:1px solid rgba(80,116,150,.25)}
+.filter-search-bottom-row .filter-search-field{display:block;width:min(100%,780px);min-width:0}
+.filter-main-grid{grid-template-columns:repeat(6,minmax(105px,max-content));grid-template-areas:"score mag surface altitude visible moon" "basis basis basis basis basis basis";align-items:start}
+.filter-area-search{grid-area:auto;min-width:0}
+.filter-area-basis{grid-column:span 3;min-width:min(100%,460px)}
+.location-add-search-row{grid-template-columns:minmax(240px,1.5fr) minmax(180px,.9fr) auto auto;gap:14px 16px;align-items:end}
+.location-add-dialog .search-results{margin-top:10px}
+.aladin-survey-settings summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.aladin-survey-settings summary .small{font-weight:400}
+.object-row .wiki-inline-button{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;min-width:2.1rem;height:2.1rem;padding:0;border-radius:50%;font-family:Georgia,serif;font-size:1rem;line-height:1;background:#0e2438;color:#e9f6ff;border:1px solid #466b91;vertical-align:middle}
+.object-row .wiki-inline-button:hover{background:#173756;color:#fff;border-color:#7caee5}
+@media(max-width:1100px){.filter-main-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"score mag surface" "altitude visible moon" "basis basis basis"}.location-add-search-row{grid-template-columns:1fr 1fr}.location-add-search-row .inline{justify-content:flex-start}}
+@media(max-width:720px){.filter-main-grid{grid-template-columns:1fr;grid-template-areas:"score" "mag" "surface" "altitude" "visible" "moon" "basis"}.filter-search-bottom-row .filter-search-field{width:100%}.location-add-search-row{grid-template-columns:1fr}}
