@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.1 – Testversion A: Kalender, Rubriken, Horizont/N.I.N.A. und Kataloge */
+/* Astro Night Planner 1.1.0-test.2 – Testversion A: Korrektur Horizonteditor und Datumsauswahl */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.1', release:'1.1.0-test.1', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.1'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.2', release:'1.1.0-test.2', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.2'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -593,7 +593,7 @@ async function init(){
   backupConfig={...backupConfig,...(storedBackupConfig||{})};backupDraft=deepClone(backupConfig);
   const active=await idbGet('meta','activeProfileId'); profile=profiles.find(x=>x.id===active?.value)||profiles.find(x=>x.id==='standard')||profiles[0];
   await setActiveProfile(profile.id); draft=deepClone(profile); currentMainTab=profile.ui?.mainTab||'plan'; currentSettingsTab=profile.ui?.settingsTab||'equipment';
-  selectedDateKey=profile.planning.dateKey||dateKeyFor(new Date(),activeLocation()?.timezone||'Europe/Berlin'); page=profile.planning.page||1;
+  selectedDateKey=dateKeyFor(new Date(),activeLocation()?.timezone||'Europe/Berlin'); profile.planning.dateKey=selectedDateKey; draft.planning.dateKey=selectedDateKey; page=profile.planning.page||1;
   await refreshStorageInfo();
   updateProfileSelectors(); bindGlobal(); render(); registerPwa(); loadCatalog(); fetchWeather();
   window.setTimeout(()=>maybeAutomaticBackup('daily'),1200);
@@ -700,7 +700,8 @@ function bindGlobal(){
     draft=deepClone(profile);
     dirtySections.clear();
     await setActiveProfile(profile.id);
-    selectedDateKey=profile.planning.dateKey||dateKeyFor(new Date(),activeLocation()?.timezone||'Europe/Berlin');
+    selectedDateKey=dateKeyFor(new Date(),activeLocation()?.timezone||'Europe/Berlin');
+    profile.planning.dateKey=selectedDateKey; draft.planning.dateKey=selectedDateKey;
     page=1;
     render();
     fetchWeather();
@@ -2729,7 +2730,82 @@ function bindLocationDraft(){
   document.getElementById('undoHorizon')?.addEventListener('click',()=>{const previous=horizonUndoStack.pop();if(!previous)return;entry().horizonProfile=previous.slice();mark();render()});
   document.getElementById('importNinaHorizon')?.addEventListener('click',()=>requestNinaHorizonImport((values,name)=>{horizonUndoStack.push(ensureHorizonProfile(location(),entry()?.id).slice());entry().horizonProfile=values;entry().updatedAt=new Date().toISOString();mark();alert((language==='en'?'Horizon has been imported.':'Horizont wurde importiert.')+(name?` (${name})`:''));render()}));
   document.getElementById('exportNinaHorizon')?.addEventListener('click',()=>{const locNow=location(),profileNow=entry();const values=ensureHorizonProfile(locNow,profileNow?.id);downloadTextFile(`nina-horizon-${safeName(locNow.name)}-${safeName(profileNow?.name||'horizon')}.hrz`,ninaHorizonTextFromValues(values));alert(language==='en'?'Horizon has been exported.':'Horizont wurde exportiert.');});
-  const canvas=document.querySelector('.settings-horizon-chart[data-editable="true"]');if(canvas){let drawing=false,lastIndex=null,lastAltitude=null;let tooltip=document.querySelector('.horizon-editor-tooltip');if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';canvas.closest('.horizon-editor-wrap')?.appendChild(tooltip)}const pointFromEvent=event=>{const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*canvas.width/Math.max(1,rect.width),y=(event.clientY-rect.top)*canvas.height/Math.max(1,rect.height),margin={left:62,right:22,top:22,bottom:68},plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;return{index:clamp(Math.round(clamp((x-margin.left)/plotW*360,0,360)/5),0,72),altitude:clamp(90-(y-margin.top)/plotH*90,0,90),clientX:event.clientX,clientY:event.clientY}};const showTooltip=point=>{if(!tooltip)return;const wrap=canvas.closest('.horizon-editor-wrap')?.getBoundingClientRect();tooltip.textContent=horizonTooltipText(point);tooltip.style.display='block';tooltip.style.left=`${Math.max(8,point.clientX-(wrap?.left||0)+14)}px`;tooltip.style.top=`${Math.max(8,point.clientY-(wrap?.top||0)-34)}px`;};const hideTooltip=()=>{if(tooltip&&!drawing)tooltip.style.display='none'};const applyPoint=point=>{const values=ensureHorizonProfile(location(),entry()?.id);if(lastIndex===null)values[point.index]=point.altitude;else{const from=Math.min(lastIndex,point.index),to=Math.max(lastIndex,point.index),span=Math.max(1,to-from);for(let index=from;index<=to;index++){const fraction=(index-from)/span,start=lastIndex<=point.index?lastAltitude:point.altitude,end=lastIndex<=point.index?point.altitude:lastAltitude;values[index]=start+(end-start)*fraction}}if(point.index===0||point.index===72){values[0]=point.altitude;values[72]=point.altitude}lastIndex=point.index;lastAltitude=point.altitude;mark()};canvas.addEventListener('pointerdown',event=>{event.preventDefault();drawing=true;canvas.setPointerCapture?.(event.pointerId);horizonUndoStack.push(ensureHorizonProfile(location(),entry()?.id).slice());horizonUndoStack=horizonUndoStack.slice(-20);lastIndex=null;lastAltitude=null;const point=pointFromEvent(event);showTooltip(point);applyPoint(point)});canvas.addEventListener('pointermove',event=>{const point=pointFromEvent(event);showTooltip(point);if(!drawing)return;event.preventDefault();applyPoint(point)});canvas.addEventListener('pointerleave',hideTooltip);const stop=event=>{if(!drawing)return;drawing=false;canvas.releasePointerCapture?.(event.pointerId);lastIndex=null;lastAltitude=null;hideTooltip();render()};canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop)}
+  const canvas=document.querySelector('.settings-horizon-chart[data-editable="true"]');
+  if(canvas){
+    let drawing=false,lastIndex=null,lastAltitude=null,activePointerId=null;
+    let tooltip=document.querySelector('.horizon-editor-tooltip');
+    if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';canvas.closest('.horizon-editor-wrap')?.appendChild(tooltip)}
+    const currentValues=()=>ensureHorizonProfile(location(),entry()?.id);
+    const redrawCanvas=()=>{
+      const values=currentValues();
+      values[72]=values[0];
+      canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[index*5,Number(altitude)||0])));
+      canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry()?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));
+      drawHorizonChart(canvas,false);
+    };
+    const pointFromClient=(clientX,clientY)=>{
+      const rect=canvas.getBoundingClientRect();
+      const scaleX=canvas.width/Math.max(1,rect.width),scaleY=canvas.height/Math.max(1,rect.height);
+      const x=(clientX-rect.left)*scaleX,y=(clientY-rect.top)*scaleY;
+      const margin={left:62,right:22,top:22,bottom:68},plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;
+      const azimuth=clamp((x-margin.left)/Math.max(1,plotW)*360,0,360);
+      return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude:clamp(90-(y-margin.top)/Math.max(1,plotH)*90,0,90),clientX,clientY};
+    };
+    const pointFromEvent=event=>pointFromClient(event.clientX,event.clientY);
+    const showTooltip=point=>{
+      if(!tooltip)return;
+      const wrap=canvas.closest('.horizon-editor-wrap')?.getBoundingClientRect();
+      tooltip.textContent=horizonTooltipText(point);
+      tooltip.style.display='block';
+      tooltip.style.left=`${Math.max(8,point.clientX-(wrap?.left||0)+14)}px`;
+      tooltip.style.top=`${Math.max(8,point.clientY-(wrap?.top||0)-34)}px`;
+    };
+    const hideTooltip=()=>{if(tooltip&&!drawing)tooltip.style.display='none'};
+    const setDirtyAfterEdit=()=>{syncCardinalHorizon(location(),entry()?.id);setSectionDirty('locations');const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;};
+    const applyPoint=point=>{
+      const values=currentValues();
+      const altitude=Number(point.altitude)||0;
+      if(lastIndex===null){values[point.index]=altitude;}
+      else{
+        const from=Math.min(lastIndex,point.index),to=Math.max(lastIndex,point.index),span=Math.max(1,to-from);
+        for(let index=from;index<=to;index++){
+          const fraction=(index-from)/span;
+          const start=lastIndex<=point.index?lastAltitude:altitude,end=lastIndex<=point.index?altitude:lastAltitude;
+          values[index]=start+(end-start)*fraction;
+        }
+      }
+      if(point.index===0||point.index===72){values[0]=altitude;values[72]=altitude;}
+      lastIndex=point.index;lastAltitude=altitude;
+      setDirtyAfterEdit();redrawCanvas();
+    };
+    const beginDrawing=event=>{
+      if(event.pointerType==='mouse'&&event.button!==0)return;
+      event.preventDefault();
+      drawing=true;activePointerId=event.pointerId;
+      canvas.setPointerCapture?.(event.pointerId);
+      horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);
+      lastIndex=null;lastAltitude=null;
+      const point=pointFromEvent(event);showTooltip(point);applyPoint(point);
+    };
+    const moveDrawing=event=>{
+      const point=pointFromEvent(event);showTooltip(point);
+      if(!drawing||activePointerId!==null&&event.pointerId!==activePointerId)return;
+      event.preventDefault();applyPoint(point);
+    };
+    const stopDrawing=event=>{
+      if(!drawing||activePointerId!==null&&event.pointerId!==activePointerId)return;
+      drawing=false;activePointerId=null;lastIndex=null;lastAltitude=null;
+      canvas.releasePointerCapture?.(event.pointerId);
+      hideTooltip();redrawCanvas();
+    };
+    canvas.addEventListener('pointerdown',beginDrawing);
+    canvas.addEventListener('pointermove',moveDrawing);
+    canvas.addEventListener('pointerup',stopDrawing);
+    canvas.addEventListener('pointercancel',stopDrawing);
+    canvas.addEventListener('pointerleave',event=>{if(!drawing)hideTooltip();});
+    canvas.addEventListener('mousemove',event=>{if(!window.PointerEvent)showTooltip(pointFromEvent(event));});
+    redrawCanvas();
+  }
   document.getElementById('addObstacle')?.addEventListener('click',()=>{entry().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});
   document.querySelectorAll('[data-obstacle]').forEach(row=>row.querySelectorAll('[data-obstacle-field]').forEach(element=>{const update=()=>{const obstacle=entry().obstacles.find(item=>item.id===row.dataset.obstacle);obstacle[element.dataset.obstacleField]=element.type==='number'?Number(element.value):element.value;setSectionDirty('locations');syncSettingsHorizonCanvas()};element.oninput=update;element.onchange=update}));
   document.querySelectorAll('[data-delete-obstacle]').forEach(button=>button.onclick=()=>{entry().obstacles=entry().obstacles.filter(item=>item.id!==button.dataset.deleteObstacle);setSectionDirty('locations');render()});

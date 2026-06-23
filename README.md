@@ -1,4 +1,4 @@
-# Astro Night Planner - Testversion 1.1.0-test.1
+# Astro Night Planner - Testversion 1.1.0-test.2
 
 Diese Testversion dient der Prüfung von langfristiger Kalenderplanung, Rubriken-Ausblendung, Horizontwerkzeugen und N.I.N.A.-Austausch.
 

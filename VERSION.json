@@ -1,30 +1,24 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.1.0-test.1",
-  "release": "1.1.0-test.1",
+  "version": "1.1.0-test.2",
+  "release": "1.1.0-test.2",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 8,
   "releasedAt": "2026-06-22",
-  "notes": "Testversion 1.1.0-test.1: Kalenderplanung, Rubriken-Ausblendung, Horizont-Tooltip, N.I.N.A.-Import/Export und getrennte LDN/LBN-Filter.",
+  "notes": "Testversion 1.1.0-test.2: Korrigiert den interaktiven Horizonteditor und markiert beim Start wieder den heutigen Tag.",
   "changes": {
     "de": [
-      "Kalenderdatum für langfristige astronomische Planung ergänzt.",
-      "Wetterabhängige Bereiche werden außerhalb des Prognosezeitraums ausgeblendet.",
-      "Planungsrubriken können in den Einstellungen vollständig angezeigt oder ausgeblendet werden.",
-      "Horizonteditor mit Live-Anzeige für Azimut und Höhe ergänzt.",
-      "N.I.N.A.-Horizontimport und -export ergänzt.",
-      "N.I.N.A.-Export für die aktuelle Aladin-Rahmung eines einzelnen Objekts ergänzt.",
-      "LDN und LBN werden als getrennte Katalogfilter angezeigt."
+      "Der interaktive Horizonteditor kann wieder zuverlässig per Maus, Stift oder Touch gezeichnet werden.",
+      "Die Live-Anzeige für Azimut und Höhe bleibt beim Zeichnen erhalten.",
+      "Beim Start der App wird initial wieder der heutige Tag markiert.",
+      "Die Funktionen aus 1.1.0-test.1 bleiben enthalten."
     ],
     "en": [
-      "Calendar date selection added for long-term astronomical planning.",
-      "Weather-dependent sections are hidden outside the forecast range.",
-      "Planning sections can be fully shown or hidden in settings.",
-      "The horizon editor now shows live azimuth and altitude values.",
-      "N.I.N.A. horizon import and export added.",
-      "N.I.N.A. export added for the current Aladin framing of a single object.",
-      "LDN and LBN are shown as separate catalog filters."
+      "The interactive horizon editor can be drawn reliably again with mouse, pen or touch.",
+      "The live azimuth and altitude display remains available while drawing.",
+      "On app start, today is selected initially again.",
+      "All features from 1.1.0-test.1 remain included."
     ]
   }
 }

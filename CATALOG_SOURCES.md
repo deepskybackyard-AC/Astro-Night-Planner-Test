@@ -15,7 +15,7 @@ Fehlende Werte werden in der App nicht künstlich ergänzt. Wenn einzelne Katalo
 
 ## LDN - Lynds' Catalogue of Dark Nebulae
 
-Mit Produktivversion 1.0.1 wurden 1787 benannte LDN-Einträge importiert. In Testversion 1.1.0-test.1 werden LDN und LBN als getrennte Katalogfilter dargestellt. LBN- und vollständige Barnard-Datensätze werden erst nach separater Prüfung einer maschinenlesbaren Rohquelle vollständig importiert.
+Mit Produktivversion 1.0.1 wurden 1787 benannte LDN-Einträge importiert. In Testversion 1.1.0-test.2 werden LDN und LBN als getrennte Katalogfilter dargestellt. LBN- und vollständige Barnard-Datensätze werden erst nach separater Prüfung einer maschinenlesbaren Rohquelle vollständig importiert.
 
 Die LDN-Daten enthalten unter anderem Positionen und Flächenangaben. Für die App werden Größenwerte der LDN-Objekte aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet. Diese Werte sind eine praktische Hilfe für Größenfilter, Rahmung und Suche, aber keine exakten sichtbaren Objektumrisse.
 
@@ -47,7 +47,7 @@ Für die Aladin-Survey-Auswahl sind zusätzlich HiPS-Einträge der Northern Sky 
 Benutzerdefinierte HiPS-Surveys werden vom Nutzer selbst eingetragen; für deren Nutzbarkeit und Lizenzlage ist die jeweilige Quelle maßgeblich.
 
 
-## Ergänzungen in Testversion 1.1.0-test.1
+## Ergänzungen in Testversion 1.1.0-test.2
 
 - LDN bleibt als Lynds Dark Nebulae eingebunden.
 - LBN wird in der Oberfläche als separater Katalogfilter vorbereitet. Der vollständige Import der LBN-Objektdaten muss nach Prüfung der maschinenlesbaren Rohquelle erfolgen.
