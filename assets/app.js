@@ -1,15 +1,18 @@
-/* Astro Night Planner 1.1.0-test.4 – Testversion A: Korrektur Horizonteditor und Standortsuche */
+/* Astro Night Planner 1.1.0-test.5 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.4', release:'1.1.0-test.4', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.4'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.5', release:'1.1.0-test.5', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.5'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Der Horizonteditor wurde für Maus, Stift und Touch robuster gemacht.',
-    'Die Einstellungen zum vollständigen Ausblenden von Planungsrubriken sind jetzt sichtbar und speicherbar.',
+    'Der Update-Button aktiviert neue App-Dateien robuster und lädt mit Cache-Aktualisierung neu.',
+    'Der Horizonteditor verwendet eine direkte Eingabeebene für Maus, Stift und Touch.',
+    'N.I.N.A.-Horizontimport und -export öffnen jetzt zuverlässig Datei-Dialog bzw. Download.',
+    'Im Erststartdialog kann eine vorhandene Gesamtsicherung direkt wiederhergestellt werden.',
+    'Die Hilfe enthält ein FAQ-Kapitel zu Browserdaten, Firefox, Safari und Cache-Einstellungen.',
     'Die Datumsauswahl wurde um eine Kalenderauswahl für langfristige Objektplanung erweitert.',
     'Wetterabhängige Rubriken werden außerhalb des Vorhersagezeitraums automatisch ausgeblendet.',
     'Rubriken können in den Einstellungen angezeigt, ausgeblendet und mit einem Standardzustand versehen werden.',
@@ -18,8 +21,11 @@ const DEFAULT_RELEASE_NOTES = {
     'LDN, LBN und Barnard werden als getrennte Katalogfilter angeboten.'
   ],
   en: [
-    'The horizon editor has been made more robust for mouse, pen and touch input.',
-    'Settings to fully hide planning sections are now visible and saved correctly.',
+    'The update button activates new app files more reliably and reloads with cache refresh.',
+    'The horizon editor uses a direct input layer for mouse, pen and touch.',
+    'N.I.N.A. horizon import and export now reliably open the file dialog or download.',
+    'The first-run dialog can restore an existing full backup directly.',
+    'The help contains a FAQ section for browser data, Firefox, Safari and cache settings.',
     'Date selection now includes a calendar picker for long-term object planning.',
     'Weather-dependent sections are automatically hidden beyond the forecast range.',
     'Sections can be shown, hidden and configured with a default open or collapsed state.',
@@ -29,7 +35,7 @@ const DEFAULT_RELEASE_NOTES = {
   ]
 };
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
 const app = document.getElementById('app');
@@ -645,26 +651,60 @@ async function showUpdateBanner(){
   banner.hidden=false;
 }
 
+async function clearAnpCachesForEnvironment(){
+  if(!('caches' in window))return;
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key.startsWith(`astro-night-planner-${ENV}-`)).map(key=>caches.delete(key)));
+}
+async function activateWaitingServiceWorker(){
+  if(!('serviceWorker' in navigator))return false;
+  const registration=swRegistration||await navigator.serviceWorker.getRegistration();
+  if(!registration)return false;
+  await registration.update().catch(()=>{});
+  const worker=registration.waiting||registration.installing;
+  if(!worker)return false;
+  return await new Promise(resolve=>{
+    let done=false;
+    const finish=value=>{if(done)return;done=true;resolve(value)};
+    const timeout=setTimeout(()=>finish(false),3500);
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{clearTimeout(timeout);finish(true)},{once:true});
+    try{worker.postMessage({type:'SKIP_WAITING'});}catch(error){clearTimeout(timeout);finish(false)}
+  });
+}
+function cacheBustingReload(){
+  const url=new URL(location.href);
+  url.searchParams.set('anpUpdate',Date.now().toString());
+  location.replace(url.toString());
+}
+async function applyAppUpdateNow(){
+  const button=document.getElementById('reloadForUpdate');
+  if(button){button.disabled=true;button.textContent=language==='en'?'Updating ...':'Aktualisiere ...'}
+  try{
+    await activateWaitingServiceWorker();
+    await clearAnpCachesForEnvironment();
+  }catch(error){console.warn('Update-Aktualisierung nicht vollständig möglich',error)}
+  cacheBustingReload();
+}
 async function installUpdateWithOptionalBackup(){
   const ask=confirm(language==='en'?'Create a backup before installing the update?':'Vor der Installation des Updates eine Datensicherung erstellen?');
-  if(!ask){location.reload();return}
+  if(!ask){await applyAppUpdateNow();return}
   try{
     const handle=await getBackupDirectoryHandle();
     if(handle){
       const ok=await performExternalBackup({forceDated:true,requestPermission:true,manualFallback:true});
-      if(ok){location.reload();return}
-      if(confirm(language==='en'?'The backup could not be created. Continue without backup?':'Die Sicherung konnte nicht erstellt werden. Ohne Sicherung fortfahren?'))location.reload();
+      if(ok){await applyAppUpdateNow();return}
+      if(confirm(language==='en'?'The backup could not be created. Continue without backup?':'Die Sicherung konnte nicht erstellt werden. Ohne Sicherung fortfahren?'))await applyAppUpdateNow();
       return;
     }
     const manual=confirm(language==='en'?'No backup folder is configured. Download a manual backup file now?':'Es ist noch kein Sicherungsordner eingerichtet. Jetzt eine manuelle Sicherungsdatei herunterladen?');
     if(manual){
       downloadJson(`astro-night-planner-update-backup-${new Date().toISOString().slice(0,10)}.json`,await buildBackupPayload());
-      if(confirm(language==='en'?'Install the update now?':'Update jetzt installieren?'))location.reload();
+      if(confirm(language==='en'?'Install the update now?':'Update jetzt installieren?'))await applyAppUpdateNow();
       return;
     }
-    if(confirm(language==='en'?'Continue without backup?':'Ohne Sicherung fortfahren?'))location.reload();
+    if(confirm(language==='en'?'Continue without backup?':'Ohne Sicherung fortfahren?'))await applyAppUpdateNow();
   }catch(error){
-    if(confirm((language==='en'?'Backup failed: ':'Sicherung fehlgeschlagen: ')+(error?.message||error)+(language==='en'?' Continue without backup?':' Ohne Sicherung fortfahren?')))location.reload();
+    if(confirm((language==='en'?'Backup failed: ':'Sicherung fehlgeschlagen: ')+(error?.message||error)+(language==='en'?' Continue without backup?':' Ohne Sicherung fortfahren?')))await applyAppUpdateNow();
   }
 }
 
@@ -1288,9 +1328,10 @@ function renderFirstRunPlan(){
       <div class="eyebrow">Erststart</div>
       <h2>Bitte zuerst einen Standort anlegen</h2>
       <p>Die Produktivversion enthält bewusst keine vorgegebenen Aufnahmeorte, Teleskope oder Kameras. Lege unter <strong>Einstellungen → Standorte & Horizont</strong> deinen Aufnahmeort an. Danach kann die Planungsnacht berechnet werden.</p>
-      <div class="data-actions"><button type="button" data-open-settings="locations">Standort jetzt anlegen</button><button type="button" data-open-settings="equipment" class="secondary">Ausrüstung erfassen</button></div>
+      <div class="data-actions"><button type="button" data-open-settings="locations">Standort jetzt anlegen</button><button type="button" data-open-settings="equipment" class="secondary">Ausrüstung erfassen</button><button type="button" id="firstRunRestoreBackup" class="secondary">Sicherung wiederherstellen</button></div>
+      <div class="notice warn" style="margin-top:14px"><strong>Hinweis zur lokalen Speicherung:</strong> Wenn der Browser Website-Daten beim Beenden löscht, gehen lokale Standorte, Ausrüstung und Profile verloren. Prüfe dazu die Hinweise in der <button type="button" class="inline-help-link" data-open-help-section="help-browser-storage">Browser-FAQ</button>.</div>
     </section>
-    <section class="card"><h2>Erste Schritte</h2><p>1. Standort anlegen und speichern. 2. Unter Ausrüstung Teleskop, Kamera und optional Setup erfassen. 3. Zur Planung zurückkehren und die Nacht berechnen lassen.</p></section>
+    <section class="card"><h2>Erste Schritte</h2><p>1. Vorhandene Sicherung importieren oder Standort anlegen und speichern. 2. Unter Ausrüstung Teleskop, Kamera und optional Setup erfassen. 3. Zur Planung zurückkehren und die Nacht berechnen lassen.</p></section>
   </div>`;
 }
 function renderPlan(){
@@ -1968,11 +2009,11 @@ function renderInfo(){
     <div class="grid two"><label class="chip"><input id="backupEnabled" type="checkbox" ${backupDraft.enabled?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Automatische Sicherung aktivieren</label><label>Aufzubewahrende datierte Sicherungen<input id="backupKeep" type="number" min="1" max="50" value="${backupDraft.keep}"></label><label class="chip"><input id="backupAfterSave" type="checkbox" ${backupDraft.afterSave?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Nach jedem erfolgreichen Speichern der Einstellungen sichern</label><label class="chip"><input id="backupDaily" type="checkbox" ${backupDraft.daily?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Zusätzlich höchstens einmal täglich datierte Sicherung</label><label>Sicherungserinnerung nach Tagen<input id="backupReminderDays" type="number" min="1" max="90" value="${backupDraft.reminderDays}"></label><div class="metric"><div class="label">Sicherungsziel</div><div class="value small">${esc(backupConfig.targetName||'Noch nicht gewählt')}</div><div class="small muted">Berechtigung: ${permissionText}</div></div></div>
     <div class="notice backup-file-explanation" style="margin-top:12px"><strong>Zwei Dateitypen:</strong> <code>astro-night-planner-aktuell.json</code> wird fortlaufend überschrieben und ist für die normale Wiederherstellung gedacht. Datierte Dateien sind historische Rücksprungpunkte. Vor einer Wiederherstellung werden Datum und Inhalt angezeigt.</div><div class="data-actions backup-actions" style="margin-top:14px"><button id="chooseBackupDirectory" ${!storageInfo.fileSystemSupported?'disabled':''}>Sicherungsordner auswählen</button><button id="backupNow">Sicherung jetzt erstellen</button><button id="restoreBackup">Gesamtsicherung wiederherstellen</button><button id="exportAll">Gesamtsicherung exportieren</button><button id="exportProfile">Aktuelles Profil exportieren</button><button id="importProfile">Profil importieren</button></div>
     ${backupConfig.lastError?`<div class="notice warn" style="margin-top:12px">Letzter Sicherungsfehler: ${esc(backupConfig.lastError)}</div>`:''}
-    ${!storageInfo.fileSystemSupported?'<div class="notice" style="margin-top:12px">Fallback: Nutze „Gesamtsicherung exportieren“. Die App erinnert nach dem eingestellten Zeitraum an einen neuen Export.</div>':''}
+    ${!storageInfo.fileSystemSupported?'<div class="notice" style="margin-top:12px">Automatische Ordnersicherung ist in diesem Browser nicht verfügbar. Verwende Chrome oder Edge auf Desktop-Systemen oder nutze die manuelle JSON-Sicherung. Details: siehe Hilfe → Browserdaten-FAQ.</div>':''}
     ${renderSaveBar('backup','Sicherungseinstellungen speichern')}
   </div>
   <div class="card help-article subtab-panel ${currentInfoSubTab==='help'?'active':''}"><div class="section-title-row"><div><h2>${esc(tx('helpTitle'))}</h2><div class="small muted">${esc(tx('helpSub'))}</div><div class="help-language-note">${esc(tx('helpNote'))}</div></div><div class="data-actions"><a class="button" href="${docLink('html')}" target="_blank" rel="noopener">${esc(tx('helpBrowser'))}</a><a class="button primary" href="${docLink('pdf')}" target="_blank" rel="noopener">${esc(tx('helpPdf'))}</a></div></div>
-    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
+    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-browser-storage','Browserdaten-FAQ'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
     <section id="help-storage"><h3>Datenspeicherung, Cookies und Browsercache</h3><p>Alle persönlichen Daten werden im gerade verwendeten Browser und Browserprofil gespeichert. IndexedDB enthält die fachlichen Daten, Cache Storage die für den Offlinebetrieb benötigten App-Dateien. Cookies sind nicht der Hauptspeicher. Ein normaler Cache-Löschvorgang betrifft die Einstellungen meist nicht; das Löschen aller Websitedaten der Installationsadresse kann sie jedoch entfernen. Auch ein Wechsel der Domain oder des Browserprofils erzeugt einen getrennten Speicherbereich. Übertrage Daten deshalb mit einer externen Sicherung.</p></section>
     <section id="help-first"><h3>Erste Schritte</h3><p>Prüfe zuerst unter Ausrüstung Teleskop, Kamera und Montierung. Lege anschließend unter Standorte & Horizont deinen Aufnahmeort, mindestens ein Horizontprofil und den jeweiligen Standard fest. Wähle in der Planung Standort, Datum, Planungszeitraum, Teleskop, Kamera, Horizontprofil und Wetterdarstellung. Danach kannst du Objektfilter setzen und ein Objekt durch Klick auf die gesamte Tabellenzeile öffnen.</p></section>
     <section id="help-plan"><h3>Planungsnacht</h3><p>Die Standortauswahl links neben den Datumsfeldern gilt nur für die aktuelle Planung. Koordinaten und Höhe stehen direkt darunter. Sonnen-, Dämmerungs- und Mondzeiten werden für diesen Standort berechnet. Der Planungszeitraum begrenzt Bewertung, Sichtbarkeitsdauer, Wetterzusammenfassung und Höhenprofile.</p></section>
@@ -1988,6 +2029,7 @@ function renderInfo(){
     <section id="help-equipment"><h3>Ausrüstung</h3><p>Teleskope, Kameras und Montierungen werden als Listen geführt. Je Kategorie ist ein Eintrag als dauerhafter Standard aktiv. Teleskop und Kamera bestimmen Bildfeld und Pixelmaßstab. Für eine einzelne Planung können beide unter „Profile für diese Planung“ oder direkt im interaktiven Himmelsbild temporär gewechselt werden. Die Montierung dient zunächst der Dokumentation und kann später in Wind- oder Tragfähigkeitsbewertungen einbezogen werden.</p></section>
     <section id="help-settings"><h3>Speichern und Standardwerte</h3><p>Jede Rubrik besitzt eine einheitliche Speicherleiste und einen eigenen Button „Rubrik auf Standard zurücksetzen“. Das Zurücksetzen verändert zunächst nur die Eingaben; dauerhaft wird es erst nach dem Speichern. Nach erfolgreichem Speichern wird der Button drei Sekunden gelb und zeigt „Gespeichert ✓“.</p><p>Die Qualitätsampel verwendet standardmäßig Rot 0–59, Gelb 60–79 und Grün 80–100. Die Grenzen „Gelb ab“ und „Grün ab“ können geändert werden.</p></section>
     <section id="help-backup"><h3>Export, automatische Sicherung und Wiederherstellung</h3><p>„Gesamtsicherung exportieren“ enthält alle Profile samt Ausrüstung, Standorten und Einstellungen. „Aktuelles Profil exportieren“ überträgt nur das aktive Profil einschließlich der dafür benötigten Daten. Mit „Profil importieren“ wird eine solche Profildatei immer als neues Profil angelegt; ein vorhandenes Profil wird nicht ungefragt überschrieben.</p><p><code>astro-night-planner-aktuell.json</code> wird bei jeder automatischen Sicherung überschrieben. Sie enthält den neuesten Stand und ist die erste Wahl für eine normale Wiederherstellung. Dateien wie <code>astro-night-planner-2026-06-16T21-24-30.json</code> sind unveränderliche historische Rücksprungpunkte; verwende sie nur, wenn bewusst ein älterer Zustand benötigt wird.</p><p>Wähle „Aus Sicherung wiederherstellen“, öffne die gewünschte JSON-Datei und kontrolliere die Vorschau mit Sicherungsdatum, Profilen, Teleskopen, Kameras, Montierungen und Standorten. Vor der eigentlichen Wiederherstellung versucht die App, den aktuellen Zustand noch einmal als datierte Sicherung abzulegen. Die externe Datei bleibt nach dem Löschen von Websitedaten erhalten; die Ordnerberechtigung liegt jedoch in IndexedDB und muss danach erneut erteilt werden.</p></section>
+    <section id="help-browser-storage"><h3>Browserdaten-FAQ: Daten dauerhaft behalten</h3><p>Der Astro Night Planner speichert Standorte, Ausrüstung, Horizonte, Profile und eigene Ziele lokal in IndexedDB. Diese Daten bleiben bei normalen App-Updates erhalten, gehen aber verloren, wenn der Browser Website-Daten beim Beenden löscht oder die Seite im privaten Modus genutzt wird.</p><p><strong>Firefox:</strong> Unter Datenschutz & Sicherheit darf „Cookies und Website-Daten beim Beenden von Firefox löschen“ nicht aktiv sein. Wenn die Option ausgegraut ist, ist häufig „niemals Chronik anlegen“ oder „immer privaten Modus verwenden“ aktiv. Stelle Firefox auf „Chronik anlegen“ oder erlaube mindestens <code>planner.deepskyastrophoto.de</code> beziehungsweise das Test-Repository als Ausnahme.</p><p><strong>Chrome und Edge:</strong> Prüfe unter Datenschutz/Site-Einstellungen, dass Website-Daten für diese App nicht automatisch gelöscht werden. Für automatische Ordnersicherung sind Chrome oder Edge auf Desktop-Systemen die bevorzugten Browser.</p><p><strong>Safari und iOS:</strong> Die App kann genutzt werden, aber automatische Ordnersicherung in einen gewählten lokalen Ordner ist nicht zuverlässig verfügbar. Nutze dort regelmäßig die manuelle JSON-Sicherung.</p><p>Empfehlung: Nach jeder größeren Änderung eine Gesamtsicherung exportieren und vor Updates die angebotene Sicherung verwenden.</p></section>
     <section id="help-pwa"><h3>Installation als PWA und Offlinebetrieb</h3><p>Nach der Installation kann die App wie ein eigenständiges Programm gestartet werden. Programmdateien stehen offline zur Verfügung. Wetter-, Karten-, Meteoblue- und Katalogaktualisierungen benötigen weiterhin eine Internetverbindung.</p></section>
     <section id="help-troubleshooting"><h3>Fehlerbehebung</h3><p>Bei alten Darstellungen zuerst die App neu laden und einen angebotenen PWA-Updatehinweis bestätigen. Zeigt die Browserhilfe trotzdem einen veralteten Stand, die Anwendung vollständig schließen und neu öffnen. Externe Dienste wie Aladin, Meteoblue und Wettermodelle können zeitweise nicht erreichbar sein. Lösche Websitedaten nur als letzte Maßnahme und ausschließlich nach einer aktuellen externen Sicherung.</p></section>
     <section id="help-values"><h3>Bedeutung der Bewertungswerte</h3><p>Die Gesamtbewertung kombiniert Wolken, effektive Transparenz, Seeing, Wind/Böen, Tauabstand, Mond, Objekthöhe und Sichtbarkeitsdauer. Die Gewichte ergeben zusammen 100 %. Farben beziehen sich auf erwartete Aufnahmequalität, nicht auf die sichere Belastbarkeit der Ausrüstung.</p><p><strong>Atmosphärische Transparenz</strong> beschreibt die wolkenunabhängige Klarheit der Luft. Sie wird durch Aerosole, Dunst, Feuchte, Schleier und Extinktion beeinflusst. Auch bei scheinbar wolkenfreiem Himmel kann eine schlechte atmosphärische Transparenz schwache Nebel- und Galaxienstrukturen deutlich abschwächen.</p><p><strong>Effektive Transparenz</strong> ist der praxisnähere Aufnahmeindikator, weil sie die Luftklarheit mit der tatsächlichen Bewölkung verbindet. Für die Entscheidung, ob sich eine Deep-Sky-Aufnahme lohnt, ist sie meist wichtiger als der reine, wolkenunabhängige Transparenzwert. Die atmosphärische Transparenz bleibt als ergänzende Erklärung nützlich, insbesondere wenn die Wolkenwerte gut aussehen, die Bildqualität aber trotzdem gedämpft sein kann.</p></section>
@@ -2030,6 +2072,8 @@ function wikipediaSearchUrl(object){
 function openWikipediaForObjectId(objectId){const object=catalog.find(item=>item.id===objectId);if(!object)return;window.open(wikipediaSearchUrl(object),'_blank','noopener');}
 function bindRendered(){
   document.querySelectorAll('[data-open-settings]').forEach(button=>button.onclick=async()=>{currentMainTab='settings';currentSettingsTab=button.dataset.openSettings||'locations';profile.ui.mainTab=currentMainTab;profile.ui.settingsTab=currentSettingsTab;await saveProfile();render()});
+  document.getElementById('firstRunRestoreBackup')?.addEventListener('click',()=>{importMode='backup';importInput.accept='application/json,.json';importInput.click()});
+  document.querySelectorAll('[data-open-help-section]').forEach(button=>button.addEventListener('click',async()=>{currentMainTab='settings';currentSettingsTab='info';currentInfoSubTab='help';profile.ui.mainTab=currentMainTab;profile.ui.settingsTab=currentSettingsTab;await saveProfile();render();setTimeout(()=>document.getElementById(button.dataset.openHelpSection)?.scrollIntoView({behavior:'smooth',block:'start'}),120)}));
   document.querySelectorAll('[data-wikipedia-object]').forEach(button=>button.onclick=event=>{event.stopPropagation();openWikipediaForObjectId(button.dataset.wikipediaObject)});
   const planningLocationSelect=document.getElementById('planningLocationSelect');
   if(planningLocationSelect)planningLocationSelect.onchange=async()=>{
@@ -2353,6 +2397,63 @@ function updateFramingTimeReadouts(fraction){
   sendAladinOverlayUpdate();
 }
 
+
+function downloadTextFile(name,text,type='text/plain;charset=utf-8'){
+  const blob=new Blob([text],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function ninaHorizonTextFromValues(values){
+  const rows=['# Astro Night Planner N.I.N.A. horizon export','# Azimuth Altitude'];
+  (values||[]).forEach((altitude,index)=>{if(index>72)return;rows.push(`${index*5} ${Math.round(clamp(Number(altitude)||0,0,90)*10)/10}`)});
+  return rows.join('\n')+'\n';
+}
+function parseNinaHorizonText(text){
+  const pairs=[];
+  String(text||'').split(/\r?\n/).forEach(line=>{
+    const clean=line.replace(/#.*/,'').trim();
+    if(!clean)return;
+    const parts=clean.split(/[;,\t ]+/).map(item=>item.trim()).filter(Boolean);
+    if(parts.length<2)return;
+    const az=Number(String(parts[0]).replace(',','.'));
+    const alt=Number(String(parts[1]).replace(',','.'));
+    if(Number.isFinite(az)&&Number.isFinite(alt)&&az>=0&&az<=360&&alt>=-5&&alt<=95){pairs.push({azimuth:clamp(az,0,360),altitude:clamp(alt,0,90)});}
+  });
+  if(pairs.length<2)throw new Error(language==='en'?'No valid azimuth/altitude pairs found.':'Keine gültigen Azimut-/Höhen-Paare gefunden.');
+  pairs.sort((a,b)=>a.azimuth-b.azimuth);
+  if(pairs[0].azimuth>0)pairs.unshift({azimuth:0,altitude:pairs[0].altitude});
+  if(pairs[pairs.length-1].azimuth<360)pairs.push({azimuth:360,altitude:pairs[pairs.length-1].altitude});
+  const values=Array.from({length:73},(_,index)=>{
+    const az=index*5;
+    let left=pairs[0],right=pairs[pairs.length-1];
+    for(let i=0;i<pairs.length-1;i++){if(pairs[i].azimuth<=az&&pairs[i+1].azimuth>=az){left=pairs[i];right=pairs[i+1];break}}
+    const span=Math.max(1e-6,right.azimuth-left.azimuth);
+    const f=clamp((az-left.azimuth)/span,0,1);
+    return left.altitude+(right.altitude-left.altitude)*f;
+  });
+  values[72]=values[0];
+  return values;
+}
+function requestNinaHorizonImport(callback){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.txt,.hrz,.csv,text/plain,text/csv';
+  input.style.position='fixed';input.style.left='-10000px';
+  document.body.appendChild(input);
+  input.addEventListener('change',async()=>{
+    const file=input.files&&input.files[0];
+    try{
+      if(!file)return;
+      const text=await file.text();
+      const values=parseNinaHorizonText(text);
+      callback(values,file.name||'');
+    }catch(error){alert((language==='en'?'Import failed: ':'Import fehlgeschlagen: ')+(error?.message||error));}
+    finally{input.remove();}
+  },{once:true});
+  input.click();
+}
 function buildNinaPlanExport(object){
   const loc=activeLocation(), setup=activeSetup(), scope=activeScope(), camera=activeCamera(), frame=fov(), night=loc?nightData(selectedDateKey,loc):null, win=night?planningWindow(night,profile.planning.planningWindow):null;
   const time=win?new Date(win.start.getTime()+(win.end-win.start)*clamp(Number(profile.planning.timeFraction)||0,0,1)):new Date();
@@ -2755,33 +2856,22 @@ function bindLocationDraft(){
     };
     const pointFromClient=(clientX,clientY)=>{
       const rect=canvas.getBoundingClientRect();
-      const scaleX=canvas.width/Math.max(1,rect.width),scaleY=canvas.height/Math.max(1,rect.height);
-      const px=(clientX-rect.left)*scaleX,py=(clientY-rect.top)*scaleY;
+      const px=clamp(clientX-rect.left,0,rect.width),py=clamp(clientY-rect.top,0,rect.height);
       const margin={left:62,right:22,top:22,bottom:68};
-      const plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;
-      const azimuth=clamp((px-margin.left)/Math.max(1,plotW)*360,0,360);
-      const altitude=clamp(90-(py-margin.top)/Math.max(1,plotH)*90,0,90);
+      const cssScaleX=rect.width/Math.max(1,canvas.width),cssScaleY=rect.height/Math.max(1,canvas.height);
+      const left=margin.left*cssScaleX,top=margin.top*cssScaleY;
+      const plotW=(canvas.width-margin.left-margin.right)*cssScaleX,plotH=(canvas.height-margin.top-margin.bottom)*cssScaleY;
+      const azimuth=clamp((px-left)/Math.max(1,plotW)*360,0,360);
+      const altitude=clamp(90-(py-top)/Math.max(1,plotH)*90,0,90);
       return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude,clientX,clientY};
     };
-    const eventPoint=event=>{
-      const source=event.touches&&event.touches[0]?event.touches[0]:event.changedTouches&&event.changedTouches[0]?event.changedTouches[0]:event;
-      return pointFromClient(source.clientX,source.clientY);
-    };
-    const showTooltip=point=>{
-      if(!tooltip)return;
-      const rect=wrap?.getBoundingClientRect();
-      tooltip.textContent=horizonTooltipText(point);
-      tooltip.style.display='block';
-      tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+14)}px`;
-      tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)-34)}px`;
-    };
+    const eventPoint=event=>{const source=event.touches?.[0]||event.changedTouches?.[0]||event;return pointFromClient(source.clientX,source.clientY)};
+    const showTooltip=point=>{if(!tooltip)return;const rect=wrap?.getBoundingClientRect();tooltip.textContent=horizonTooltipText(point);tooltip.style.display='block';tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+14)}px`;tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)-34)}px`;};
     const hideTooltip=()=>{if(tooltip&&!drawing)tooltip.style.display='none'};
     const applyPoint=point=>{
       const values=currentValues();
       const altitude=clamp(Number(point.altitude)||0,0,90);
-      if(lastIndex===null){
-        values[point.index]=altitude;
-      }else{
+      if(lastIndex===null){values[point.index]=altitude;}else{
         const from=Math.min(lastIndex,point.index),to=Math.max(lastIndex,point.index),span=Math.max(1,to-from);
         for(let index=from;index<=to;index++){
           const fraction=(index-from)/span;
@@ -2797,41 +2887,23 @@ function bindLocationDraft(){
       const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;
       refreshCanvas();
     };
-    const begin=event=>{
-      if(event.type==='mousedown'&&event.button!==0)return;
-      event.preventDefault?.();event.stopPropagation?.();
-      if(!drawing){
-        horizonUndoStack.push(currentValues().slice());
-        horizonUndoStack=horizonUndoStack.slice(-20);
-      }
-      drawing=true;lastIndex=null;lastAltitude=null;
-      const point=eventPoint(event);showTooltip(point);applyPoint(point);
-    };
-    const move=event=>{
-      const point=eventPoint(event);showTooltip(point);
-      if(!drawing)return;
-      event.preventDefault?.();event.stopPropagation?.();
-      applyPoint(point);
-    };
-    const endDrawing=event=>{
-      if(!drawing)return;
-      event?.preventDefault?.();event?.stopPropagation?.();
-      drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();
-    };
-    canvas.style.touchAction='none';
-    canvas.addEventListener('mousedown',begin);
-    window.addEventListener('mousemove',move);
-    window.addEventListener('mouseup',endDrawing);
-    canvas.addEventListener('mousemove',event=>{if(!drawing)showTooltip(eventPoint(event));});
-    canvas.addEventListener('mouseleave',()=>{if(!drawing)hideTooltip()});
-    canvas.addEventListener('click',event=>{if(event.detail===1){begin(event);endDrawing(event)}});
-    canvas.addEventListener('touchstart',begin,{passive:false});
+    const begin=event=>{if(event.type==='mousedown'&&event.button!==0)return;event.preventDefault?.();event.stopPropagation?.();if(!drawing){horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);}drawing=true;lastIndex=null;lastAltitude=null;const point=eventPoint(event);showTooltip(point);applyPoint(point);};
+    const move=event=>{const point=eventPoint(event);showTooltip(point);if(!drawing)return;event.preventDefault?.();event.stopPropagation?.();applyPoint(point);};
+    const endDrawing=event=>{if(!drawing)return;event?.preventDefault?.();event?.stopPropagation?.();drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();};
+    const bindTarget=canvas;
+    canvas.style.touchAction='none';canvas.style.cursor='crosshair';canvas.tabIndex=0;
+    bindTarget.addEventListener('pointerdown',event=>{if(event.button!==undefined&&event.button!==0)return;try{bindTarget.setPointerCapture?.(event.pointerId)}catch(e){}begin(event);},{passive:false});
+    bindTarget.addEventListener('pointermove',event=>{move(event);},{passive:false});
+    bindTarget.addEventListener('pointerup',endDrawing,{passive:false});
+    bindTarget.addEventListener('pointercancel',endDrawing,{passive:false});
+    bindTarget.addEventListener('mousedown',begin,{passive:false});
+    window.addEventListener('mousemove',move,{passive:false});
+    window.addEventListener('mouseup',endDrawing,{passive:false});
+    bindTarget.addEventListener('touchstart',begin,{passive:false});
     window.addEventListener('touchmove',move,{passive:false});
     window.addEventListener('touchend',endDrawing,{passive:false});
     window.addEventListener('touchcancel',endDrawing,{passive:false});
-    canvas.addEventListener('pointerdown',event=>{if(event.pointerType&&event.pointerType!=='mouse'){begin(event)}});
-    window.addEventListener('pointermove',event=>{if(drawing&&event.pointerType&&event.pointerType!=='mouse')move(event)});
-    window.addEventListener('pointerup',event=>{if(event.pointerType&&event.pointerType!=='mouse')endDrawing(event)});
+    bindTarget.addEventListener('mouseleave',()=>{if(!drawing)hideTooltip()});
     refreshCanvas();
   }
   document.getElementById('addObstacle')?.addEventListener('click',()=>{entry().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});
@@ -2898,8 +2970,8 @@ async function deleteProfile(){if(profiles.length===1||!confirm(`Profil „${pro
 function bindInfoActions(){
   document.getElementById('exportProfile')?.addEventListener('click',()=>downloadJson(`astro-night-planner-profil-${safeName(profile.name)}.json`,{kind:'astro-night-planner-profile',appVersion:APP_VERSION,exportedAt:new Date().toISOString(),profile}));
   document.getElementById('exportAll')?.addEventListener('click',async()=>{downloadJson(`astro-night-planner-sicherung-${new Date().toISOString().slice(0,10)}.json`,await buildBackupPayload());backupConfig.lastSuccessAt=new Date().toISOString();backupConfig.lastError='';await saveBackupConfig();backupDraft=deepClone(backupConfig);render()});
-  document.getElementById('importProfile')?.addEventListener('click',()=>{importMode='profile';importInput.click()});
-  document.getElementById('restoreBackup')?.addEventListener('click',()=>{importMode='backup';importInput.click()});
+  document.getElementById('importProfile')?.addEventListener('click',()=>{importMode='profile';importInput.accept='application/json,.json';importInput.click()});
+  document.getElementById('restoreBackup')?.addEventListener('click',()=>{importMode='backup';importInput.accept='application/json,.json';importInput.click()});
   document.getElementById('refreshStorageStatus')?.addEventListener('click',async()=>{await refreshStorageInfo();render()});
   document.getElementById('requestPersistence')?.addEventListener('click',async()=>{
     const message=document.getElementById('storageMessage');

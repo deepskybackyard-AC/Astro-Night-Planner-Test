@@ -3,21 +3,25 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.4',
-  release: '1.1.0-test.4',
+  appVersion: '1.1.0-test.5',
+  release: '1.1.0-test.5',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.4',
+  documentTitle: 'Astro Night Planner 1.1.0-test.5',
   releaseNotes: {
     de: [
-      'Der Horizont kann im Horizonteditor wieder direkt per Maus, Stift oder Touch gezeichnet werden.',
-      'Der Tooltip zeigt weiterhin Azimut und Höhe während der Bearbeitung.',
-      'Gefundene Orte werden bei der Standortanlage wieder zuverlässig in die Eingabefelder übernommen.'
+      'Der Update-Button aktualisiert App-Dateien und Cache robuster.',
+      'Der Horizonteditor wurde erneut überarbeitet und verwendet direkte Maus-, Stift- und Touch-Eingaben.',
+      'N.I.N.A.-Horizontimport und -export öffnen jetzt Datei-Dialog bzw. Download.',
+      'Beim Erststart kann direkt eine vorhandene Gesamtsicherung wiederhergestellt werden.',
+      'Die Hilfe enthält ein FAQ-Kapitel zu Browserdaten und dauerhaftem lokalen Speicher.'
     ],
     en: [
-      'The horizon can again be drawn directly in the horizon editor using mouse, pen or touch.',
-      'The tooltip continues to show azimuth and altitude while editing.',
-      'Found locations are again reliably copied into the input fields when creating a location.'
+      'The update button refreshes app files and cache more reliably.',
+      'The horizon editor has been revised again and uses direct mouse, pen and touch input.',
+      'N.I.N.A. horizon import and export now open the file dialog or download.',
+      'The first-run screen can directly restore an existing full backup.',
+      'The help contains an FAQ section about browser data and persistent local storage.'
     ]
   }
 });

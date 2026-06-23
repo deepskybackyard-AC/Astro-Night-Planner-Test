@@ -1,4 +1,4 @@
-# Astro Night Planner - Testversion 1.1.0-test.4
+# Astro Night Planner - Testversion 1.1.0-test.5
 
 Diese Testversion korrigiert den interaktiven Horizonteditor und die Übernahme von Standort-Suchergebnissen.
 
