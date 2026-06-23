@@ -1,41 +1,39 @@
-/* Astro Night Planner 1.1.0-test.6 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
+/* Astro Night Planner 1.1.0-test.7 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.6', release:'1.1.0-test.6', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.6'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.7', release:'1.1.0-test.7', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.7'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Der Update-Button aktiviert neue App-Dateien robuster und lädt mit Cache-Aktualisierung neu.',
-    'Der Horizonteditor verwendet eine direkte Eingabeebene für Maus, Stift und Touch.',
-    'N.I.N.A.-Horizontimport und -export öffnen jetzt zuverlässig Datei-Dialog bzw. Download.',
-    'Im Erststartdialog kann eine vorhandene Gesamtsicherung direkt wiederhergestellt werden.',
-    'Die Hilfe enthält ein FAQ-Kapitel zu Browserdaten, Firefox, Safari und Cache-Einstellungen.',
-    'Die Datumsauswahl wurde um eine Kalenderauswahl für langfristige Objektplanung erweitert.',
-    'Wetterabhängige Rubriken werden außerhalb des Vorhersagezeitraums automatisch ausgeblendet.',
-    'Rubriken können in den Einstellungen angezeigt, ausgeblendet und mit einem Standardzustand versehen werden.',
-    'Der Horizonteditor zeigt beim Zeichnen Azimut und Höhe an und unterstützt N.I.N.A.-Import und -Export.',
-    'In der Aladin-Rahmung kann das aktuell geöffnete Objekt mit Rahmungsdaten für N.I.N.A. exportiert werden.',
-    'LDN, LBN und Barnard werden als getrennte Katalogfilter angeboten.'
+    'iPad- und Tablet-Layouts wurden robuster gegen Überlappungen gemacht.',
+    'Neuanlage-Felder markieren Vorgabetexte beim ersten Antippen automatisch.',
+    'Kameras können zusätzlich über Auflösung/Megapixel beschrieben werden; Pixelgröße wird berechnet.',
+    'Teleskope/Objektive können über Brennweite und Blende gepflegt werden; die Öffnung wird berechnet.',
+    'Reducer/Barlow-Faktoren können als optische Zusatzkomponenten im Setup berücksichtigt werden.',
+    'Speichern-Aktionen sind auf Einstellungsseiten zusätzlich oben verfügbar.',
+    'Mondaufgang und Monduntergang zeigen bei Hinweisen nun auch die Uhrzeit.',
+    'Aladin-Infofelder können ein- und ausgeblendet sowie positioniert werden.',
+    'Der Kamerarahmen kann in Aladin frei auf die Bildmitte gesetzt werden.',
+    'Ungespeicherte Einstellungen warnen vor dem Verlassen der Seite.'
   ],
   en: [
-    'The update button activates new app files more reliably and reloads with cache refresh.',
-    'The horizon editor uses a direct input layer for mouse, pen and touch.',
-    'N.I.N.A. horizon import and export now reliably open the file dialog or download.',
-    'The first-run dialog can restore an existing full backup directly.',
-    'The help contains a FAQ section for browser data, Firefox, Safari and cache settings.',
-    'Date selection now includes a calendar picker for long-term object planning.',
-    'Weather-dependent sections are automatically hidden beyond the forecast range.',
-    'Sections can be shown, hidden and configured with a default open or collapsed state.',
-    'The horizon editor shows azimuth and altitude while drawing and supports N.I.N.A. import and export.',
-    'The currently opened framed object can be exported for N.I.N.A. from the Aladin framing tools.',
-    'LDN, LBN and Barnard are offered as separate catalog filters.'
+    'iPad and tablet layouts are more robust against overlap.',
+    'New-entry fields automatically select placeholder defaults on first tap.',
+    'Cameras can additionally be described by resolution/megapixels; pixel size is calculated.',
+    'Telescopes/lenses can be maintained by focal length and f-number; aperture is calculated.',
+    'Reducer/Barlow factors can be used as optical accessories in setups.',
+    'Save actions are additionally available at the top of settings pages.',
+    'Moonrise and moonset hints now include the actual time.',
+    'Aladin info boxes can be shown/hidden and positioned.',
+    'The camera frame can be freely set to the current Aladin view center.',
+    'Unsaved settings warn before leaving the page.'
   ]
 };
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
 const app = document.getElementById('app');
@@ -241,6 +239,63 @@ const DEFAULT_SELECTED_FILTERS = FILTER_KEYS.slice();
 const FRAMING_FILTERS = [
   ['good','gut passend'],['near-edge','knapp / nahe am Rand'],['too-large','Objekt zu groß'],['unknown','keine Bewertung']
 ];
+const DEFAULT_NEW_ENTRY_NAMES = new Set(['Neues Teleskop','Neue Kamera','Neue Montierung','Neues Setup','Neue Optik','Neuer Standort','Mein Teleskop','Mein Standort','Mein Setup']);
+const OPTICAL_ACCESSORY_NONE_ID = 'optical-none';
+function opticalAccessoriesFor(equipment){
+  const list = Array.isArray(equipment?.opticalAccessories) ? equipment.opticalAccessories : [];
+  const normalized = list.map((item,index)=>({id:item.id||`optical-${index}`,name:String(item.name||'Optischer Faktor'),factor:Number(item.factor)||1,type:item.type||'neutral'}));
+  return [{id:OPTICAL_ACCESSORY_NONE_ID,name:'Ohne Reducer/Barlow',factor:1,type:'neutral'},...normalized];
+}
+function opticalFactorForSetup(setup,equipment=profile?.equipment){
+  if(!setup)return 1;
+  const direct = Number(setup.opticalFactor);
+  if(Number.isFinite(direct) && direct>0) return direct;
+  const item = opticalAccessoriesFor(equipment).find(acc=>acc.id===setup.opticalAccessoryId);
+  return Number(item?.factor)||1;
+}
+function effectiveFocalLength(scope,setup=null,equipment=profile?.equipment){
+  const focal=Number(scope?.focalLength)||0;
+  return focal * opticalFactorForSetup(setup,equipment);
+}
+function fRatioFromScope(scope){
+  const fl=Number(scope?.focalLength)||0, ap=Number(scope?.aperture)||0;
+  return fl>0 && ap>0 ? fl/ap : (Number(scope?.fRatio)||0);
+}
+function calculateCameraPixelSize(camera){
+  const w=Number(camera?.sensorWidth)||0, h=Number(camera?.sensorHeight)||0;
+  const rx=Number(camera?.resolutionX)||0, ry=Number(camera?.resolutionY)||0;
+  if(w>0 && rx>0) return (w*1000)/rx;
+  const mp=Number(camera?.megapixels)||0;
+  if(w>0 && h>0 && mp>0){
+    const aspect=w/h, total=mp*1e6, pxX=Math.sqrt(total*aspect);
+    if(pxX>0) return (w*1000)/pxX;
+  }
+  return Number(camera?.pixelSize)||0;
+}
+function updateCalculatedEquipmentValues(equipment){
+  (equipment?.telescopes||[]).forEach(scope=>{
+    const fl=Number(scope.focalLength)||0, fr=Number(scope.fRatio)||0, ap=Number(scope.aperture)||0;
+    if(fl>0 && fr>0) scope.aperture=Math.round(fl/fr*10)/10;
+    else if(fl>0 && ap>0) scope.fRatio=Math.round(fl/ap*100)/100;
+  });
+  (equipment?.cameras||[]).forEach(camera=>{
+    const px=calculateCameraPixelSize(camera);
+    if(px>0) camera.pixelSize=Math.round(px*100)/100;
+    const rx=Number(camera.resolutionX)||0, ry=Number(camera.resolutionY)||0;
+    if(rx>0 && ry>0) camera.megapixels=Math.round(rx*ry/10000)/100;
+  });
+  (equipment?.setups||[]).forEach(setup=>{
+    const acc=opticalAccessoriesFor(equipment).find(item=>item.id===setup.opticalAccessoryId);
+    if(acc) setup.opticalFactor=Number(acc.factor)||1;
+    else if(!Number(setup.opticalFactor)) setup.opticalFactor=1;
+  });
+}
+function frameCenterForObject(object){
+  const ra=Number(profile?.planning?.frameCenterRaDeg), dec=Number(profile?.planning?.frameCenterDecDeg);
+  if(Number.isFinite(ra)&&Number.isFinite(dec))return {raDeg:ra,decDeg:dec};
+  return {raDeg:(Number(object?.raHours)||0)*15,decDeg:Number(object?.decDeg)||0};
+}
+
 function degMinToArcMin(deg,min){return Math.max(0,(Number(deg)||0)*60+clamp(Math.round(Number(min)||0),0,59))}
 function arcMinToDegMin(value){const total=Math.max(0,Math.round(Number(value)||0));return{deg:Math.floor(total/60),min:total%60}}
 function formatDegMinArc(value){const dm=arcMinToDegMin(value);return `${dm.deg}°${String(dm.min).padStart(2,'0')}′`}
@@ -270,7 +325,7 @@ function standardProfile(){
       telescopes:[], selectedTelescopeId:'',
       cameras:[], selectedCameraId:'',
       mounts:[], selectedMountId:'',
-      setups:[], selectedSetupId:''
+      setups:[], selectedSetupId:'', opticalAccessories:[], selectedOpticalAccessoryId:''
     },
     central:{
       windUnit:'kmh', activeWindProfile:'normal', windProfiles:deepClone(WIND_PROFILES),
@@ -284,6 +339,7 @@ function standardProfile(){
       defaultPlanningWindow:'nautical', defaultLocationId:'', gpsBehavior:'last', locationSearchCountry:'DE',
       framing:{minMarginPercent:10,autoRotate:true},
       aladinLabels:{visible:true,detail:'auto'},
+      aladinInfo:{visible:true,position:'right'},
       aladinSurveys:defaultAladinSurveys(),
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
@@ -297,7 +353,7 @@ function standardProfile(){
       temporaryCloudMapView:null,temporaryCloudMapBaseMode:null,temporaryCloudSmoothing:null,temporaryCloudMapShowValues:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,cloudMapWeatherOverlays:{precip:true,rain:true,snow:true},
       search:'',directSearch:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],objectTypeProfileId:'types-all',objectTypeProfileCustom:false,maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,visibilityBasis:'nautical',minMoonDistance:25,
       minSize:3,maxSize:240,sizeProfileId:'size-standard',excludeNoSize:false,minScore:0,selectedFilters:DEFAULT_SELECTED_FILTERS.slice(),framingFilter:['good','near-edge','too-large','unknown'],surfaceBrightnessMax:99,showNoSurfaceBrightness:true,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:35,objectRotationObjectId:null,frameRotation:0,timeFraction:.5,showMoonInAladin:false,
-      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[]},
+      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[],frameMoveMode:false,frameCenterRaDeg:null,frameCenterDecDeg:null},
     targets:[],
     targetFilters:{search:'',status:'all',priority:'all',type:'all',filter:'all',month:'all'},
     ui:{mainTab:'plan',settingsTab:'equipment',scroll:{plan:0,settings:0}}
@@ -494,12 +550,16 @@ function normalizeProfile(p){
   out.equipment.cameras=Array.isArray(p.equipment?.cameras)&&p.equipment.cameras.length?p.equipment.cameras:base.equipment.cameras;
   out.equipment.mounts=Array.isArray(p.equipment?.mounts)&&p.equipment.mounts.length?p.equipment.mounts:base.equipment.mounts;
   out.equipment.setups=Array.isArray(p.equipment?.setups)&&p.equipment.setups.length?p.equipment.setups:base.equipment.setups;
+  out.equipment.opticalAccessories=Array.isArray(p.equipment?.opticalAccessories)?p.equipment.opticalAccessories:base.equipment.opticalAccessories;
+  updateCalculatedEquipmentValues(out.equipment);
   out.equipment.setups=out.equipment.setups.map((setup,index)=>({id:setup.id||`setup-${index}`,name:String(setup.name||'Setup'),telescopeId:setup.telescopeId||out.equipment.telescopes[0]?.id||'',cameraId:setup.cameraId||out.equipment.cameras[0]?.id||'',mountId:setup.mountId||out.equipment.mounts[0]?.id||''}));
   if(!out.equipment.setups.length)out.equipment.setups=[{id:'setup-auto',name:`${out.equipment.telescopes[0]?.name||'Teleskop'} + ${out.equipment.cameras[0]?.name||'Kamera'}`,telescopeId:out.equipment.telescopes[0]?.id||'',cameraId:out.equipment.cameras[0]?.id||'',mountId:out.equipment.mounts[0]?.id||''}];
   out.equipment.setups=out.equipment.setups.map(setup=>({ ...setup,
     telescopeId:out.equipment.telescopes.some(item=>item.id===setup.telescopeId)?setup.telescopeId:(out.equipment.selectedTelescopeId||out.equipment.telescopes[0]?.id||''),
     cameraId:out.equipment.cameras.some(item=>item.id===setup.cameraId)?setup.cameraId:(out.equipment.selectedCameraId||out.equipment.cameras[0]?.id||''),
-    mountId:out.equipment.mounts.some(item=>item.id===setup.mountId)?setup.mountId:(out.equipment.selectedMountId||out.equipment.mounts[0]?.id||'')
+    mountId:out.equipment.mounts.some(item=>item.id===setup.mountId)?setup.mountId:(out.equipment.selectedMountId||out.equipment.mounts[0]?.id||''),
+    opticalAccessoryId:setup.opticalAccessoryId&&opticalAccessoriesFor(out.equipment).some(item=>item.id===setup.opticalAccessoryId)?setup.opticalAccessoryId:OPTICAL_ACCESSORY_NONE_ID,
+    opticalFactor:Number(setup.opticalFactor)||opticalFactorForSetup(setup,out.equipment)||1
   }));
   if(!out.equipment.selectedSetupId||!out.equipment.setups.some(item=>item.id===out.equipment.selectedSetupId))out.equipment.selectedSetupId=out.equipment.setups[0]?.id||'';
   if(!out.equipment.selectedTelescopeId||!out.equipment.telescopes.some(item=>item.id===out.equipment.selectedTelescopeId))out.equipment.selectedTelescopeId=out.equipment.telescopes[0]?.id||'';
@@ -515,6 +575,7 @@ function normalizeProfile(p){
   out.central.weights={...base.central.weights,...(p.central?.weights||{})};
   out.central.qualityThresholds={...base.central.qualityThresholds,...(p.central?.qualityThresholds||{})};
   out.central.aladinLabels={...base.central.aladinLabels,...(p.central?.aladinLabels||{})};
+  out.central.aladinInfo={...base.central.aladinInfo,...(p.central?.aladinInfo||{})};
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
   out.central.filterDefaults.selectedFilters=Array.isArray(out.central.filterDefaults.selectedFilters)?out.central.filterDefaults.selectedFilters.filter(x=>FILTER_KEYS.includes(x)):DEFAULT_SELECTED_FILTERS.slice();
@@ -772,15 +833,15 @@ function updateProfileSelectors(){
   select.innerHTML=profiles.sort((a,b)=>a.name.localeCompare(b.name,'de')).map(p=>`<option value="${esc(p.id)}" ${profile&&p.id===profile.id?'selected':''}>${esc(p.name)}</option>`).join('');
   document.getElementById('headerProfileName').textContent=profile?.name||'Standard';
 }
-async function switchMain(tab){scrollByTab[currentMainTab]=scrollY;if(tab!=='plan')stopCloudMapAnimation();currentMainTab=tab;profile.ui.mainTab=tab;await saveProfile();render();if(tab==='plan'&&!cloudMapData)fetchCloudMap();requestAnimationFrame(()=>scrollTo({top:scrollByTab[tab]||0,behavior:'instant'}));}
+async function switchMain(tab){if(dirtySections&&dirtySections.size&&currentMainTab==='settings'&&tab!=='settings'&&!confirm('Es gibt ungespeicherte Änderungen in den Einstellungen. Bereich trotzdem verlassen?'))return;scrollByTab[currentMainTab]=scrollY;if(tab!=='plan')stopCloudMapAnimation();currentMainTab=tab;profile.ui.mainTab=tab;await saveProfile();render();if(tab==='plan'&&!cloudMapData)fetchCloudMap();requestAnimationFrame(()=>scrollTo({top:scrollByTab[tab]||0,behavior:'instant'}));}
 
 function activeLocation(){const id=profile.planning?.locationId||profile.central?.defaultLocationId||profile.selectedLocationId;return profile.locations.find(x=>x.id===id)||profile.locations[0]||standardProfile().locations[0]}
 function activeSetup(){const id=profile.planning?.temporarySetupId||profile.equipment.selectedSetupId;return (profile.equipment.setups||[]).find(x=>x.id===id)||(profile.equipment.setups||[])[0]||null}
 function activeScope(){const setup=activeSetup();const id=profile.planning?.temporaryTelescopeId||setup?.telescopeId||profile.equipment.selectedTelescopeId;return profile.equipment.telescopes.find(x=>x.id===id)||profile.equipment.telescopes[0]}
 function activeCamera(){const setup=activeSetup();const id=profile.planning?.temporaryCameraId||setup?.cameraId||profile.equipment.selectedCameraId;return profile.equipment.cameras.find(x=>x.id===id)||profile.equipment.cameras[0]}
 function activeMount(){return profile.equipment.mounts?.find(x=>x.id===profile.equipment.selectedMountId)}
-function fov(){const s=activeScope(),c=activeCamera();if(!s||!c||!s.focalLength)return null;return {width:57.2958*c.sensorWidth/s.focalLength,height:57.2958*c.sensorHeight/s.focalLength,pixelScale:206.265*c.pixelSize/s.focalLength}}
-function fovForSetup(setup){const s=profile.equipment.telescopes.find(x=>x.id===setup?.telescopeId),c=profile.equipment.cameras.find(x=>x.id===setup?.cameraId);if(!s||!c||!s.focalLength)return null;return {width:57.2958*c.sensorWidth/s.focalLength,height:57.2958*c.sensorHeight/s.focalLength,pixelScale:206.265*c.pixelSize/s.focalLength,name:setup.name,id:setup.id}}
+function fov(){const setup=activeSetup(),s=activeScope(),c=activeCamera(),fl=effectiveFocalLength(s,setup);if(!s||!c||!fl)return null;const px=calculateCameraPixelSize(c)||Number(c.pixelSize)||0;return {width:57.2958*c.sensorWidth/fl,height:57.2958*c.sensorHeight/fl,pixelScale:px?206.265*px/fl:null,effectiveFocalLength:fl,opticalFactor:opticalFactorForSetup(setup),setupName:setup?.name||''}}
+function fovForSetup(setup){const s=profile.equipment.telescopes.find(x=>x.id===setup?.telescopeId),c=profile.equipment.cameras.find(x=>x.id===setup?.cameraId),fl=effectiveFocalLength(s,setup);if(!s||!c||!fl)return null;const px=calculateCameraPixelSize(c)||Number(c.pixelSize)||0;return {width:57.2958*c.sensorWidth/fl,height:57.2958*c.sensorHeight/fl,pixelScale:px?206.265*px/fl:null,effectiveFocalLength:fl,opticalFactor:opticalFactorForSetup(setup),name:setup.name,id:setup.id}}
 function esc(v){return String(v??'').replace(/[&<>"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
 function fmt(v,d=0){return Number.isFinite(v)?Number(v).toFixed(d):'–'}
 function toRad(x){return x*Math.PI/180} function toDeg(x){return x*180/Math.PI}
@@ -790,10 +851,16 @@ function fmtDate(key,tz){return new Intl.DateTimeFormat('de-DE',{timeZone:tz,wee
 function fmtTime(date,tz){if(!date||isNaN(date))return'–';return new Intl.DateTimeFormat('de-DE',{timeZone:tz,hour:'2-digit',minute:'2-digit'}).format(date)}
 function fmtEventTime(date,tz,emptyText){return(!date||isNaN(date))?emptyText:fmtTime(date,tz)}
 function moonEventDisplay(date,type,night,windowRange,loc){
-  const before=`${type==='rise'?'Mondaufgang':'Monduntergang'} liegt vor dem Planungszeitraum`;
-  const after=`${type==='rise'?'Mondaufgang':'Monduntergang'} liegt nach dem Planungszeitraum`;
-  const none=`kein ${type==='rise'?'Mondaufgang':'Monduntergang'} in dieser Nacht`;
-  if(date&&!isNaN(date)){if(date<windowRange.start)return before;if(date>windowRange.end)return after;return fmtTime(date,loc.timezone)}
+  const label=type==='rise'?'Mondaufgang':'Monduntergang';
+  const before=`${label} liegt vor dem Planungszeitraum`;
+  const after=`${label} liegt nach dem Planungszeitraum`;
+  const none=`kein ${label.toLowerCase()} in dieser Nacht`;
+  if(date&&!isNaN(date)){
+    const time=fmtTime(date,loc.timezone);
+    if(date<windowRange.start)return `${label} ${time} – liegt vor dem Planungszeitraum`;
+    if(date>windowRange.end)return `${label} ${time} – liegt nach dem Planungszeitraum`;
+    return time;
+  }
   const moonStart=moonCoords(windowRange.start),moonEnd=moonCoords(windowRange.end);
   const altStart=altitude(moonStart.raHours,moonStart.decDeg,windowRange.start,loc.latitude,loc.longitude);
   const altEnd=altitude(moonEnd.raHours,moonEnd.decDeg,windowRange.end,loc.latitude,loc.longitude);
@@ -1697,7 +1764,8 @@ function meteoblueLocationInfo(loc){
 }
 
 function renderFraming(o,windowRange,loc){
-  const setup=fov(),aspect=2.15,setupW=setup?.width||1.5,setupH=setup?.height||1;
+  const setup=fov(),activeSetupItem=activeSetup(),aspect=2.15,setupW=setup?.width||1.5,setupH=setup?.height||1,frameCenter=frameCenterForObject(o);
+  const frameCenterRa=frameCenter.raDeg,frameCenterDec=frameCenter.decDeg;
   const objectW=Math.max(.02,(Number(o.majorArcMin)||1)/60),objectH=Math.max(.02,(Number(o.minorArcMin)||Number(o.majorArcMin)||1)/60);
   const frameRotation=normalizedAngle180(profile.planning.frameRotation||0),catalogRotation=normalizedAngle180(Number(o.positionAngleDeg)||0),rotationBelongsToObject=profile.planning.objectRotationObjectId===o.id,objectRotation=rotationBelongsToObject&&Number.isFinite(Number(profile.planning.objectRotation))?normalizedAngle180(Number(profile.planning.objectRotation)):catalogRotation;
   if(!rotationBelongsToObject){profile.planning.objectRotation=catalogRotation;profile.planning.objectRotationObjectId=o.id}
@@ -1706,14 +1774,14 @@ function renderFraming(o,windowRange,loc){
   const moon=moonCoords(time),moonRaDeg=moon.raHours*15,moonDecDeg=moon.decDeg,moonSep=angularSeparation(o.raHours,o.decDeg,moon.raHours,moon.decDeg),moonAlt=altitude(moon.raHours,moon.decDeg,time,loc.latitude,loc.longitude),moonPhase=moonPhaseInfo(time),moonName=language==='en'?'Moon':'Mond';
   const outline=curatedOutlineForObject(o),availableSurveys=enabledAladinSurveys(profile);let survey=profile.planning.aladinSurvey||availableSurveys[0]?.hipsId||'P/DSS2/color';if(!availableSurveys.some(item=>item.hipsId===survey))survey=availableSurveys[0]?.hipsId||'P/DSS2/color';
   const comparisonFrames=(profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:frameRotation,color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]}));
-  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language}).toString();
+  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),frameRa:String(frameCenterRa),frameDec:String(frameCenterDec),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language}).toString();
   const scopes=profile.equipment.telescopes.map(item=>`<option value="${esc(item.id)}" ${item.id===activeScope()?.id?'selected':''}>${esc(item.name)}</option>`).join(''),cameras=profile.equipment.cameras.map(item=>`<option value="${esc(item.id)}" ${item.id===activeCamera()?.id?'selected':''}>${esc(item.name)}</option>`).join('');
   const selectableObjects=[...new Map([...currentComputedObjects.map(entry=>entry.object),o].map(item=>[item.id,item])).values()].sort((a,b)=>a.id.localeCompare(b.id,'de',{numeric:true})),objectOptions=selectableObjects.map(x=>`<option value="${esc(x.id)}" ${x.id===o.id?'selected':''}>${esc(x.id)} · ${esc(x.name)}</option>`).join('');
   const analysis=framingAnalysis(o,{rotation:frameRotation,optimize:false});
   return`<section class="object-detail-section framing-section" id="framingCard">
     <div class="framing-header-grid"><div><div class="eyebrow">Interaktives Himmelsbild</div><h3>Rahmung: ${esc(o.id)} · ${esc(o.name)}</h3><div class="muted">${esc(o.type)} · ${fmt(o.majorArcMin)}′ × ${fmt(o.minorArcMin)}′ · ${esc(analysis.status)} · Mindestrand ${fmt(analysis.minMargin,1)} %</div></div><label>Objekt<select id="framingObjectSelect">${objectOptions}</select></label><label>Teleskop<select id="framingTelescopeSelect">${scopes}</select></label><label>Kamera<select id="framingCameraSelect">${cameras}</select></label></div>
-    <div class="framing-view"><iframe id="aladinFrame" title="Aladin Lite – ${esc(o.id)}" src="aladin-frame.html?${query}" loading="eager"></iframe><div class="framing-info"><div id="framingTimePosition"><strong id="framingTimeClock">${fmtTime(time,loc.timezone)}</strong><br>Höhe ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)}</div><div id="framingTimeWeather">${setup?`Setup ${fmt(setup.width,2)}° × ${fmt(setup.height,2)}°<br>${fmt(setup.pixelScale,2)}″/px`:'Kein Setup gewählt'}</div><div id="framingMoonInfo" class="moon-note">${moonName}: Abstand ${fmt(moonSep)}° · Höhe ${fmt(moonAlt)}° · Beleuchtung ${fmt(moonPhase.illumination)} %</div></div></div>
-    <div class="framing-controls compact-framing-controls"><label>Survey<select id="aladinSurveySelect">${availableSurveys.map(item=>`<option value="${esc(item.hipsId)}" ${survey===item.hipsId?'selected':''}>${optionText(item.name)}</option>`).join('')||`<option value="P/DSS2/color">DSS2 Farbe</option>`}</select></label><button type="button" id="openAladinExternal">Himmelsbild in neuem Tab öffnen</button><span class="small muted external-aladin-note">Mit Messwerkzeug und Umrisszeichnung</span><div class="comparison-frame-picker"><span>Vergleichsrahmen</span>${(profile.equipment.setups||[]).map(setup=>`<label class="chip"><input type="checkbox" data-compare-setup="${esc(setup.id)}" ${(profile.planning.comparisonSetupIds||[]).includes(setup.id)?'checked':''}>${esc(setup.name)}</label>`).join('')}</div><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><button type="button" id="centerAladinFrame">Rahmen auf ausgewähltes Objekt</button><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><button type="button" id="exportNinaPlan" class="primary">${language==='en'?'Export for N.I.N.A.':'Für N.I.N.A. exportieren'}</button><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label><label class="chip"><input id="showMoonInAladin" type="checkbox" ${profile.planning.showMoonInAladin?'checked':''}>Mond anzeigen</label><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>Ändert Planungswerte, nicht das Sternfeld. Mond: ${fmt(moonSep)}° Abstand, Höhe ${fmt(moonAlt)}°, Beleuchtung ${fmt(moonPhase.illumination)} %.</small></label><label class="chip outline-control"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektumriss anzeigen</label><label class="outline-control">Objektrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" class="outline-control" title="Objektellipse auf den Katalog-Positionswinkel ${fmt(catalogRotation)}° zurücksetzen">Objektausrichtung zurücksetzen</button></div>
+    <div class="framing-view info-pos-${esc(profile.central.aladinInfo?.position||'right')}"><iframe id="aladinFrame" title="Aladin Lite – ${esc(o.id)}" src="aladin-frame.html?${query}" loading="eager"></iframe><div class="framing-info ${profile.central.aladinInfo?.visible===false?'hidden':''}"><div id="framingTimePosition"><strong id="framingTimeClock">${fmtTime(time,loc.timezone)}</strong><br>Höhe ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)}</div><div id="framingTimeWeather">${setup?`Setup ${fmt(setup.width,2)}° × ${fmt(setup.height,2)}°<br>${fmt(setup.pixelScale,2)}″/px`:'Kein Setup gewählt'}</div><div id="framingMoonInfo" class="moon-note">${moonName}: Abstand ${fmt(moonSep)}° · Höhe ${fmt(moonAlt)}° · Beleuchtung ${fmt(moonPhase.illumination)} %</div></div></div>
+    <div class="framing-controls compact-framing-controls"><label>Survey<select id="aladinSurveySelect">${availableSurveys.map(item=>`<option value="${esc(item.hipsId)}" ${survey===item.hipsId?'selected':''}>${optionText(item.name)}</option>`).join('')||`<option value="P/DSS2/color">DSS2 Farbe</option>`}</select></label><button type="button" id="openAladinExternal">Himmelsbild in neuem Tab öffnen</button><span class="small muted external-aladin-note">Mit Messwerkzeug und Umrisszeichnung</span><div class="comparison-frame-picker"><span>Vergleichsrahmen</span>${(profile.equipment.setups||[]).map(setup=>`<label class="chip"><input type="checkbox" data-compare-setup="${esc(setup.id)}" ${(profile.planning.comparisonSetupIds||[]).includes(setup.id)?'checked':''}>${esc(setup.name)}</label>`).join('')}</div><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><button type="button" id="centerAladinFrame">Rahmen auf Objekt zurücksetzen</button><button type="button" id="toggleFrameMoveMode" class="${profile.planning.frameMoveMode?'active':''}">Rahmen verschieben</button><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><button type="button" id="exportNinaPlan" class="primary">${language==='en'?'Export for N.I.N.A.':'Für N.I.N.A. exportieren'}</button><label class="chip"><input id="aladinInfoVisible" type="checkbox" ${profile.central.aladinInfo?.visible!==false?'checked':''}>Infofelder anzeigen</label><label>Infofelder-Position<select id="aladinInfoPosition">${[['right','rechts'],['left','links'],['top','oben'],['bottom','unten']].map(([key,label])=>`<option value="${key}" ${profile.central.aladinInfo?.position===key?'selected':''}>${label}</option>`).join('')}</select></label><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label><label class="chip"><input id="showMoonInAladin" type="checkbox" ${profile.planning.showMoonInAladin?'checked':''}>Mond anzeigen</label><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>Ändert Planungswerte, nicht das Sternfeld. Mond: ${fmt(moonSep)}° Abstand, Höhe ${fmt(moonAlt)}°, Beleuchtung ${fmt(moonPhase.illumination)} %.</small></label><label class="chip outline-control"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektumriss anzeigen</label><label class="outline-control">Objektrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" class="outline-control" title="Objektellipse auf den Katalog-Positionswinkel ${fmt(catalogRotation)}° zurücksetzen">Objektausrichtung zurücksetzen</button></div>
   </section>`;
 }
 function renderMeteoblue(loc){
@@ -1752,10 +1820,10 @@ function renderMeteoblue(loc){
   </section>`
 }
 
-function renderSaveBar(section,label='Änderungen speichern'){
+function renderSaveBar(section,label='Änderungen speichern',placement='bottom'){
   const dirty=dirtySections.has(section),success=saveFeedbackSections.has(section);
   const state=dirty?'Ungespeicherte Änderungen':success?'Erfolgreich gespeichert':'Gespeichert';
-  return`<div class="save-bar ${dirty?'is-dirty':''} ${success?'is-success':''}"><span class="save-state">${state}</span><div class="save-actions"><button type="button" class="ghost section-reset-button" data-reset-section="${section}">Rubrik auf Standard zurücksetzen</button><button data-save-section="${section}" data-default-label="${esc(label)}" class="primary ${success?'save-success':''}" ${success?'disabled':''}>${success?'Gespeichert ✓':label}</button></div></div>`;
+  return`<div class="save-bar ${placement==='top'?'save-bar-top':''} ${dirty?'is-dirty':''} ${success?'is-success':''}"><span class="save-state">${state}</span><div class="save-actions"><button type="button" class="ghost section-reset-button" data-reset-section="${section}">Rubrik auf Standard zurücksetzen</button><button data-save-section="${section}" data-default-label="${esc(label)}" class="primary ${success?'save-success':''}" ${success?'disabled':''}>${success?'Gespeichert ✓':label}</button></div></div>`;
 }
 function resetDraftSection(section){
   const base=standardProfile();
@@ -1784,18 +1852,25 @@ function renderSettings(){
   return`<div data-page="settings"><section class="card"><div class="section-title-row"><div><h2>Einstellungen</h2><div class="muted">Lokales Profil „${esc(profile.name)}“ · Einstellungen in IndexedDB, Programmdateien im PWA-Cache</div></div>${renderProfileBar()}</div><div class="settings-tabs" style="margin-top:16px">${tabs.map(([k,n])=>`<button data-settings-tab="${k}" class="${currentSettingsTab===k?'active':''} ${settingsTabHasDirty(k)?'dirty-dot':''}">${n}</button>`).join('')}</div></section><section class="settings-section ${currentSettingsTab==='equipment'?'active':''}">${renderEquipment()}</section><section class="settings-section ${currentSettingsTab==='central'?'active':''}">${renderCentral()}</section><section class="settings-section ${currentSettingsTab==='locations'?'active':''}">${renderLocations()}</section><section class="settings-section ${currentSettingsTab==='targets'?'active':''}">${renderTargets()}</section><section class="settings-section ${currentSettingsTab==='info'?'active':''}">${renderInfo()}</section></div>`
 }
 function renderProfileBar(){return`<div class="profile-bar"><select id="settingsProfileSelect">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===profile.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button id="newProfile">Neu</button><button id="duplicateProfile">Duplizieren</button><button id="renameProfile">Umbenennen</button><button id="deleteProfile" class="danger" ${profiles.length===1?'disabled':''}>Löschen</button></div>`}
-function renderEquipment(){return`<div class="card">
-  <div class="section-title-row"><div><h2>Teleskope</h2><div class="small muted">Brennweite und Öffnung bestimmen zusammen mit der Kamera das Bildfeld.</div></div><button id="addTelescope">Teleskop hinzufügen</button></div>
-  <div class="equipment-list">${draft.equipment.telescopes.map(s=>`<div class="equipment-row scope-row" data-scope-row="${s.id}"><label>Name<input data-scope="name" value="${esc(s.name)}"></label><label>Brennweite (mm)<input data-scope="focalLength" type="number" min="1" value="${s.focalLength}"></label><label>Öffnung (mm)<input data-scope="aperture" type="number" min="1" value="${s.aperture||''}"></label><label class="chip"><input data-selected-scope type="radio" name="selectedScope" value="${s.id}" ${draft.equipment.selectedTelescopeId===s.id?'checked':''}>Aktiv</label><button data-delete-scope="${s.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+function renderEquipment(){
+  updateCalculatedEquipmentValues(draft.equipment);
+  const opticals=opticalAccessoriesFor(draft.equipment);
+  return`<div class="card equipment-settings-card">
+  ${renderSaveBar('equipment','Ausrüstung speichern','top')}
+  <div class="section-title-row"><div><h2>Teleskope und Objektive</h2><div class="small muted">Brennweite, Öffnung oder Blende bestimmen zusammen mit Kamera und optischem Faktor das Bildfeld.</div></div><button id="addTelescope">Teleskop hinzufügen</button></div>
+  <div class="equipment-list">${draft.equipment.telescopes.map(s=>`<div class="equipment-row scope-row extended-equipment-row" data-scope-row="${s.id}"><label>Name<input data-scope="name" data-default-clear="true" value="${esc(s.name)}"></label><label>Brennweite (mm)<input data-scope="focalLength" type="number" min="1" value="${s.focalLength}"></label><label>Blende / f-Zahl<input data-scope="fRatio" type="number" min="0.1" step="0.1" value="${Number(s.fRatio)||fmt(fRatioFromScope(s),1)}"></label><label>Öffnung (mm)<input data-scope="aperture" type="number" min="1" step="0.1" value="${s.aperture||''}"></label><div class="small muted calculated-equipment-value">Berechnet: f/${fmt(fRatioFromScope(s),1)} · ${s.aperture?fmt(Number(s.aperture),1)+' mm Öffnung':'Öffnung fehlt'}</div><label class="chip"><input data-selected-scope type="radio" name="selectedScope" value="${s.id}" ${draft.equipment.selectedTelescopeId===s.id?'checked':''}>Aktiv</label><button data-delete-scope="${s.id}" class="danger">Entfernen</button></div>`).join('')}</div>
   <div class="divider"></div>
-  <div class="section-title-row"><div><h2>Kameras</h2><div class="small muted">Sensorgröße und Pixelgröße werden für Bildfeld und Abbildungsmaßstab verwendet.</div></div><button id="addCamera">Kamera hinzufügen</button></div>
-  <div class="equipment-list">${draft.equipment.cameras.map(c=>`<div class="equipment-row camera-row" data-camera-row="${c.id}"><label>Name<input data-camera="name" value="${esc(c.name)}"></label><label>Sensorbreite (mm)<input data-camera="sensorWidth" type="number" min="0.1" step="0.01" value="${c.sensorWidth}"></label><label>Sensorhöhe (mm)<input data-camera="sensorHeight" type="number" min="0.1" step="0.01" value="${c.sensorHeight}"></label><label>Pixelgröße (µm)<input data-camera="pixelSize" type="number" min="0.1" step="0.01" value="${c.pixelSize}"></label><label class="chip"><input data-selected-camera type="radio" name="selectedCamera" value="${c.id}" ${draft.equipment.selectedCameraId===c.id?'checked':''}>Aktiv</label><button data-delete-camera="${c.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="section-title-row"><div><h2>Kameras</h2><div class="small muted">Sensorgröße bestimmt das Bildfeld. Pixelgröße kann direkt eingegeben oder aus Sensorgröße und Auflösung/Megapixel berechnet werden.</div></div><button id="addCamera">Kamera hinzufügen</button></div>
+  <div class="equipment-list">${draft.equipment.cameras.map(c=>`<div class="equipment-row camera-row extended-equipment-row" data-camera-row="${c.id}"><label>Name<input data-camera="name" data-default-clear="true" value="${esc(c.name)}"></label><label>Sensorbreite (mm)<input data-camera="sensorWidth" type="number" min="0.1" step="0.01" value="${c.sensorWidth}"></label><label>Sensorhöhe (mm)<input data-camera="sensorHeight" type="number" min="0.1" step="0.01" value="${c.sensorHeight}"></label><label>Auflösung X (px)<input data-camera="resolutionX" type="number" min="1" step="1" value="${c.resolutionX||''}"></label><label>Auflösung Y (px)<input data-camera="resolutionY" type="number" min="1" step="1" value="${c.resolutionY||''}"></label><label>Megapixel<input data-camera="megapixels" type="number" min="0.1" step="0.1" value="${c.megapixels||''}"></label><label>Pixelgröße (µm)<input data-camera="pixelSize" type="number" min="0.1" step="0.01" value="${c.pixelSize}"></label><div class="small muted calculated-equipment-value">Berechnet: ${fmt(c.pixelSize,2)} µm${c.resolutionX&&c.resolutionY?` · ${fmt(c.megapixels,2)} MP`:''}</div><label class="chip"><input data-selected-camera type="radio" name="selectedCamera" value="${c.id}" ${draft.equipment.selectedCameraId===c.id?'checked':''}>Aktiv</label><button data-delete-camera="${c.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="divider"></div>
+  <div class="section-title-row"><div><h2>Reducer, Flattener und Barlow</h2><div class="small muted">Optische Faktoren werden im Setup berücksichtigt. Beispiel: 0,8× Reducer oder 2,0× Barlow.</div></div><button id="addOpticalAccessory">Optische Komponente hinzufügen</button></div>
+  <div class="equipment-list">${(draft.equipment.opticalAccessories||[]).map(acc=>`<div class="equipment-row optical-row" data-optical-row="${acc.id}"><label>Name<input data-optical="name" data-default-clear="true" value="${esc(acc.name)}"></label><label>Typ<select data-optical="type">${[['reducer','Reducer/Flattener'],['barlow','Barlow'],['neutral','Neutral/Sonstige']].map(([key,label])=>`<option value="${key}" ${acc.type===key?'selected':''}>${label}</option>`).join('')}</select></label><label>Faktor<input data-optical="factor" type="number" min="0.1" step="0.01" value="${Number(acc.factor)||1}"></label><button data-delete-optical="${acc.id}" class="danger">Entfernen</button></div>`).join('')||'<div class="notice">Noch keine optische Zusatzkomponente angelegt. Setups verwenden dann Faktor 1,0×.</div>'}</div>
   <div class="divider"></div>
   <div class="section-title-row"><div><h2>Montierungen</h2><div class="small muted">Die Montierung wird derzeit dokumentiert; eine spätere Qualitätsbewertung kann Typ und Tragfähigkeit berücksichtigen.</div></div><button id="addMount">Montierung hinzufügen</button></div>
-  <div class="equipment-list">${draft.equipment.mounts.map(m=>`<div class="equipment-row mount-row" data-mount-row="${m.id}"><label>Name<input data-mount="name" value="${esc(m.name)}"></label><label>Montierungsart<select data-mount="type">${['Parallaktisch','Alt-Azimutal','Startracker','Säule / stationär','Sonstige'].map(type=>`<option ${m.type===type?'selected':''}>${type}</option>`).join('')}</select></label><label>Max. Zuladung (kg, optional)<input data-mount="maxPayloadKg" type="number" min="0" step="0.1" value="${m.maxPayloadKg??''}"></label><label class="chip"><input data-selected-mount type="radio" name="selectedMount" value="${m.id}" ${draft.equipment.selectedMountId===m.id?'checked':''}>Aktiv</label><button data-delete-mount="${m.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="equipment-list">${draft.equipment.mounts.map(m=>`<div class="equipment-row mount-row" data-mount-row="${m.id}"><label>Name<input data-mount="name" data-default-clear="true" value="${esc(m.name)}"></label><label>Montierungsart<select data-mount="type">${['Parallaktisch','Alt-Azimutal','Startracker','Säule / stationär','Sonstige'].map(type=>`<option ${m.type===type?'selected':''}>${type}</option>`).join('')}</select></label><label>Max. Zuladung (kg, optional)<input data-mount="maxPayloadKg" type="number" min="0" step="0.1" value="${m.maxPayloadKg??''}"></label><label class="chip"><input data-selected-mount type="radio" name="selectedMount" value="${m.id}" ${draft.equipment.selectedMountId===m.id?'checked':''}>Aktiv</label><button data-delete-mount="${m.id}" class="danger">Entfernen</button></div>`).join('')}</div>
   <div class="divider"></div>
-  <div class="section-title-row"><div><h2>Setup-Kombinationen</h2><div class="small muted">Setups bündeln Teleskop und Kamera für Planung, Rahmungsbewertung und Bildfeld.</div></div><button id="addSetup">Setup hinzufügen</button></div>
-  <div class="equipment-list">${(draft.equipment.setups||[]).map(setup=>`<div class="equipment-row setup-row" data-setup-row="${setup.id}"><label>Name<input data-setup="name" value="${esc(setup.name)}"></label><label>Teleskop<select data-setup="telescopeId">${draft.equipment.telescopes.map(scope=>`<option value="${esc(scope.id)}" ${setup.telescopeId===scope.id?'selected':''}>${esc(scope.name)}</option>`).join('')}</select></label><label>Kamera<select data-setup="cameraId">${draft.equipment.cameras.map(camera=>`<option value="${esc(camera.id)}" ${setup.cameraId===camera.id?'selected':''}>${esc(camera.name)}</option>`).join('')}</select></label><label>Montierung<select data-setup="mountId">${draft.equipment.mounts.map(mount=>`<option value="${esc(mount.id)}" ${setup.mountId===mount.id?'selected':''}>${esc(mount.name)}</option>`).join('')}</select></label><label class="chip"><input data-selected-setup type="radio" name="selectedSetup" value="${setup.id}" ${draft.equipment.selectedSetupId===setup.id?'checked':''}>Aktiv</label><button data-delete-setup="${setup.id}" class="danger">Entfernen</button></div>`).join('')}</div>
+  <div class="section-title-row"><div><h2>Setup-Kombinationen</h2><div class="small muted">Setups bündeln Teleskop/Objektiv, Kamera, Montierung und optional Reducer/Barlow. Daraus berechnet die Planung die effektive Rahmung.</div></div><button id="addSetup">Setup hinzufügen</button></div>
+  <div class="equipment-list">${(draft.equipment.setups||[]).map(setup=>{const scope=draft.equipment.telescopes.find(s=>s.id===setup.telescopeId), fl=effectiveFocalLength(scope,setup,draft.equipment), factor=opticalFactorForSetup(setup,draft.equipment);return`<div class="equipment-row setup-row extended-equipment-row" data-setup-row="${setup.id}"><label>Name<input data-setup="name" data-default-clear="true" value="${esc(setup.name)}"></label><label>Teleskop<select data-setup="telescopeId">${draft.equipment.telescopes.map(scope=>`<option value="${esc(scope.id)}" ${setup.telescopeId===scope.id?'selected':''}>${esc(scope.name)}</option>`).join('')}</select></label><label>Kamera<select data-setup="cameraId">${draft.equipment.cameras.map(camera=>`<option value="${esc(camera.id)}" ${setup.cameraId===camera.id?'selected':''}>${esc(camera.name)}</option>`).join('')}</select></label><label>Optik<select data-setup="opticalAccessoryId">${opticals.map(acc=>`<option value="${esc(acc.id)}" ${setup.opticalAccessoryId===acc.id?'selected':''}>${esc(acc.name)} (${fmt(Number(acc.factor)||1,2)}×)</option>`).join('')}</select></label><label>Faktor<input data-setup="opticalFactor" type="number" min="0.1" step="0.01" value="${Number(setup.opticalFactor)||factor}"></label><label>Montierung<select data-setup="mountId">${draft.equipment.mounts.map(mount=>`<option value="${esc(mount.id)}" ${setup.mountId===mount.id?'selected':''}>${esc(mount.name)}</option>`).join('')}</select></label><div class="small muted calculated-equipment-value">Effektive Brennweite: ${fl?fmt(fl,0)+' mm':'–'} · Faktor ${fmt(factor,2)}×</div><label class="chip"><input data-selected-setup type="radio" name="selectedSetup" value="${setup.id}" ${draft.equipment.selectedSetupId===setup.id?'checked':''}>Aktiv</label><button data-delete-setup="${setup.id}" class="danger">Entfernen</button></div>`}).join('')}</div>
   ${renderSaveBar('equipment','Ausrüstung speichern')}
 </div>`}
 function renderDisplayColumnConfigurator(key,value){
@@ -1809,6 +1884,7 @@ function renderCentral(){
   const total=Object.values(c.weights).reduce((a,b)=>a+Number(b||0),0);
   const weatherTotal=Object.values(c.weatherModels?.weights||{}).reduce((a,b)=>a+Number(b||0),0);
   return`<div class="settings-tabs subtabs">${[['wind','Wind'],['weather','Wetter/Karte'],['weights','Bewertung'],['display','Anzeige'],['filters','Filterprofile']].map(([k,n])=>`<button data-central-subtab="${k}" class="${currentCentralSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card subtab-panel ${currentCentralSubTab==='wind'?'active':''}">
+    ${renderSaveBar('centralWind','Windwerte speichern','top')}
     <div class="section-title-row"><div><h2>Wind und Aufnahmequalität</h2><div class="small muted">Grenzwerte bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit der Ausrüstung.</div></div></div>
     <div class="grid two">
       <label>Einheit für Wind, Böen und Jetstream<select id="windUnit"><option value="kmh" ${c.windUnit==='kmh'?'selected':''}>km/h</option><option value="ms" ${c.windUnit==='ms'?'selected':''}>m/s</option></select></label>
@@ -1827,6 +1903,7 @@ function renderCentral(){
     ${renderSaveBar('centralWind','Windwerte speichern')}
   </div>
   <div class="card subtab-panel ${currentCentralSubTab==='weather'?'active':''}">
+    ${renderSaveBar('weatherModels','Wettermodelle speichern','top')}
     <div class="section-title-row"><div><h2>Wettermodelle</h2><div class="small muted">Gewichtung für den Modellkonsens je Prognosestunde</div></div><span class="weight-total ${weatherTotal===100?'ok':'error'}">Summe: ${weatherTotal} %</span></div>
     <div class="notice">Der Modellkonsens mittelt DWD ICON, ECMWF IFS und NOAA GFS nach diesen Anteilen. Default: 40 % / 40 % / 20 %.</div>
     <div class="grid three" style="margin-top:12px">${Object.entries(WEATHER_MODEL_CONFIG).map(([key,value])=>`<label>${esc(value.name)} (%)<input data-weather-weight="${key}" type="number" min="0" max="100" step="1" value="${Number(c.weatherModels?.weights?.[key]??value.defaultWeight)}"></label>`).join('')}</div>
@@ -1834,6 +1911,7 @@ function renderCentral(){
     ${renderSaveBar('weatherModels','Wettermodelle speichern')}
   </div>
   <div class="card subtab-panel ${currentCentralSubTab==='weather'?'active':''}">
+    ${renderSaveBar('cloudMap','Wolkenkarte speichern','top')}
     <div class="section-title-row"><div><h2>Wolkenkarte und Datenmenge</h2><div class="small muted">Auflösung, Kartenausschnitt und Standarddarstellung der animierten 24-Stunden-Prognose</div></div></div>
     <div class="grid three">
       <label>Kartendetails<select id="cloudMapGridSize">${CLOUD_MAP_GRID_OPTIONS.map(([value,label])=>`<option value="${value}" ${Number(c.cloudMap?.gridSize)===value?'selected':''}>${esc(label.replace('Kartenpunkte','Prognosepunkte'))}</option>`).join('')}</select></label>
@@ -1851,6 +1929,7 @@ function renderCentral(){
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
   <div class="card subtab-panel ${currentCentralSubTab==='weights'?'active':''}">
+    ${renderSaveBar('weights','Bewertung speichern','top')}
     <div class="section-title-row"><h2>Deep-Sky-Gewichtung</h2><span class="weight-total ${total===100?'ok':'error'}">Summe: ${total} %</span></div>
     <div class="notice">Nur ganzzahlige Eingabefelder. Speichern ist nur bei exakt 100 % möglich.</div>
     <div class="weight-grid" style="margin-top:12px">${Object.entries({clouds:'Wolken',transparency:'Effektive Transparenz',seeing:'Seeing',wind:'Wind/Böen',dew:'Tauabstand',moon:'Mond',altitude:'Objekthöhe',duration:'Sichtbarkeitsdauer'}).map(([key,name])=>`<label>${name} (%)<input data-weight="${key}" type="number" min="0" max="100" step="1" value="${c.weights[key]}"></label>`).join('')}</div>
@@ -1875,6 +1954,7 @@ function renderCentral(){
     ${renderSaveBar('filterProfiles','Filterprofile speichern')}
   </div>
   <div class="card subtab-panel ${currentCentralSubTab==='display'?'active':''}">
+    ${renderSaveBar('display','Anzeigeeinstellungen speichern','top')}
     <div class="section-title-row"><div><h2>Anzeige und Planung</h2><div class="small muted">Dauerhafte Standards für neue beziehungsweise zurückgesetzte Planungen</div></div></div>
     <div class="grid two"><label>Standard-Planungszeitraum<select id="defaultPlanningWindow">${[['sunset','Sonnenuntergang–Sonnenaufgang'],['civil','Bürgerliche Nacht'],['nautical','Nautischer Planungszeitraum'],['astronomicalTwilight','Nautisch + astronomisch'],['astronomicalNight','Astronomische Nacht']].map(([key,name])=>`<option value="${key}" ${c.defaultPlanningWindow===key?'selected':''}>${name}</option>`).join('')}</select></label></div>
     <div class="grid two" style="margin-top:12px"><label>Gewünschter Mindestfreiraum zum Bildrand (%)<input id="framingMinMargin" type="number" min="0" max="45" step="1" value="${Number(c.framing?.minMarginPercent??10)}"></label><label class="chip"><input id="framingAutoRotate" type="checkbox" ${c.framing?.autoRotate!==false?'checked':''}>Kamera bei verlässlichem Positionswinkel automatisch optimal drehen</label></div>
@@ -1899,7 +1979,7 @@ function renderLocations(){
   const addDraft=pendingLocationDraft||createEmptyLocationDraft();
   const addLocationMarkup=addOpen?`<div class="location-add-dialog"><div class="section-title-row"><div><h3>Neuen Standort hinzufügen</h3><div class="small muted">Suche einen Ort oder gib Koordinaten manuell ein. Nach dem Speichern wird der neue Standort aktiv ausgewählt.</div></div>${noLocations?'': '<button id="cancelAddLocation" type="button">Abbrechen</button>'}</div><div class="grid four location-add-search-row"><label>Ort oder Postleitzahl<input id="locationSearchQuery" value="${esc(locationSearchQuery)}" placeholder="z. B. 72108 oder Rottenburg"></label><label>Bevorzugtes Land<select id="locationSearchCountry">${COUNTRY_OPTIONS.map(([code,label])=>`<option value="${code}" ${country===code?'selected':''}>${esc(label)}</option>`).join('')}</select></label><div class="inline" style="align-self:end"><button id="searchLocation" ${locationSearchLoading?'disabled':''}>${locationSearchLoading?'Suche läuft …':'Standort suchen'}</button></div><div class="inline" style="align-self:end"><button id="useGpsNewLocation" type="button">GPS verwenden</button></div></div><div class="small muted">Die Suche wird erst nach Klick oder Enter ausgelöst. GPS befüllt nur diesen neuen Standort.</div>${locationSearchError?`<div class="notice warn">${esc(locationSearchError)}</div>`:''}${locationSearchResults.length?`<div class="search-results">${locationSearchResults.map((r,i)=>`<button type="button" data-location-result="${i}"><strong>${esc(r.displayName)}</strong><span>${esc([r.postcode,r.region,r.country].filter(Boolean).join(' · '))}</span><span>${fmt(r.latitude,5)}°, ${fmt(r.longitude,5)}°</span></button>`).join('')}</div>`:''}<div class="grid three" style="margin-top:12px"><label>Name<input id="newLocName" value="${esc(addDraft.name||'Neuer Standort')}"></label><label>Zeitzone<select id="newLocTimezone">${timeZoneOptions(addDraft.timezone||'Europe/Berlin')}</select></label><label>Höhe über Meer (m)<input id="newLocElevation" type="number" value="${Number(addDraft.elevation)||0}"></label><label>Breitengrad (°)<input id="newLocLat" type="number" step="0.0001" value="${addDraft.latitude==null?'':Number(addDraft.latitude)}"></label><label>Längengrad (°)<input id="newLocLon" type="number" step="0.0001" value="${addDraft.longitude==null?'':Number(addDraft.longitude)}"></label><div class="inline" style="align-self:end"><button id="saveNewLocation" type="button">Standort speichern</button></div></div></div>`:'';
   if(noLocations){
-    return`<div class="settings-tabs subtabs"><button data-locations-subtab="locations" class="${currentLocationsSubTab==='locations'?'active':''}">Standorte</button><button data-locations-subtab="horizon" class="${currentLocationsSubTab==='horizon'?'active':''}">Horizontprofile</button></div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}"><div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Lege zuerst einen Aufnahmeort an. Danach können Planung, Wetter und Horizontprofile berechnet werden.</div></div><button id="addLocation" type="button">Standort hinzufügen</button></div><div class="notice warn">Noch kein Standort vorhanden. Bitte einen Standort suchen oder Koordinaten manuell eintragen und speichern.</div>${addLocationMarkup}</div><div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}"><h2>Horizontprofile</h2><p class="muted">Horizontprofile stehen zur Verfügung, sobald ein Standort gespeichert wurde.</p></div>`;
+    return`<div class="settings-tabs subtabs"><button data-locations-subtab="locations" class="${currentLocationsSubTab==='locations'?'active':''}">Standorte</button><button data-locations-subtab="horizon" class="${currentLocationsSubTab==='horizon'?'active':''}">Horizontprofile</button></div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}">${renderSaveBar('locations','Standort und Horizonte speichern','top')}<div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Lege zuerst einen Aufnahmeort an. Danach können Planung, Wetter und Horizontprofile berechnet werden.</div></div><button id="addLocation" type="button">Standort hinzufügen</button></div><div class="notice warn">Noch kein Standort vorhanden. Bitte einen Standort suchen oder Koordinaten manuell eintragen und speichern.</div>${addLocationMarkup}</div><div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}"><h2>Horizontprofile</h2><p class="muted">Horizontprofile stehen zur Verfügung, sobald ein Standort gespeichert wurde.</p></div>`;
   }
   const profiles=horizonProfilesFor(loc),horizonEntry=horizonProfileFor(loc,loc.selectedHorizonProfileId),horizonPoints=ensureHorizonProfile(loc,horizonEntry?.id).map((altitude,index)=>[index*5,Number(altitude)||0]),obstacles=(horizonEntry?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
   const profileOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}</option>`).join(''),defaultOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===loc.defaultHorizonProfileId?'selected':''}>${esc(item.name)}</option>`).join('');
@@ -1909,7 +1989,7 @@ function renderLocations(){
     <div class="grid two"><label>Standort bearbeiten<select id="locationSelect">${locations.map(item=>`<option value="${item.id}" ${item.id===loc.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label><label>Standardstandort<select id="defaultLocationSelect">${locations.map(item=>`<option value="${item.id}" ${item.id===draft.central.defaultLocationId?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label><label>GPS-Verhalten<select id="gpsBehavior"><option value="last" ${draft.central.gpsBehavior==='last'?'selected':''}>Letzten/Standardstandort verwenden</option><option value="ask" ${draft.central.gpsBehavior==='ask'?'selected':''}>Bei Bedarf nach GPS fragen</option></select></label><span></span></div>
     <div class="grid three" style="margin-top:12px"><label>Name<input id="locName" value="${esc(loc.name)}"></label><label>Zeitzone<select id="locTimezone">${timeZoneOptions(loc.timezone)}</select><span class="small muted">Gültige IANA-Zeitzone; wird bei der Standortwahl automatisch gesetzt.</span></label><label>Breitengrad (°)<input id="locLat" type="number" step="0.0001" value="${loc.latitude}"></label><label>Längengrad (°)<input id="locLon" type="number" step="0.0001" value="${loc.longitude}"></label><label>Höhe über Meer (m)<input id="locElevation" type="number" value="${loc.elevation||0}"></label><div class="inline" style="align-self:end"><button id="saveLocationChanges" type="button">Standortänderungen speichern</button><button id="deleteLocation" class="danger" ${locations.length===1?'disabled':''}>Standort löschen</button></div></div>
   </div>
-  <div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}"><div class="section-title-row"><div><div class="eyebrow">Interaktive Horizontprofile</div><h2>${esc(loc.name)}</h2><div class="small muted">Mehrere Profile pro Standort sind möglich, zum Beispiel Garten, Terrasse oder mobile Aufstellung.</div></div><div class="horizon-editor-actions"><button id="undoHorizon" ${!horizonUndoStack.length?'disabled':''}>Letzte Änderung rückgängig</button><button id="resetHorizon">Horizont auf 0° setzen</button><button id="importNinaHorizon" type="button">N.I.N.A.-Horizont importieren</button><button id="exportNinaHorizon" type="button">N.I.N.A.-Horizont exportieren</button></div></div>
+  <div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}">${renderSaveBar('locations','Standort und Horizonte speichern','top')}<div class="section-title-row"><div><div class="eyebrow">Interaktive Horizontprofile</div><h2>${esc(loc.name)}</h2><div class="small muted">Mehrere Profile pro Standort sind möglich, zum Beispiel Garten, Terrasse oder mobile Aufstellung.</div></div><div class="horizon-editor-actions"><button id="undoHorizon" ${!horizonUndoStack.length?'disabled':''}>Letzte Änderung rückgängig</button><button id="resetHorizon">Horizont auf 0° setzen</button><button id="importNinaHorizon" type="button">N.I.N.A.-Horizont importieren</button><button id="exportNinaHorizon" type="button">N.I.N.A.-Horizont exportieren</button></div></div>
     <div class="horizon-profile-toolbar"><label>Horizont bearbeiten<select id="horizonProfileSelect">${profileOptions}</select></label><label>Standardprofil dieses Standorts<select id="defaultHorizonProfileSelect">${defaultOptions}</select></label><button id="addHorizonProfile">Neu</button><button id="duplicateHorizonProfile">Duplizieren</button><button id="renameHorizonProfile">Umbenennen</button><button id="deleteHorizonProfile" class="danger" ${profiles.length===1?'disabled':''}>Löschen</button></div>
     <div class="horizon-editor-wrap"><canvas class="settings-horizon-chart editable-horizon" width="1400" height="440" data-editable="true" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}"></canvas><div class="small muted horizon-editor-help">0° N · 45° NO · 90° O · 135° SO · 180° S · 225° SW · 270° W · 315° NW · 360° N. Änderungen werden erst mit Speichern dauerhaft übernommen.</div></div>
     <div class="divider"></div><div class="section-title-row"><h3>Hindernisse im Profil „${esc(horizonEntry?.name||'–')}“</h3><button id="addObstacle">Hindernis hinzufügen</button></div>
@@ -2006,7 +2086,7 @@ function renderInfo(){
   return`<div class="settings-tabs subtabs">${[['status','Status'],['backup','Sicherung'],['help','Hilfe']].map(([k,n])=>`<button data-info-subtab="${k}" class="${currentInfoSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card storage-warning-card subtab-panel ${currentInfoSubTab==='status'?'active':''}"><div class="eyebrow">Bitte vor der Nutzung lesen</div><h2>Wichtiger Hinweis zur lokalen Datenspeicherung</h2><p><strong>Einstellungen, Profile, Ausrüstung, Standorte und Horizonte werden lokal in der Browserdatenbank IndexedDB gespeichert. Normale Cookies sind nicht der primäre Speicherort.</strong></p><p>Die PWA-Programmdateien liegen getrennt im Cache Storage. Das Löschen nur von „Bildern und Dateien im Cache“ entfernt IndexedDB normalerweise nicht. Das Löschen der Websitedaten kann jedoch Profile, Einstellungen und gespeicherte Dateizugriffe entfernen. Persistenter Speicher schützt nur vor automatischer Browserbereinigung – nicht vor einer bewussten Löschung. Erstelle deshalb regelmäßig externe Sicherungen.</p></div>
   <div class="card subtab-panel ${currentInfoSubTab==='status'?'active':''}"><h2>Astro Night Planner 1.0</h2><p>Installierbare PWA für Nachtplanung, astronomisches Wetter, Mond und Dämmerung, Deep-Sky-Auswahl, persönliche Ausrüstung, Standorte, Horizont und Rahmung.</p><div class="storage-status"><div class="metric"><div class="label">Umgebung</div><div class="value">${ENV==='prod'?'Produktion':'Test'}</div></div><div class="metric"><div class="label">Datenbank</div><div class="value small">${DB_NAME}</div></div><div class="metric"><div class="label">Version</div><div class="value">${APP_VERSION}</div></div></div></div>
   <div class="card subtab-panel ${currentInfoSubTab==='status'?'active':''}"><div class="section-title-row"><div><h2>Datenstatus</h2><div class="small muted">Technischer Status der lokalen Speicherung</div></div><button id="refreshStorageStatus">Status aktualisieren</button></div><div class="grid four"><div class="metric"><div class="label">Speicherschutz</div><div class="value ${storageInfo.persistent?'good':'warn'}">${persistentText}</div></div><div class="metric"><div class="label">Lokaler Speicherverbrauch</div><div class="value">${formatBytes(storageInfo.usage)}</div><div class="small muted">von ${formatBytes(storageInfo.quota)}</div></div><div class="metric"><div class="label">Externe Sicherung</div><div class="value small ${storageInfo.permission==='granted'?'good':'warn'}">${permissionText}</div><div class="small muted">${esc(backupConfig.targetName||'Kein Ziel')}</div></div><div class="metric"><div class="label">Letzte Sicherung</div><div class="value small ${reminderDue?'warn':'good'}">${esc(lastBackup)}</div></div></div><div class="data-actions" style="margin-top:12px"><button id="requestPersistence">Lokale Daten vor automatischer Browserbereinigung schützen</button></div><div id="storageMessage" class="notice" style="margin-top:12px">Der Speicherschutz verhindert keine manuelle Löschung von Websitedaten.</div></div>
-  <div class="card subtab-panel ${currentInfoSubTab==='backup'?'active':''}"><div class="section-title-row"><div><h2>Automatische externe Sicherung</h2><div class="small muted">Die Sicherungsdatei liegt außerhalb des Browsercaches. Nach einer vollständigen Löschung der Websitedaten muss Ordner oder Datei erneut ausgewählt werden.</div></div><span class="backup-support ${storageInfo.fileSystemSupported?'good':'warn'}">${fileSupport}</span></div>
+  <div class="card subtab-panel ${currentInfoSubTab==='backup'?'active':''}">${renderSaveBar('backup','Sicherungseinstellungen speichern','top')}<div class="section-title-row"><div><h2>Automatische externe Sicherung</h2><div class="small muted">Die Sicherungsdatei liegt außerhalb des Browsercaches. Nach einer vollständigen Löschung der Websitedaten muss Ordner oder Datei erneut ausgewählt werden.</div></div><span class="backup-support ${storageInfo.fileSystemSupported?'good':'warn'}">${fileSupport}</span></div>
     <div class="grid two"><label class="chip"><input id="backupEnabled" type="checkbox" ${backupDraft.enabled?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Automatische Sicherung aktivieren</label><label>Aufzubewahrende datierte Sicherungen<input id="backupKeep" type="number" min="1" max="50" value="${backupDraft.keep}"></label><label class="chip"><input id="backupAfterSave" type="checkbox" ${backupDraft.afterSave?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Nach jedem erfolgreichen Speichern der Einstellungen sichern</label><label class="chip"><input id="backupDaily" type="checkbox" ${backupDraft.daily?'checked':''} ${!storageInfo.fileSystemSupported?'disabled':''}>Zusätzlich höchstens einmal täglich datierte Sicherung</label><label>Sicherungserinnerung nach Tagen<input id="backupReminderDays" type="number" min="1" max="90" value="${backupDraft.reminderDays}"></label><div class="metric"><div class="label">Sicherungsziel</div><div class="value small">${esc(backupConfig.targetName||'Noch nicht gewählt')}</div><div class="small muted">Berechtigung: ${permissionText}</div></div></div>
     <div class="notice backup-file-explanation" style="margin-top:12px"><strong>Zwei Dateitypen:</strong> <code>astro-night-planner-aktuell.json</code> wird fortlaufend überschrieben und ist für die normale Wiederherstellung gedacht. Datierte Dateien sind historische Rücksprungpunkte. Vor einer Wiederherstellung werden Datum und Inhalt angezeigt.</div><div class="data-actions backup-actions" style="margin-top:14px"><button id="chooseBackupDirectory" ${!storageInfo.fileSystemSupported?'disabled':''}>Sicherungsordner auswählen</button><button id="backupNow">Sicherung jetzt erstellen</button><button id="restoreBackup">Gesamtsicherung wiederherstellen</button><button id="exportAll">Gesamtsicherung exportieren</button><button id="exportProfile">Aktuelles Profil exportieren</button><button id="importProfile">Profil importieren</button></div>
     ${backupConfig.lastError?`<div class="notice warn" style="margin-top:12px">Letzter Sicherungsfehler: ${esc(backupConfig.lastError)}</div>`:''}
@@ -2372,7 +2452,7 @@ function sendAladinOverlayUpdate(){
   const frame=document.getElementById('aladinFrame');if(!frame?.contentWindow)return;
   const object=catalog.find(item=>item.id===profile.planning.selectedObjectId),setup=fov();if(!object)return;
   const loc=activeLocation(),win=planningWindow(nightData(selectedDateKey,loc),profile.planning.planningWindow),time=new Date(win.start.getTime()+(win.end-win.start)*clamp(Number(profile.planning.timeFraction)||0,0,1)),moon=moonCoords(time),sep=angularSeparation(object.raHours,object.decDeg,moon.raHours,moon.decDeg),malt=altitude(moon.raHours,moon.decDeg,time,loc.latitude,loc.longitude),moonPhase=moonPhaseInfo(time),moonName=language==='en'?'Moon':'Mond';
-  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(profile.planning.objectRotationObjectId===object.id&&Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),catalogRot:normalizedAngle180(Number(object.positionAngleDeg)||0),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name,showMoon:Boolean(profile.planning.showMoonInAladin),moonRa:moon.raHours*15,moonDec:moon.decDeg,moonLabel:`${moonName} · ${fmt(sep)}° Abstand · Höhe ${fmt(malt)}°`,moonName,moonIllumination:moonPhase.illumination,moonAge:moonPhase.age,moonWaxing:moonPhase.waxing,outlinePolygons:curatedOutlineForObject(object)?JSON.stringify(curatedOutlineForObject(object).polygons):'',outlineSource:curatedOutlineForObject(object)?.source||'',comparisonFrames:JSON.stringify((profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:normalizedAngle180(profile.planning.frameRotation||0),color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]})))},location.origin);
+  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),frameRa:frameCenterForObject(object).raDeg,frameDec:frameCenterForObject(object).decDeg,frameMoveMode:Boolean(profile.planning.frameMoveMode),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(profile.planning.objectRotationObjectId===object.id&&Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),catalogRot:normalizedAngle180(Number(object.positionAngleDeg)||0),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name,showMoon:Boolean(profile.planning.showMoonInAladin),moonRa:moon.raHours*15,moonDec:moon.decDeg,moonLabel:`${moonName} · ${fmt(sep)}° Abstand · Höhe ${fmt(malt)}°`,moonName,moonIllumination:moonPhase.illumination,moonAge:moonPhase.age,moonWaxing:moonPhase.waxing,outlinePolygons:curatedOutlineForObject(object)?JSON.stringify(curatedOutlineForObject(object).polygons):'',outlineSource:curatedOutlineForObject(object)?.source||'',comparisonFrames:JSON.stringify((profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:normalizedAngle180(profile.planning.frameRotation||0),color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]})))},location.origin);
 }
 function nearestWeatherAt(time,range){
   const rows=weatherRowsForWindow(range,currentWeatherView());
@@ -2462,8 +2542,8 @@ function buildNinaPlanExport(object){
   return {
     kind:'astro-night-planner-nina-object-export',schemaVersion:1,appVersion:APP_VERSION,exportedAt:new Date().toISOString(),
     object:{id:object.id,name:object.name,aliases:object.aliases||[],type:object.type,constellation:object.constellation,raHours:object.raHours,raDeg:object.raHours*15,decDeg:object.decDeg,majorArcMin:object.majorArcMin,minorArcMin:object.minorArcMin,positionAngleDeg:Number(object.positionAngleDeg)||0,recommendedFilters:object.recommendedFilters||[],catalogs:object.catalogs||[]},
-    framing:{centerRaHours:object.raHours,centerRaDeg:object.raHours*15,centerDecDeg:object.decDeg,rotationDeg:normalizedAngle180(profile.planning.frameRotation||0),objectRotationDeg:normalizedAngle180(profile.planning.objectRotation||0),frameWidthDeg:frame?.width||null,frameHeightDeg:frame?.height||null,pixelScaleArcSec:frame?.pixelScale||null,status:analysis.status,minMarginPercent:Number.isFinite(analysis.minMargin)?analysis.minMargin:null},
-    setup:{name:setup?.name||'',telescope:scope||null,camera:camera||null},
+    framing:{centerRaHours:frameCenterForObject(object).raDeg/15,centerRaDeg:frameCenterForObject(object).raDeg,centerDecDeg:frameCenterForObject(object).decDeg,rotationDeg:normalizedAngle180(profile.planning.frameRotation||0),objectRotationDeg:normalizedAngle180(profile.planning.objectRotation||0),frameWidthDeg:frame?.width||null,frameHeightDeg:frame?.height||null,pixelScaleArcSec:frame?.pixelScale||null,status:analysis.status,minMarginPercent:Number.isFinite(analysis.minMargin)?analysis.minMargin:null},
+    setup:{name:setup?.name||'',telescope:scope||null,camera:camera||null,opticalFactor:opticalFactorForSetup(setup),effectiveFocalLengthMm:effectiveFocalLength(scope,setup)},
     planning:{dateKey:selectedDateKey,location:loc?{name:loc.name,latitude:loc.latitude,longitude:loc.longitude,elevation:loc.elevation,timezone:loc.timezone}:null,windowStart:win?.start?.toISOString()||null,windowEnd:win?.end?.toISOString()||null,exportTime:time.toISOString(),moonDistanceDeg:moonSep},
     notes:'Use the framing center, rotation and FOV values in N.I.N.A. framing/sequence tools as needed.'
   };
@@ -2483,6 +2563,8 @@ function bindFraming(){
   const labelsVisible=document.getElementById('aladinLabelsVisible');if(labelsVisible)labelsVisible.onchange=async()=>{profile.central.aladinLabels.visible=labelsVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
   const labelDetail=document.getElementById('aladinLabelDetail');if(labelDetail)labelDetail.onchange=async()=>{profile.central.aladinLabels.detail=labelDetail.value;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
   const showMoon=document.getElementById('showMoonInAladin');if(showMoon)showMoon.onchange=async()=>{profile.planning.showMoonInAladin=showMoon.checked;await saveProfile();sendAladinOverlayUpdate()};
+  const infoVisible=document.getElementById('aladinInfoVisible');if(infoVisible)infoVisible.onchange=async()=>{profile.central.aladinInfo=profile.central.aladinInfo||{};profile.central.aladinInfo.visible=infoVisible.checked;await saveProfile();draft=deepClone(profile);document.querySelector('.framing-info')?.classList.toggle('hidden',!infoVisible.checked)};
+  const infoPosition=document.getElementById('aladinInfoPosition');if(infoPosition)infoPosition.onchange=async()=>{profile.central.aladinInfo=profile.central.aladinInfo||{};profile.central.aladinInfo.position=infoPosition.value;await saveProfile();render()};
   const surveySelect=document.getElementById('aladinSurveySelect');if(surveySelect)surveySelect.onchange=async()=>{profile.planning.aladinSurvey=surveySelect.value;await saveProfile();render()};
   document.getElementById('openAladinExternal')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame');if(frame?.src)window.open(frame.src+'&external=1','_blank')});
   document.querySelectorAll('[data-compare-setup]').forEach(element=>element.onchange=async()=>{let values=Array.isArray(profile.planning.comparisonSetupIds)?profile.planning.comparisonSetupIds.slice():[];if(element.checked){if(values.length>=3){element.checked=false;alert('Maximal drei Vergleichsrahmen auswählen.');return}values=[...new Set([...values,element.dataset.compareSetup])]}else values=values.filter(id=>id!==element.dataset.compareSetup);profile.planning.comparisonSetupIds=values;await saveProfile();sendAladinOverlayUpdate();});
@@ -2491,7 +2573,8 @@ function bindFraming(){
   const timeSlider=document.getElementById('framingTime');if(timeSlider){timeSlider.oninput=()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction)};timeSlider.onchange=async()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction);await saveProfile()};updateFramingTimeReadouts(profile.planning.timeFraction)}
   document.getElementById('optimalFrameRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.frameRotation=optimalFrameRotation(object);const slider=document.getElementById('frameRotation'),label=document.getElementById('frameRotationValue');if(slider)slider.value=String(profile.planning.frameRotation);if(label)label.textContent=`${fmt(profile.planning.frameRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
   document.getElementById('resetObjectRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=object.id;const slider=document.getElementById('objectRotation'),label=document.getElementById('objectRotationValue');if(slider)slider.value=String(profile.planning.objectRotation);if(label)label.textContent=`${fmt(profile.planning.objectRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
-  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame'),button=document.getElementById('centerAladinFrame');if(!frame?.contentWindow)return;if(button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}const send=()=>frame.contentWindow?.postMessage({type:'anp-center-frame'},location.origin);send();window.setTimeout(send,160);window.setTimeout(()=>{if(button?.disabled){button.textContent='Rahmen auf ausgewähltes Objekt';button.disabled=false}},1800)});
+  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame'),button=document.getElementById('centerAladinFrame'),object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!frame?.contentWindow||!object)return;profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;saveProfile();if(button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}const send=()=>frame.contentWindow?.postMessage({type:'anp-center-frame',ra:object.raHours*15,dec:object.decDeg},location.origin);send();window.setTimeout(send,160);window.setTimeout(()=>{if(button?.disabled){button.textContent='Rahmen auf Objekt zurücksetzen';button.disabled=false}},1800)});
+  document.getElementById('toggleFrameMoveMode')?.addEventListener('click',async()=>{profile.planning.frameMoveMode=!profile.planning.frameMoveMode;await saveProfile();const frame=document.getElementById('aladinFrame');frame?.contentWindow?.postMessage({type:'anp-frame-move-mode',enabled:profile.planning.frameMoveMode},location.origin);document.getElementById('toggleFrameMoveMode')?.classList.toggle('active',profile.planning.frameMoveMode)});
   document.getElementById('reloadAladinImage')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame');if(!frame)return;try{frame.contentWindow.location.reload()}catch{const url=new URL(frame.src);url.searchParams.set('reload',String(Date.now()));frame.src=url.toString()}});
   document.getElementById('exportNinaPlan')?.addEventListener('click',exportNinaPlanForSelectedObject);
 }
@@ -2571,11 +2654,20 @@ function bindDetails(){
   const m=document.getElementById('meteoblueDetails');if(m)m.ontoggle=async()=>{profile.central.meteoblueCollapsed=!m.open;await saveProfile();draft=deepClone(profile)};
   document.querySelectorAll('.object-chart-panel').forEach(panel=>panel.addEventListener('toggle',()=>{if(panel.open)requestAnimationFrame(drawLargeCharts)}));
 }
+function bindDefaultClearingInputs(){
+  document.querySelectorAll('input[data-default-clear="true"]').forEach(input=>{
+    if(input.dataset.defaultClearBound)return; input.dataset.defaultClearBound='1';
+    input.addEventListener('focus',()=>{const value=String(input.value||'').trim(); if(DEFAULT_NEW_ENTRY_NAMES.has(value)){try{input.select()}catch{}}});
+    input.addEventListener('pointerdown',()=>{const value=String(input.value||'').trim(); if(DEFAULT_NEW_ENTRY_NAMES.has(value))setTimeout(()=>{try{input.select()}catch{}},0);},{passive:true});
+  });
+}
+
 function bindSettings(){
+  bindDefaultClearingInputs();
   document.querySelectorAll('[data-central-subtab]').forEach(b=>b.onclick=()=>{currentCentralSubTab=b.dataset.centralSubtab;render()});
   document.querySelectorAll('[data-info-subtab]').forEach(b=>b.onclick=()=>{currentInfoSubTab=b.dataset.infoSubtab;render()});
   document.querySelectorAll('[data-locations-subtab]').forEach(b=>b.onclick=()=>{currentLocationsSubTab=b.dataset.locationsSubtab;render()});
-  document.querySelectorAll('[data-settings-tab]').forEach(b=>b.onclick=async()=>{currentSettingsTab=b.dataset.settingsTab;profile.ui.settingsTab=currentSettingsTab;await saveProfile();render()});
+  document.querySelectorAll('[data-settings-tab]').forEach(b=>b.onclick=async()=>{if(dirtySections&&dirtySections.size&&!confirm('Es gibt ungespeicherte Änderungen. Einstellungsbereich trotzdem wechseln?'))return;currentSettingsTab=b.dataset.settingsTab;profile.ui.settingsTab=currentSettingsTab;await saveProfile();render()});
   const ps=document.getElementById('settingsProfileSelect');if(ps)ps.onchange=()=>{document.getElementById('headerProfileSelect').value=ps.value;document.getElementById('headerProfileSelect').dispatchEvent(new Event('change'))};
   document.getElementById('newProfile')?.addEventListener('click',createProfile);document.getElementById('duplicateProfile')?.addEventListener('click',duplicateProfile);document.getElementById('renameProfile')?.addEventListener('click',renameProfile);document.getElementById('deleteProfile')?.addEventListener('click',deleteProfile);
   bindEquipmentDraft();bindCentralDraft();bindLocationDraft();bindTargetSettings();bindInfoActions();
@@ -2643,20 +2735,24 @@ function setSectionDirty(section){
 }
 function markDirty(section){setSectionDirty(section)}
 function bindEquipmentDraft(){
-  document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(element=>element.onchange=()=>{const item=draft.equipment.telescopes.find(value=>value.id===row.dataset.scopeRow);item[element.dataset.scope]=element.type==='number'?Number(element.value):element.value;setSectionDirty('equipment')}));
-  document.querySelectorAll('[data-camera-row]').forEach(row=>row.querySelectorAll('[data-camera]').forEach(element=>element.onchange=()=>{const item=draft.equipment.cameras.find(value=>value.id===row.dataset.cameraRow);item[element.dataset.camera]=element.type==='number'?Number(element.value):element.value;setSectionDirty('equipment')}));
+  const recalcAndMark=()=>{updateCalculatedEquipmentValues(draft.equipment);setSectionDirty('equipment')};
+  document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(element=>element.onchange=()=>{const item=draft.equipment.telescopes.find(value=>value.id===row.dataset.scopeRow);if(!item)return;item[element.dataset.scope]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;recalcAndMark();render()}));
+  document.querySelectorAll('[data-camera-row]').forEach(row=>row.querySelectorAll('[data-camera]').forEach(element=>element.onchange=()=>{const item=draft.equipment.cameras.find(value=>value.id===row.dataset.cameraRow);if(!item)return;item[element.dataset.camera]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;recalcAndMark();render()}));
+  document.querySelectorAll('[data-optical-row]').forEach(row=>row.querySelectorAll('[data-optical]').forEach(element=>element.onchange=()=>{const item=(draft.equipment.opticalAccessories||[]).find(value=>value.id===row.dataset.opticalRow);if(!item)return;item[element.dataset.optical]=element.type==='number'?Number(element.value):element.value;recalcAndMark();render()}));
   document.querySelectorAll('[data-mount-row]').forEach(row=>row.querySelectorAll('[data-mount]').forEach(element=>element.onchange=()=>{const item=draft.equipment.mounts.find(value=>value.id===row.dataset.mountRow);const field=element.dataset.mount;item[field]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;setSectionDirty('equipment')}));
-  document.querySelectorAll('[data-setup-row]').forEach(row=>row.querySelectorAll('[data-setup]').forEach(element=>element.onchange=()=>{const item=(draft.equipment.setups||[]).find(value=>value.id===row.dataset.setupRow);if(item){item[element.dataset.setup]=element.value;setSectionDirty('equipment')}}));
+  document.querySelectorAll('[data-setup-row]').forEach(row=>row.querySelectorAll('[data-setup]').forEach(element=>element.onchange=()=>{const item=(draft.equipment.setups||[]).find(value=>value.id===row.dataset.setupRow);if(item){item[element.dataset.setup]=element.type==='number'?Number(element.value):element.value;if(element.dataset.setup==='opticalAccessoryId'){const acc=opticalAccessoriesFor(draft.equipment).find(x=>x.id===element.value);item.opticalFactor=Number(acc?.factor)||1;}recalcAndMark();render()}}));
   document.querySelectorAll('[data-selected-scope]').forEach(element=>element.onchange=()=>{draft.equipment.selectedTelescopeId=element.value;setSectionDirty('equipment')});
   document.querySelectorAll('[data-selected-camera]').forEach(element=>element.onchange=()=>{draft.equipment.selectedCameraId=element.value;setSectionDirty('equipment')});
   document.querySelectorAll('[data-selected-mount]').forEach(element=>element.onchange=()=>{draft.equipment.selectedMountId=element.value;setSectionDirty('equipment')});
   document.querySelectorAll('[data-selected-setup]').forEach(element=>element.onchange=()=>{draft.equipment.selectedSetupId=element.value;const setup=(draft.equipment.setups||[]).find(item=>item.id===element.value);if(setup){draft.equipment.selectedTelescopeId=setup.telescopeId;draft.equipment.selectedCameraId=setup.cameraId;draft.equipment.selectedMountId=setup.mountId||draft.equipment.selectedMountId}setSectionDirty('equipment')});
-  document.getElementById('addTelescope')?.addEventListener('click',()=>{const id=uid('scope');draft.equipment.telescopes.push({id,name:'Neues Teleskop',focalLength:500,aperture:80});draft.equipment.selectedTelescopeId=id;setSectionDirty('equipment');render()});
-  document.getElementById('addCamera')?.addEventListener('click',()=>{const id=uid('cam');draft.equipment.cameras.push({id,name:'Neue Kamera',sensorWidth:23.5,sensorHeight:15.7,pixelSize:3.76});draft.equipment.selectedCameraId=id;setSectionDirty('equipment');render()});
+  document.getElementById('addTelescope')?.addEventListener('click',()=>{const id=uid('scope');draft.equipment.telescopes.push({id,name:'Neues Teleskop',focalLength:500,fRatio:5,aperture:100});draft.equipment.selectedTelescopeId=id;recalcAndMark();render()});
+  document.getElementById('addCamera')?.addEventListener('click',()=>{const id=uid('cam');draft.equipment.cameras.push({id,name:'Neue Kamera',sensorWidth:23.5,sensorHeight:15.7,resolutionX:6248,resolutionY:4176,megapixels:26.1,pixelSize:3.76});draft.equipment.selectedCameraId=id;recalcAndMark();render()});
+  document.getElementById('addOpticalAccessory')?.addEventListener('click',()=>{const id=uid('optical');draft.equipment.opticalAccessories=draft.equipment.opticalAccessories||[];draft.equipment.opticalAccessories.push({id,name:'Neue Optik',type:'reducer',factor:0.8});recalcAndMark();render()});
   document.getElementById('addMount')?.addEventListener('click',()=>{const id=uid('mount');draft.equipment.mounts.push({id,name:'Neue Montierung',type:'Parallaktisch',maxPayloadKg:null});draft.equipment.selectedMountId=id;setSectionDirty('equipment');render()});
-  document.getElementById('addSetup')?.addEventListener('click',()=>{const id=uid('setup');const scope=draft.equipment.selectedTelescopeId||draft.equipment.telescopes[0]?.id||'',camera=draft.equipment.selectedCameraId||draft.equipment.cameras[0]?.id||'',mount=draft.equipment.selectedMountId||draft.equipment.mounts[0]?.id||'';draft.equipment.setups=draft.equipment.setups||[];draft.equipment.setups.push({id,name:'Neues Setup',telescopeId:scope,cameraId:camera,mountId:mount});draft.equipment.selectedSetupId=id;setSectionDirty('equipment');render()});
+  document.getElementById('addSetup')?.addEventListener('click',()=>{const id=uid('setup');const scope=draft.equipment.selectedTelescopeId||draft.equipment.telescopes[0]?.id||'',camera=draft.equipment.selectedCameraId||draft.equipment.cameras[0]?.id||'',mount=draft.equipment.selectedMountId||draft.equipment.mounts[0]?.id||'';draft.equipment.setups=draft.equipment.setups||[];draft.equipment.setups.push({id,name:'Neues Setup',telescopeId:scope,cameraId:camera,mountId:mount,opticalAccessoryId:OPTICAL_ACCESSORY_NONE_ID,opticalFactor:1});draft.equipment.selectedSetupId=id;recalcAndMark();render()});
   document.querySelectorAll('[data-delete-scope]').forEach(button=>button.onclick=()=>{if(draft.equipment.telescopes.length<=1)return alert('Mindestens ein Teleskop muss erhalten bleiben.');draft.equipment.telescopes=draft.equipment.telescopes.filter(item=>item.id!==button.dataset.deleteScope);draft.equipment.selectedTelescopeId=draft.equipment.telescopes[0]?.id||'';setSectionDirty('equipment');render()});
   document.querySelectorAll('[data-delete-camera]').forEach(button=>button.onclick=()=>{if(draft.equipment.cameras.length<=1)return alert('Mindestens eine Kamera muss erhalten bleiben.');draft.equipment.cameras=draft.equipment.cameras.filter(item=>item.id!==button.dataset.deleteCamera);draft.equipment.selectedCameraId=draft.equipment.cameras[0]?.id||'';setSectionDirty('equipment');render()});
+  document.querySelectorAll('[data-delete-optical]').forEach(button=>button.onclick=()=>{draft.equipment.opticalAccessories=(draft.equipment.opticalAccessories||[]).filter(item=>item.id!==button.dataset.deleteOptical);(draft.equipment.setups||[]).forEach(setup=>{if(setup.opticalAccessoryId===button.dataset.deleteOptical){setup.opticalAccessoryId=OPTICAL_ACCESSORY_NONE_ID;setup.opticalFactor=1;}});setSectionDirty('equipment');render()});
   document.querySelectorAll('[data-delete-mount]').forEach(button=>button.onclick=()=>{if(draft.equipment.mounts.length<=1)return alert('Mindestens eine Montierung muss erhalten bleiben.');draft.equipment.mounts=draft.equipment.mounts.filter(item=>item.id!==button.dataset.deleteMount);draft.equipment.selectedMountId=draft.equipment.mounts[0]?.id||'';setSectionDirty('equipment');render()});
   document.querySelectorAll('[data-delete-setup]').forEach(button=>button.onclick=()=>{if((draft.equipment.setups||[]).length<=1)return alert('Mindestens eine Setup-Kombination muss erhalten bleiben.');draft.equipment.setups=draft.equipment.setups.filter(item=>item.id!==button.dataset.deleteSetup);draft.equipment.selectedSetupId=draft.equipment.setups[0]?.id||'';setSectionDirty('equipment');render()});
 }
@@ -2934,6 +3030,7 @@ function bindLocationDraft(){
 async function saveDraftSection(section){
   let profileChanged=true;
   if(section==='equipment'){
+    updateCalculatedEquipmentValues(draft.equipment);
     profile.equipment=deepClone(draft.equipment);
     if(profile.planning.temporarySetupId&&!profile.equipment.setups.some(item=>item.id===profile.planning.temporarySetupId))profile.planning.temporarySetupId=null;
     if(profile.planning.temporaryTelescopeId&&!profile.equipment.telescopes.some(item=>item.id===profile.planning.temporaryTelescopeId))profile.planning.temporaryTelescopeId=null;
@@ -3580,14 +3677,17 @@ function layoutFramingOverlays(){
 }
 
 
+window.addEventListener('beforeunload',event=>{if(dirtySections&&dirtySections.size){event.preventDefault();event.returnValue='';}});
+
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin)return;
   if(event.data?.type==='anp-aladin-ready'){sendAladinOverlayUpdate();return}
-  if(event.data?.type==='anp-frame-centered'){
+  if(event.data?.type==='anp-frame-centered'||event.data?.type==='anp-frame-moved'){
+    if(Number.isFinite(Number(event.data.ra))&&Number.isFinite(Number(event.data.dec))){profile.planning.frameCenterRaDeg=Number(event.data.ra);profile.planning.frameCenterDecDeg=Number(event.data.dec);saveProfile();}
     const button=document.getElementById('centerAladinFrame');
     if(!button)return;
     button.textContent='Rahmen gesetzt ✓';button.disabled=true;
-    window.setTimeout(()=>{button.textContent='Rahmen auf ausgewähltes Objekt';button.disabled=false},1800);
+    window.setTimeout(()=>{button.textContent='Rahmen auf Objekt zurücksetzen';button.disabled=false},1800);
     return;
   }
   if(event.data?.type==='anp-select-object'){
@@ -3608,7 +3708,7 @@ window.addEventListener('message',event=>{
     const button=document.getElementById('centerAladinFrame');
     if(!button)return;
     button.textContent='Bildmitte nicht verfügbar';button.disabled=true;
-    window.setTimeout(()=>{button.textContent='Rahmen auf ausgewähltes Objekt';button.disabled=false},1800);
+    window.setTimeout(()=>{button.textContent='Rahmen auf Objekt zurücksetzen';button.disabled=false},1800);
   }
 });
 

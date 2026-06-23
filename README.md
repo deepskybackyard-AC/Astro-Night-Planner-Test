@@ -1,3 +1,3 @@
-# Astro Night Planner – Testversion 1.1.0-test.6
+# Astro Night Planner 1.1.0-test.7
 
-Testpaket für das Test-Repository. Enthält die korrigierte Horizontbearbeitung mit separater Eingabeebene, N.I.N.A.-Import/-Export, Kalenderplanung und Anzeigeoptionen.
+Testversion mit erweiterten Ausrüstungsdaten, optischen Setup-Faktoren, verbesserter Aladin-Rahmung, Tablet-Layoutverbesserungen und Warnung bei ungespeicherten Einstellungen.
