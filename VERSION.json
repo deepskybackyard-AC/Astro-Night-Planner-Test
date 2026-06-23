@@ -1,10 +1,30 @@
 {
   "name": "Astro Night Planner",
-  "version": "1.0.1-test.1",
-  "release": "1.0.1",
+  "version": "1.1.0-test.1",
+  "release": "1.1.0-test.1",
   "environment": "test",
   "repositoryRole": "test",
   "schemaVersion": 8,
-  "releasedAt": "2026-06-21",
-  "notes": "Test 1 für Version 1.0.1: Hauptnavigation in die feste Titelzeile verschoben; LDN-Katalog mit 1787 benannten Lynds-Dunkelnebeln ergänzt."
+  "releasedAt": "2026-06-22",
+  "notes": "Testversion 1.1.0-test.1: Kalenderplanung, Rubriken-Ausblendung, Horizont-Tooltip, N.I.N.A.-Import/Export und getrennte LDN/LBN-Filter.",
+  "changes": {
+    "de": [
+      "Kalenderdatum für langfristige astronomische Planung ergänzt.",
+      "Wetterabhängige Bereiche werden außerhalb des Prognosezeitraums ausgeblendet.",
+      "Planungsrubriken können in den Einstellungen vollständig angezeigt oder ausgeblendet werden.",
+      "Horizonteditor mit Live-Anzeige für Azimut und Höhe ergänzt.",
+      "N.I.N.A.-Horizontimport und -export ergänzt.",
+      "N.I.N.A.-Export für die aktuelle Aladin-Rahmung eines einzelnen Objekts ergänzt.",
+      "LDN und LBN werden als getrennte Katalogfilter angezeigt."
+    ],
+    "en": [
+      "Calendar date selection added for long-term astronomical planning.",
+      "Weather-dependent sections are hidden outside the forecast range.",
+      "Planning sections can be fully shown or hidden in settings.",
+      "The horizon editor now shows live azimuth and altitude values.",
+      "N.I.N.A. horizon import and export added.",
+      "N.I.N.A. export added for the current Aladin framing of a single object.",
+      "LDN and LBN are shown as separate catalog filters."
+    ]
+  }
 }

@@ -1,13 +1,15 @@
-# Astro Night Planner 1.0.1-test.1
+# Astro Night Planner - Testversion 1.1.0-test.1
 
-Testversion für die nächste Produktivrunde 1.0.1.
+Diese Testversion dient der Prüfung von langfristiger Kalenderplanung, Rubriken-Ausblendung, Horizontwerkzeugen und N.I.N.A.-Austausch.
 
-## Änderungen in dieser Testversion
+Wichtige Änderungen:
 
-- Hauptnavigation „Planung“ und „Einstellungen“ aus der unteren Floating-Leiste in die feste Titelzeile verschoben.
-- Untere Navigation entfernt, damit Wetterverlauf, Objektliste und Detailansichten mehr Platz erhalten.
-- LDN-Katalog ergänzt: 1787 benannte Lynds-Dunkelnebel aus der HEASARC/CDS-basierten LDN-Liste.
-- Katalogcache auf `catalog-v11` erhöht, damit vorhandene Browserprofile den erweiterten Objektkatalog neu laden.
-- Browserhilfe und PDF-Handbücher DE/EN aktualisiert.
+- Kalenderdatum zusätzlich zur Prognose-Schnellauswahl.
+- Wetterabhängige Bereiche werden bei Terminen außerhalb des Prognosezeitraums ausgeblendet.
+- Planungsrubriken können in den Einstellungen vollständig angezeigt oder ausgeblendet werden.
+- Horizonteditor mit Live-Tooltip für Azimut und Höhe.
+- N.I.N.A.-Horizontimport und -export.
+- N.I.N.A.-Export der aktuellen Aladin-Rahmung für ein einzelnes Objekt.
+- LDN und LBN werden getrennt als Katalogfilter angeboten.
 
-Dies ist ein Paket für das Test-Repository. Nicht unverändert produktiv deployen.
+Hinweis: Die Testversion verwendet die getrennte Testdatenbank `astro-night-planner-test-v1`.

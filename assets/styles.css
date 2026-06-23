@@ -570,7 +570,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .filter-area-basis .basis-duration-hint{white-space:nowrap;max-width:none}
 @media(max-width:720px){.filter-area-basis .basis-duration-hint{white-space:normal}}
 
-/* Testversion 23: Basisfilter-Reset und stabilere Aktionszeile */
+/* Version 1.0.0/23: Basisfilter-Reset und stabilere Aktionszeile */
 .filter-action-row{align-items:center;gap:10px;flex-wrap:wrap}
 .filter-action-row .secondary{background:#102235;border-color:#45688a;color:#dcecff}
 .filter-action-row .secondary:hover{background:#17304a}
@@ -587,3 +587,11 @@ body{padding-bottom:0}
 .bottom-nav{display:none!important}.app-footer{margin-bottom:0}
 @media(max-width:980px){.header-main-nav{order:3;width:100%;max-width:360px}.header-actions{align-items:center}.header-actions select{flex:1;min-width:140px}}
 @media(max-width:620px){.header-actions{gap:8px}.header-main-nav{width:100%;max-width:none;grid-column:1/-1}.header-main-nav button{min-height:42px;padding:9px 10px}.language-switch{order:1}.header-main-nav{order:2}.header-actions select{order:3}.header-actions #installButton{order:4;width:100%}}
+
+/* Test A: calendar date, horizon tooltip and weather-unavailable note */
+.calendar-date-field{display:flex;flex-direction:column;gap:6px;min-width:170px}
+.calendar-date-field input{min-width:155px}
+.weather-unavailable-notice{border-color:rgba(255,190,90,.35);background:rgba(255,190,90,.08)}
+.horizon-editor-wrap{position:relative}
+.horizon-editor-tooltip{position:absolute;z-index:20;display:none;pointer-events:none;padding:5px 8px;border-radius:8px;background:rgba(4,10,18,.92);border:1px solid rgba(255,255,255,.22);color:#f6f4e8;font-size:12px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+@media (max-width:700px){.calendar-date-field{min-width:100%}.horizon-editor-tooltip{font-size:13px}}
