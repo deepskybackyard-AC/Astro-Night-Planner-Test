@@ -1,36 +1,19 @@
 {
-  "name": "Astro Night Planner",
-  "version": "1.1.0-test.7",
-  "release": "1.1.0-test.7",
+  "version": "1.1.0-test.8",
+  "release": "1.1.0-test.8",
   "environment": "test",
-  "repositoryRole": "test",
-  "schemaVersion": 10,
-  "releasedAt": "2026-06-23",
-  "notes": "Testversion 1.1.0-test.7: Tablet-Layout, Ausrüstungserweiterungen, Aladin-Rahmen, Infofelder und sichere Einstellungsbearbeitung.",
-  "changes": {
+  "builtAt": "2026-06-24T00:00:00+02:00",
+  "notes": "Testversion 1.1.0-test.8: Wetter-Tabs für Meteoblue, Flugwetter und MOSMIX, konfigurierbare deutsche Flugwetterstationen und MOSMIX-/METAR-/TAF-Anzeige mit Browser-Fallbacks.",
+  "releaseNotes": {
     "de": [
-      "iPad- und Tablet-Layouts wurden robuster gegen Überlappungen gemacht.",
-      "Neuanlage-Felder markieren Vorgabetexte beim ersten Antippen automatisch.",
-      "Kameras können zusätzlich über Auflösung/Megapixel beschrieben werden; Pixelgröße wird berechnet.",
-      "Teleskope/Objektive können über Brennweite und Blende gepflegt werden; die Öffnung wird berechnet.",
-      "Reducer/Barlow-Faktoren können als optische Zusatzkomponenten im Setup berücksichtigt werden.",
-      "Speichern-Aktionen sind auf Einstellungsseiten zusätzlich oben verfügbar.",
-      "Mondaufgang und Monduntergang zeigen bei Hinweisen nun auch die Uhrzeit.",
-      "Aladin-Infofelder können ein- und ausgeblendet sowie positioniert werden.",
-      "Der Kamerarahmen kann in Aladin frei auf die Bildmitte gesetzt werden.",
-      "Ungespeicherte Einstellungen warnen vor dem Verlassen der Seite."
+      "Zusätzliche Wetterquellen werden als Tabs für Meteoblue, Flugwetter und MOSMIX angezeigt.",
+      "Flugwetterstationen in Deutschland können in den Einstellungen ausgewählt werden.",
+      "METAR/TAF und MOSMIX können direkt aus der Planung geladen werden; bei Browser-Sperren werden Hinweise und Quellenlinks angezeigt."
     ],
     "en": [
-      "iPad and tablet layouts are more robust against overlap.",
-      "New-entry fields automatically select placeholder defaults on first tap.",
-      "Cameras can additionally be described by resolution/megapixels; pixel size is calculated.",
-      "Telescopes/lenses can be maintained by focal length and f-number; aperture is calculated.",
-      "Reducer/Barlow factors can be used as optical accessories in setups.",
-      "Save actions are additionally available at the top of settings pages.",
-      "Moonrise and moonset hints now include the actual time.",
-      "Aladin info boxes can be shown/hidden and positioned.",
-      "The camera frame can be freely set to the current Aladin view center.",
-      "Unsaved settings warn before leaving the page."
+      "Additional weather sources are shown as tabs for Meteoblue, aviation weather and MOSMIX.",
+      "German aviation weather stations can be selected in settings.",
+      "METAR/TAF and MOSMIX can be loaded from the planning view; hints and source links are shown if the browser blocks access."
     ]
   }
 }

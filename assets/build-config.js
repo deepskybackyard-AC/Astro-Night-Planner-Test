@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.7',
-  release: '1.1.0-test.7',
+  appVersion: '1.1.0-test.8',
+  release: '1.1.0-test.8',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.7',
+  documentTitle: 'Astro Night Planner 1.1.0-test.8',
   releaseNotes: {
     de: [
     "iPad- und Tablet-Layouts wurden robuster gegen Überlappungen gemacht.",

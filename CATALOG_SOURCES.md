@@ -52,3 +52,8 @@ Benutzerdefinierte HiPS-Surveys werden vom Nutzer selbst eingetragen; für deren
 - LDN bleibt als Lynds Dark Nebulae eingebunden.
 - LBN wird in der Oberfläche als separater Katalogfilter vorbereitet. Der vollständige Import der LBN-Objektdaten muss nach Prüfung der maschinenlesbaren Rohquelle erfolgen.
 - Barnard wird als eigener Katalogfilter vorbereitet; bekannte vorhandene Barnard-Aliase wie B 33/B33 werden in der Suche berücksichtigt. Der vollständige Barnard-Datenbestand wird in einem separaten Katalogimport ergänzt, sobald eine belastbare maschinenlesbare Quelle im Build vorliegt.
+
+
+## Testversion 1.1.0-test.8
+
+Diese Testversion ergänzt die Wetter-Tabs Meteoblue, Flugwetter und MOSMIX. Flugwetterstationen können in den Einstellungen gewählt werden. METAR/TAF nutzt die AviationWeather-API, MOSMIX/Punktprognose Bright Sky/DWD-Daten. Bei Browser-CORS-Sperren zeigt die App Quellenlinks und Hinweise.

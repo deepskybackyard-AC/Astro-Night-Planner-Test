@@ -1,39 +1,29 @@
-/* Astro Night Planner 1.1.0-test.7 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
+/* Astro Night Planner 1.1.0-test.8 – Testversion B: Wetterquellen, Flugwetter und MOSMIX */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.7', release:'1.1.0-test.7', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.7'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.8', release:'1.1.0-test.8', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.8'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'iPad- und Tablet-Layouts wurden robuster gegen Überlappungen gemacht.',
-    'Neuanlage-Felder markieren Vorgabetexte beim ersten Antippen automatisch.',
-    'Kameras können zusätzlich über Auflösung/Megapixel beschrieben werden; Pixelgröße wird berechnet.',
-    'Teleskope/Objektive können über Brennweite und Blende gepflegt werden; die Öffnung wird berechnet.',
-    'Reducer/Barlow-Faktoren können als optische Zusatzkomponenten im Setup berücksichtigt werden.',
-    'Speichern-Aktionen sind auf Einstellungsseiten zusätzlich oben verfügbar.',
-    'Mondaufgang und Monduntergang zeigen bei Hinweisen nun auch die Uhrzeit.',
-    'Aladin-Infofelder können ein- und ausgeblendet sowie positioniert werden.',
-    'Der Kamerarahmen kann in Aladin frei auf die Bildmitte gesetzt werden.',
-    'Ungespeicherte Einstellungen warnen vor dem Verlassen der Seite.'
+    'Wetter-Zusatzquellen werden jetzt in Tabs für Meteoblue, Flugwetter und MOSMIX dargestellt.',
+    'Flugwetterstationen in Deutschland können in den Einstellungen ausgewählt werden.',
+    'METAR/TAF-Daten können stationsbezogen abgerufen werden; bei Browser-Sperren werden direkte Quellenlinks angeboten.',
+    'MOSMIX/Standortprognosen können über eine DWD-basierte Punktprognose geladen werden.',
+    'Aladin-Rahmenverschiebung, Infofelder, Mondhinweise und Neuanlage-Eingabefelder bleiben aus der vorherigen Testversion enthalten.'
   ],
   en: [
-    'iPad and tablet layouts are more robust against overlap.',
-    'New-entry fields automatically select placeholder defaults on first tap.',
-    'Cameras can additionally be described by resolution/megapixels; pixel size is calculated.',
-    'Telescopes/lenses can be maintained by focal length and f-number; aperture is calculated.',
-    'Reducer/Barlow factors can be used as optical accessories in setups.',
-    'Save actions are additionally available at the top of settings pages.',
-    'Moonrise and moonset hints now include the actual time.',
-    'Aladin info boxes can be shown/hidden and positioned.',
-    'The camera frame can be freely set to the current Aladin view center.',
-    'Unsaved settings warn before leaving the page.'
+    'Additional weather sources are now shown as tabs for Meteoblue, aviation weather and MOSMIX.',
+    'German aviation weather stations can be selected in settings.',
+    'METAR/TAF data can be requested per station; direct source links are shown if the browser blocks access.',
+    'MOSMIX/location forecasts can be loaded via a DWD-based point forecast.',
+    'Aladin frame movement, info boxes, Moon hints and new-entry field handling remain included from the previous test version.'
   ]
-};
+}
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
 const app = document.getElementById('app');
@@ -341,11 +331,13 @@ function standardProfile(){
       aladinLabels:{visible:true,detail:'auto'},
       aladinInfo:{visible:true,position:'right'},
       aladinSurveys:defaultAladinSurveys(),
+      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF']},
+      mosmix:{enabled:true},
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
       detailPanels:{altitudeCollapsed:true,horizonCollapsed:true},
       collapsed:{profiles:false,weatherSummary:false,weatherHourly:false,weather:false,meteoblue:true,filters:false,framing:false,cloudMap:false},
-      visibleSections:{profiles:true,weatherSummary:true,weatherHourly:true,cloudMap:true,meteoblue:true,objectSelection:true},
+      visibleSections:{profiles:true,weatherSummary:true,weatherHourly:true,cloudMap:true,meteoblue:true,weatherSources:true,objectSelection:true},
       persistentStorageRequested:false
     },
     locations:[], selectedLocationId:'',
@@ -353,7 +345,7 @@ function standardProfile(){
       temporaryCloudMapView:null,temporaryCloudMapBaseMode:null,temporaryCloudSmoothing:null,temporaryCloudMapShowValues:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,cloudMapWeatherOverlays:{precip:true,rain:true,snow:true},
       search:'',directSearch:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],objectTypeProfileId:'types-all',objectTypeProfileCustom:false,maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,visibilityBasis:'nautical',minMoonDistance:25,
       minSize:3,maxSize:240,sizeProfileId:'size-standard',excludeNoSize:false,minScore:0,selectedFilters:DEFAULT_SELECTED_FILTERS.slice(),framingFilter:['good','near-edge','too-large','unknown'],surfaceBrightnessMax:99,showNoSurfaceBrightness:true,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:35,objectRotationObjectId:null,frameRotation:0,timeFraction:.5,showMoonInAladin:false,
-      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[],frameMoveMode:false,frameCenterRaDeg:null,frameCenterDecDeg:null},
+      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[],frameMoveMode:false,frameCenterRaDeg:null,frameCenterDecDeg:null,weatherSourceTab:'meteoblue'},
     targets:[],
     targetFilters:{search:'',status:'all',priority:'all',type:'all',filter:'all',month:'all'},
     ui:{mainTab:'plan',settingsTab:'equipment',scroll:{plan:0,settings:0}}
@@ -403,6 +395,38 @@ const BUILTIN_OBJECTS = [
  ['NGC 6888','Sichelnebel',[],'Emissionsnebel',20.201,38.355,7.4,20,10,'Cygnus',['OIII','Ha','SII'],['NGC'],0]
 ].map(r=>({id:r[0],name:r[1],aliases:r[2],type:r[3],raHours:r[4],decDeg:r[5],magnitude:r[6],majorArcMin:r[7],minorArcMin:r[8],constellation:r[9],recommendedFilters:r[10],catalogs:r[11],positionAngleDeg:r[12]}));
 
+
+const GERMAN_AVIATION_STATIONS = [
+  {id:'EDDS',name:'Stuttgart',lat:48.6899,lon:9.2219},
+  {id:'EDDM',name:'München',lat:48.3538,lon:11.7861},
+  {id:'EDDF',name:'Frankfurt/Main',lat:50.0379,lon:8.5622},
+  {id:'EDDL',name:'Düsseldorf',lat:51.2895,lon:6.7668},
+  {id:'EDDH',name:'Hamburg',lat:53.6304,lon:9.9882},
+  {id:'EDDK',name:'Köln/Bonn',lat:50.8659,lon:7.1427},
+  {id:'EDDB',name:'Berlin Brandenburg',lat:52.3667,lon:13.5033},
+  {id:'EDDP',name:'Leipzig/Halle',lat:51.4239,lon:12.2364},
+  {id:'EDDN',name:'Nürnberg',lat:49.4987,lon:11.0780},
+  {id:'EDDV',name:'Hannover',lat:52.4611,lon:9.6851},
+  {id:'EDDG',name:'Münster/Osnabrück',lat:52.1346,lon:7.6848},
+  {id:'EDLW',name:'Dortmund',lat:51.5183,lon:7.6122},
+  {id:'EDNY',name:'Friedrichshafen',lat:47.6713,lon:9.5115},
+  {id:'EDSB',name:'Karlsruhe/Baden-Baden',lat:48.7794,lon:8.0805},
+  {id:'EDFM',name:'Mannheim City',lat:49.4727,lon:8.5143},
+  {id:'EDDR',name:'Saarbrücken',lat:49.2146,lon:7.1095},
+  {id:'EDDW',name:'Bremen',lat:53.0475,lon:8.7867},
+  {id:'EDJA',name:'Memmingen',lat:47.9888,lon:10.2395},
+  {id:'EDDC',name:'Dresden',lat:51.1340,lon:13.7672},
+  {id:'EDDE',name:'Erfurt-Weimar',lat:50.9798,lon:10.9581}
+];
+function haversineKm(aLat,aLon,bLat,bLon){const R=6371,rad=x=>Number(x)*Math.PI/180,dLat=rad(bLat-aLat),dLon=rad(bLon-aLon),la1=rad(aLat),la2=rad(bLat);const h=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function nearestAviationStation(loc){if(!loc)return GERMAN_AVIATION_STATIONS[0];return GERMAN_AVIATION_STATIONS.reduce((best,st)=>haversineKm(loc.latitude,loc.longitude,st.lat,st.lon)<haversineKm(loc.latitude,loc.longitude,best.lat,best.lon)?st:best,GERMAN_AVIATION_STATIONS[0]);}
+function selectedAviationStations(loc){const cfg=profile?.central?.flightWeather||{};const ids=new Set(Array.isArray(cfg.selectedStations)?cfg.selectedStations:['EDDS','EDDM','EDDF']);if(cfg.autoNearest!==false){const near=nearestAviationStation(loc);if(near)ids.add(near.id);}return GERMAN_AVIATION_STATIONS.filter(st=>ids.has(st.id));}
+function aviationStationLabel(st,loc){const d=loc?haversineKm(loc.latitude,loc.longitude,st.lat,st.lon):null;return `${st.id} ${st.name}${Number.isFinite(d)?` · ${fmt(d,0)} km`:''}`;}
+function airportWeatherLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded`;}
+function aviationApiUrl(kind,ids){return `https://aviationweather.gov/api/data/${kind}?ids=${encodeURIComponent(ids)}&format=json`;}
+function brightskyMosmixUrl(loc){const key=selectedDateKey||dateKeyFor(new Date(),loc.timezone);const end=addDays(key,2);return `https://api.brightsky.dev/weather?lat=${encodeURIComponent(loc.latitude)}&lon=${encodeURIComponent(loc.longitude)}&date=${encodeURIComponent(key)}&last_date=${encodeURIComponent(end)}&tz=${encodeURIComponent(loc.timezone||'Europe/Berlin')}`;}
+function safeRawText(value){return String(value||'').replace(/\s+/g,' ').trim();}
+
 let db;
 let profiles=[];
 let profile;
@@ -433,6 +457,13 @@ let currentInfoSubTab='status';
 let currentLocationsSubTab='locations';
 let currentObjectFilterTab='basis';
 let selectedDateKey='';
+let weatherSourceTab='meteoblue';
+let flightWeatherData=null;
+let flightWeatherLoading=false;
+let flightWeatherError='';
+let mosmixData=null;
+let mosmixLoading=false;
+let mosmixError='';
 let page=1;
 let scrollByTab={plan:0,settings:0};
 let dirtySections=new Set();
@@ -576,6 +607,9 @@ function normalizeProfile(p){
   out.central.qualityThresholds={...base.central.qualityThresholds,...(p.central?.qualityThresholds||{})};
   out.central.aladinLabels={...base.central.aladinLabels,...(p.central?.aladinLabels||{})};
   out.central.aladinInfo={...base.central.aladinInfo,...(p.central?.aladinInfo||{})};
+  out.central.flightWeather={...base.central.flightWeather,...(p.central?.flightWeather||{})};
+  out.central.flightWeather.selectedStations=Array.isArray(out.central.flightWeather.selectedStations)?out.central.flightWeather.selectedStations.filter(id=>GERMAN_AVIATION_STATIONS.some(st=>st.id===id)):base.central.flightWeather.selectedStations.slice();
+  out.central.mosmix={...base.central.mosmix,...(p.central?.mosmix||{})};
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
   out.central.filterDefaults.selectedFilters=Array.isArray(out.central.filterDefaults.selectedFilters)?out.central.filterDefaults.selectedFilters.filter(x=>FILTER_KEYS.includes(x)):DEFAULT_SELECTED_FILTERS.slice();
@@ -612,6 +646,7 @@ function normalizeProfile(p){
     return{...x,horizonProfiles:profiles,defaultHorizonProfileId:defaultId,selectedHorizonProfileId:selectedId,horizonProfile:selected.horizonProfile.slice(),horizon:Array.from({length:8},(_,index)=>Number(selected.horizonProfile[index*9]||0)),obstacles:selected.obstacles.map(item=>({...item}))};
   });
   out.planning={...base.planning,...(p.planning||{})};
+  if(!['meteoblue','flight','mosmix'].includes(out.planning.weatherSourceTab))out.planning.weatherSourceTab='meteoblue';
   out.planning.search=String(out.planning.search||'');
   out.planning.directSearch=String(out.planning.directSearch||'');
   const defaultSize=out.central.sizeProfiles.find(x=>x.id===(out.planning.sizeProfileId||out.central.activeSizeProfileId))||out.central.sizeProfiles[0];
@@ -1447,7 +1482,7 @@ function renderPlan(){
         </div>
       </details>
     </section>`:''}
-    ${hasWeatherDate?(((sectionVisible('weatherSummary')||sectionVisible('weatherHourly'))?renderWeather(windowRange,weather,loc,night):'')+(sectionVisible('cloudMap')?renderCloudMap(windowRange,loc,night):'')+(sectionVisible('meteoblue')?renderMeteoblue(loc):'')):renderWeatherUnavailableNotice()}
+    ${hasWeatherDate?(((sectionVisible('weatherSummary')||sectionVisible('weatherHourly'))?renderWeather(windowRange,weather,loc,night):'')+(sectionVisible('cloudMap')?renderCloudMap(windowRange,loc,night):'')+(sectionVisible('weatherSources')?renderWeatherSourceTabs(loc,night,windowRange):'')):renderWeatherUnavailableNotice()}
     ${sectionVisible('objectSelection')?`<section class="card"><div class="section-title-row"><h2>Objektauswahl</h2><span class="muted">${objects.length} Treffer aus ${catalog.length} Katalogobjekten</span></div>${renderFilters()}${pagination(totalPages,objects.length)}${renderObjectTable(shown,visibleDisplayColumns(display),loc,windowRange,night)}${pagination(totalPages,objects.length)}</section>`:''}
   </div>`;
 }
@@ -1784,6 +1819,74 @@ function renderFraming(o,windowRange,loc){
     <div class="framing-controls compact-framing-controls"><label>Survey<select id="aladinSurveySelect">${availableSurveys.map(item=>`<option value="${esc(item.hipsId)}" ${survey===item.hipsId?'selected':''}>${optionText(item.name)}</option>`).join('')||`<option value="P/DSS2/color">DSS2 Farbe</option>`}</select></label><button type="button" id="openAladinExternal">Himmelsbild in neuem Tab öffnen</button><span class="small muted external-aladin-note">Mit Messwerkzeug und Umrisszeichnung</span><div class="comparison-frame-picker"><span>Vergleichsrahmen</span>${(profile.equipment.setups||[]).map(setup=>`<label class="chip"><input type="checkbox" data-compare-setup="${esc(setup.id)}" ${(profile.planning.comparisonSetupIds||[]).includes(setup.id)?'checked':''}>${esc(setup.name)}</label>`).join('')}</div><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><button type="button" id="centerAladinFrame">Rahmen auf Objekt zurücksetzen</button><button type="button" id="toggleFrameMoveMode" class="${profile.planning.frameMoveMode?'active':''}">Rahmen verschieben</button><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><button type="button" id="exportNinaPlan" class="primary">${language==='en'?'Export for N.I.N.A.':'Für N.I.N.A. exportieren'}</button><label class="chip"><input id="aladinInfoVisible" type="checkbox" ${profile.central.aladinInfo?.visible!==false?'checked':''}>Infofelder anzeigen</label><label>Infofelder-Position<select id="aladinInfoPosition">${[['right','rechts'],['left','links'],['top','oben'],['bottom','unten']].map(([key,label])=>`<option value="${key}" ${profile.central.aladinInfo?.position===key?'selected':''}>${label}</option>`).join('')}</select></label><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label><label class="chip"><input id="showMoonInAladin" type="checkbox" ${profile.planning.showMoonInAladin?'checked':''}>Mond anzeigen</label><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>Ändert Planungswerte, nicht das Sternfeld. Mond: ${fmt(moonSep)}° Abstand, Höhe ${fmt(moonAlt)}°, Beleuchtung ${fmt(moonPhase.illumination)} %.</small></label><label class="chip outline-control"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektumriss anzeigen</label><label class="outline-control">Objektrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" class="outline-control" title="Objektellipse auf den Katalog-Positionswinkel ${fmt(catalogRotation)}° zurücksetzen">Objektausrichtung zurücksetzen</button></div>
   </section>`;
 }
+
+function renderWeatherSourceTabs(loc,night,windowRange){
+  const active=profile.planning.weatherSourceTab||'meteoblue';
+  return `<section class="card weather-source-tabs-card"><div class="section-title-row"><div><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="small muted">${language==='en'?'Meteoblue, aviation weather and MOSMIX are independent reference sources.':'Meteoblue, Flugwetter und MOSMIX sind unabhängige Zusatz- und Kontrollquellen.'}</div></div></div>
+    <div class="settings-tabs weather-source-tabs" style="margin-top:12px">${[['meteoblue','Meteoblue'],['flight',language==='en'?'Aviation weather':'Flugwetter'],['mosmix','MOSMIX']].map(([key,label])=>`<button type="button" data-weather-source-tab="${key}" class="${active===key?'active':''}">${label}</button>`).join('')}</div>
+    <div class="weather-source-panel ${active==='meteoblue'?'active':''}">${active==='meteoblue'?renderMeteoblue(loc):''}</div>
+    <div class="weather-source-panel ${active==='flight'?'active':''}">${active==='flight'?renderFlightWeather(loc):''}</div>
+    <div class="weather-source-panel ${active==='mosmix'?'active':''}">${active==='mosmix'?renderMosmix(loc,night,windowRange):''}</div>
+  </section>`;
+}
+function renderFlightWeather(loc){
+  const stations=selectedAviationStations(loc);
+  const ids=stations.map(st=>st.id).join(',');
+  const data=flightWeatherData||{};
+  const cards=stations.map(st=>{
+    const metar=(data.metars||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
+    const taf=(data.tafs||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
+    const rawMetar=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text);
+    const rawTaf=safeRawText(taf?.rawTAF||taf?.raw_text||taf?.raw||taf?.text);
+    const clouds=Array.isArray(metar?.clouds)?metar.clouds.map(c=>`${c.cover||c.coverage||''}${c.base?` ${c.base} ft`:''}`).join(', '):'';
+    return `<div class="flight-weather-card metric"><strong>${esc(aviationStationLabel(st,loc))}</strong><div class="small muted">${esc(st.lat.toFixed(3))}°, ${esc(st.lon.toFixed(3))}°</div>
+      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">Sicht ${esc(metar.visib||metar.visibility||'')} · Wolken ${esc(clouds||'keine Detailangabe')} · Flugkategorie ${esc(metar.fltCat||'')}</div>`:`<div class="small muted">METAR noch nicht geladen.</div>`}
+      ${rawTaf?`<details><summary>TAF-Prognose</summary><div class="raw-block">${esc(rawTaf)}</div></details>`:`<div class="small muted">TAF noch nicht geladen.</div>`}
+      <a class="button small" href="${airportWeatherLink(st)}" target="_blank" rel="noopener noreferrer">Quelle öffnen</a></div>`;
+  }).join('');
+  return `<details open class="weather-inner-details"><summary><strong>${language==='en'?'Aviation weather / station check':'Flugwetter / Stationsabgleich'}</strong></summary>
+    <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check, not another model in the automatic score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
+    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?'Lade Flugwetter …':'METAR/TAF laden'}</button><span class="small muted">Stationen: ${esc(ids||'keine')}</span></div>
+    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}<br><span class="small">Die NOAA AviationWeather API ist im Browser teilweise durch CORS geschützt. Nutze dann die Quellenlinks oder prüfe später erneut.</span></div>`:''}
+    <div class="grid two flight-weather-grid" style="margin-top:12px">${cards}</div>
+    <details style="margin-top:12px"><summary>Rohdaten / API-Adressen</summary><div class="raw-block">METAR: ${esc(aviationApiUrl('metar',ids))}\nTAF: ${esc(aviationApiUrl('taf',ids))}</div></details>
+  </details>`;
+}
+function renderMosmix(loc,night,windowRange){
+  const rows=Array.isArray(mosmixData?.weather)?mosmixData.weather.slice(0,36):[];
+  const table=rows.length?`<div class="table-wrap"><table><thead><tr><th>Zeit</th><th>Bewölkung</th><th>Wind</th><th>Temp.</th><th>Taupunkt</th><th>Niederschlag</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${esc(fmtTime(new Date(row.timestamp),loc.timezone))}</td><td>${esc(row.cloud_cover??row.cloud_cover_total??'–')} %</td><td>${esc(row.wind_speed??'–')} km/h</td><td>${esc(row.temperature??'–')} °C</td><td>${esc(row.dew_point??'–')} °C</td><td>${esc(row.precipitation??'–')}</td></tr>`).join('')}</tbody></table></div>`:`<div class="notice">Noch keine MOSMIX-/Punktprognose geladen.</div>`;
+  return `<details open class="weather-inner-details"><summary><strong>MOSMIX / Standortprognose</strong></summary>
+    <div class="notice" style="margin-top:12px">MOSMIX wird hier als standortnahe Punktprognose dargestellt. Sie ergänzt den Modellkonsens und hilft besonders bei Temperatur, Wind, Taupunkt und Nebel-/Taurisiko.</div>
+    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadMosmix" ${mosmixLoading?'disabled':''}>${mosmixLoading?'Lade MOSMIX …':'MOSMIX laden'}</button><span class="small muted">${esc(loc.name)} · ${esc(selectedDateKey)}</span></div>
+    ${mosmixError?`<div class="notice warn" style="margin-top:10px">${esc(mosmixError)}</div>`:''}
+    ${table}
+    <details style="margin-top:12px"><summary>Quelle / API-Adresse</summary><div class="raw-block">${esc(brightskyMosmixUrl(loc))}</div></details>
+  </details>`;
+}
+async function fetchFlightWeather(){
+  const loc=activeLocation(), stations=selectedAviationStations(loc), ids=stations.map(st=>st.id).join(',');
+  if(!ids){flightWeatherError='Keine Flugwetterstation ausgewählt.';render();return}
+  flightWeatherLoading=true;flightWeatherError='';render();
+  try{
+    const [metarRes,tafRes]=await Promise.all([fetch(aviationApiUrl('metar',ids),{cache:'no-store'}),fetch(aviationApiUrl('taf',ids),{cache:'no-store'})]);
+    const metars=metarRes.status===204?[]:await metarRes.json();
+    const tafs=tafRes.status===204?[]:await tafRes.json();
+    flightWeatherData={metars:Array.isArray(metars)?metars:[],tafs:Array.isArray(tafs)?tafs:[],loadedAt:new Date().toISOString()};
+  }catch(error){
+    flightWeatherError='METAR/TAF konnten im Browser nicht direkt geladen werden. Grund: '+(error?.message||String(error));
+  }finally{flightWeatherLoading=false;render();}
+}
+async function fetchMosmix(){
+  const loc=activeLocation(); if(!loc)return;
+  mosmixLoading=true;mosmixError='';render();
+  try{
+    const response=await fetch(brightskyMosmixUrl(loc),{cache:'no-store'});
+    if(!response.ok)throw new Error(`${response.status} ${response.statusText}`);
+    mosmixData=await response.json();
+  }catch(error){mosmixError='MOSMIX-/Punktprognose konnte nicht geladen werden: '+(error?.message||String(error));}
+  finally{mosmixLoading=false;render();}
+}
+
 function renderMeteoblue(loc){
   const urls=meteoblueLocationInfo(loc);
   const mapCollapsed=profile.central.cloudMap?.meteoblueMapCollapsed!==false;
@@ -1925,6 +2028,7 @@ function renderCentral(){
       <label>Glättung der Wolkenfelder<select id="cloudMapSmoothing">${CLOUD_SMOOTHING_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.smoothing===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
     </div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
+    <div class="metric" style="margin-top:12px"><strong>Flugwetterstationen Deutschland</strong><div class="small muted">Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>Nächstgelegene Station automatisch anzeigen</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${(c.flightWeather?.selectedStations||[]).includes(st.id)?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
@@ -1961,7 +2065,7 @@ function renderCentral(){
     <div class="grid two" style="margin-top:12px"><div class="metric"><strong>Qualitätsampel</strong><div class="small muted">Rot 0 bis unter Gelb, Gelb bis unter Grün, Grün bis 100.</div><div class="grid two" style="margin-top:8px"><label>Gelb ab<input id="qualityYellow" type="number" min="1" max="98" step="1" value="${Number(c.qualityThresholds?.yellow??60)}"></label><label>Grün ab<input id="qualityGreen" type="number" min="2" max="99" step="1" value="${Number(c.qualityThresholds?.green??80)}"></label></div></div><div class="metric"><strong>Objektbeschriftungen in Aladin</strong><label class="chip" style="margin-top:8px"><input id="defaultAladinLabelsVisible" type="checkbox" ${c.aladinLabels?.visible!==false?'checked':''}>Objektnamen und Katalognummern anzeigen</label><label>Detailstufe<select id="defaultAladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label></div></div>
     <div class="display-config-selector static"><div class="section-title-row"><div><h3>Objektlisteninformationen konfigurieren</h3><div class="small muted">Sichtbarkeit, Reihenfolge und aktives Darstellungsprofil der Objektliste.</div></div><label>Objektliste Darstellungsprofil – aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div><div class="display-config-list">${Object.entries(c.listDisplay.profiles).map(([key,value])=>renderDisplayColumnConfigurator(key,value)).join('')}</div></div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label><label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label><label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label><label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label><label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['meteoblue','Meteoblue'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${esc(label)} anzeigen</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['weatherSources','Zusätzliche Wetterquellen'],['meteoblue','Meteoblue (alt)'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${esc(label)} anzeigen</label>`).join('')}</div></div>
     <details class="metric aladin-survey-settings" style="margin-top:16px"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin-Surveys</strong><span class="small muted">Weitere Surveys können manuell per HiPS-ID ergänzt werden. Monochrome Surveys werden nativ angezeigt.</span></summary><div class="section-title-row" style="margin-top:12px"><div><div class="small muted">Surveys in der Aladin-Auswahl aktivieren, umbenennen oder eigene HiPS-IDs ergänzen. Diese Expertenliste ist initial zugeklappt.</div></div><button id="addAladinSurvey" type="button">Survey hinzufügen</button></div>
       <div class="aladin-survey-list">${normalizeAladinSurveys(c.aladinSurveys).map(item=>`<div class="survey-config-row" data-survey-row="${esc(item.id)}"><label class="chip"><input data-aladin-survey="${esc(item.id)}" data-field="enabled" type="checkbox" ${item.enabled?'checked':''}>in Auswahl</label><label>Anzeigename<input data-aladin-survey="${esc(item.id)}" data-field="name" value="${esc(item.name)}"></label><label>HiPS-ID<input data-aladin-survey="${esc(item.id)}" data-field="hipsId" value="${esc(item.hipsId)}" ${item.builtin?'readonly':''}></label><label>Kategorie<input data-aladin-survey="${esc(item.id)}" data-field="category" value="${esc(item.category||'')}"></label>${item.builtin?'':`<button type="button" class="danger" data-delete-aladin-survey="${esc(item.id)}">Entfernen</button>`}</div>`).join('')}</div>
     </details>
@@ -2094,14 +2198,14 @@ function renderInfo(){
     ${renderSaveBar('backup','Sicherungseinstellungen speichern')}
   </div>
   <div class="card help-article subtab-panel ${currentInfoSubTab==='help'?'active':''}"><div class="section-title-row"><div><h2>${esc(tx('helpTitle'))}</h2><div class="small muted">${esc(tx('helpSub'))}</div><div class="help-language-note">${esc(tx('helpNote'))}</div></div><div class="data-actions"><a class="button" href="${docLink('html')}" target="_blank" rel="noopener">${esc(tx('helpBrowser'))}</a><a class="button primary" href="${docLink('pdf')}" target="_blank" rel="noopener">${esc(tx('helpPdf'))}</a></div></div>
-    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-browser-storage','Browserdaten-FAQ'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
+    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-weather-sources','Flugwetter/MOSMIX'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-browser-storage','Browserdaten-FAQ'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
     <section id="help-storage"><h3>Datenspeicherung, Cookies und Browsercache</h3><p>Alle persönlichen Daten werden im gerade verwendeten Browser und Browserprofil gespeichert. IndexedDB enthält die fachlichen Daten, Cache Storage die für den Offlinebetrieb benötigten App-Dateien. Cookies sind nicht der Hauptspeicher. Ein normaler Cache-Löschvorgang betrifft die Einstellungen meist nicht; das Löschen aller Websitedaten der Installationsadresse kann sie jedoch entfernen. Auch ein Wechsel der Domain oder des Browserprofils erzeugt einen getrennten Speicherbereich. Übertrage Daten deshalb mit einer externen Sicherung.</p></section>
     <section id="help-first"><h3>Erste Schritte</h3><p>Prüfe zuerst unter Ausrüstung Teleskop, Kamera und Montierung. Lege anschließend unter Standorte & Horizont deinen Aufnahmeort, mindestens ein Horizontprofil und den jeweiligen Standard fest. Wähle in der Planung Standort, Datum, Planungszeitraum, Teleskop, Kamera, Horizontprofil und Wetterdarstellung. Danach kannst du Objektfilter setzen und ein Objekt durch Klick auf die gesamte Tabellenzeile öffnen.</p></section>
     <section id="help-plan"><h3>Planungsnacht</h3><p>Die Standortauswahl links neben den Datumsfeldern gilt nur für die aktuelle Planung. Koordinaten und Höhe stehen direkt darunter. Sonnen-, Dämmerungs- und Mondzeiten werden für diesen Standort berechnet. Der Planungszeitraum begrenzt Bewertung, Sichtbarkeitsdauer, Wetterzusammenfassung und Höhenprofile.</p></section>
     <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Planungszeitraum, Aufnahmequalitätsprofil, Darstellungsprofil, Wetteransicht, Teleskop, Kamera und Horizontprofil können für die aktuelle Nacht temporär gewählt werden. Teleskop und Kamera wirken sofort auf Bildfeld, Framingbewertung und Aladin-Rahmung; das Horizontprofil auf die Horizontansicht. Keine dieser Auswahlen überschreibt einen gespeicherten Standard. Dauerhafte Standards werden ausschließlich in den Einstellungen festgelegt.</p></section>
     <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
     <section id="help-cloudmap"><h3>Animierte 24-Stunden-Wolkenkarte</h3><p>In der Planung kann temporär zwischen „Karte + Wolken“ und „Nur Wolken“ gewechselt werden. Die kombinierte Ansicht nutzt eine bewusst dunkle, reduzierte topografische Basiskarte. Straßen, Gebäude und POIs werden ausgeblendet; Gelände, Gewässer, Grenzen und wenige Ortsnamen bleiben dezent zur Orientierung. Wolken erscheinen bei allen Modellen einheitlich weiß: je höher der Wolkenanteil, desto deckender die Fläche. Der Modus „Nur Wolken“ zeigt dieselben Felder auf neutral dunklem Hintergrund. Der Modus Modellabweichung bleibt farbig und zeigt die Streuung der drei Modelle.</p><p>Die orangefarbenen Prozentangaben stehen an den tatsächlichen Prognosepunkten und können kompakt ein- oder ausgeblendet werden. Ihre Dichte passt sich an Raster und Bildschirmbreite an. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge. Die Glättung kann direkt in der Planung temporär als „Strukturiert“, „Ausgewogen“ oder „Weich“ gewählt werden, ohne zusätzliche Wetterdaten abzurufen. Das Zeitraster ist mit 15, 30 oder 60 Minuten wählbar; Standard sind 30 Minuten. Zwischenbilder werden aus den stündlichen Modellwerten interpoliert und erhöhen nicht die Prognosegenauigkeit. Bei geringer Sicherheit erscheint „Bewegungsrichtung unsicher“.</p></section>
-    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten. Wenn ein Browser externe Daten durch CORS oder Datenschutzregeln blockiert, zeigt die App direkte Quellenlinks und Hinweise.</p></section>
     <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Die Suche innerhalb der aktiven Filter verfeinert diese Auswahl. Die Direktsuche rechts daneben sucht dagegen nach Katalognummer, Objektname oder Alias und ignoriert bewusst alle anderen gesetzten Filter. So findest du zum Beispiel SH 2-119 oder NGC 7000 auch dann, wenn ein Katalog, Objekttyp, Größenbereich oder eine Mindesthöhe sie gerade ausblenden würde.</p><p>Texteingaben werden nach 1,5 Sekunden übernommen, damit nicht nach jedem Zeichen neu gerechnet wird; Enter oder „Filter anwenden“ startet sofort. Aktive Suchfelder werden hervorgehoben. Änderungen setzen die Ergebnisliste auf Seite 1 zurück. „Basisfilter zurücksetzen“ stellt nur die Werte dieser Basisfilter-Rubrik auf Standard zurück; Kataloge, Aufnahmefilter, Objekttypen, Ausrüstung und Anzeigeprofile bleiben unverändert.</p><p>Der Katalogfilter LDN/LBN enthält in dieser Version benannte LDN-Dunkelnebel. LBN-Objekte sind noch nicht als eigener Katalog importiert. Größenwerte der LDN-Objekte werden aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet und dienen als praktische Filter- und Rahmungshilfe.</p></section>
     <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Im Darstellungsprofil können die Informationen über eine aufklappbare Auswahlliste ein- oder ausgeschaltet und per Drag-and-drop beziehungsweise Auf-/Ab-Schaltflächen sortiert werden. Der Objektname bleibt immer sichtbar.</p><p>„Beste Stunde“ ist die Stunde mit dem höchsten Qualitätswert innerhalb des nautischen Planungszeitraums, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Meridian und Kulmination bleiben getrennte Informationen. Das Mini-Höhenprofil verwendet den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
     <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt. In der Horizontansicht kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des gewählten Standorts ausgewählt werden.</p></section>
@@ -2190,6 +2294,9 @@ function bindRendered(){
     if(isForecastDateKey(selectedDateKey))fetchWeather();
   });
   document.getElementById('weatherRefresh')?.addEventListener('click',fetchWeather);
+  document.querySelectorAll('[data-weather-source-tab]').forEach(button=>button.addEventListener('click',async()=>{profile.planning.weatherSourceTab=button.dataset.weatherSourceTab;await saveProfile();render();}));
+  document.getElementById('loadFlightWeather')?.addEventListener('click',fetchFlightWeather);
+  document.getElementById('loadMosmix')?.addEventListener('click',fetchMosmix);
   const planningWindowTop=document.getElementById('planningWindowTop');
   if(planningWindowTop)planningWindowTop.onchange=async()=>{
     profile.planning.planningWindow=planningWindowTop.value;
@@ -2802,6 +2909,8 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
+  set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'weatherModels');
+  document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('weatherModels')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
     setSectionDirty('weights');
