@@ -1,13 +1,15 @@
-/* Astro Night Planner 1.1.0-test.2 – Testversion A: Korrektur Horizonteditor und Datumsauswahl */
+/* Astro Night Planner 1.1.0-test.3 – Testversion A: Korrektur Horizonteditor und Rubriken-Sichtbarkeit */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.2', release:'1.1.0-test.2', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.2'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.3', release:'1.1.0-test.3', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.3'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
+    'Der Horizonteditor wurde für Maus, Stift und Touch robuster gemacht.',
+    'Die Einstellungen zum vollständigen Ausblenden von Planungsrubriken sind jetzt sichtbar und speicherbar.',
     'Die Datumsauswahl wurde um eine Kalenderauswahl für langfristige Objektplanung erweitert.',
     'Wetterabhängige Rubriken werden außerhalb des Vorhersagezeitraums automatisch ausgeblendet.',
     'Rubriken können in den Einstellungen angezeigt, ausgeblendet und mit einem Standardzustand versehen werden.',
@@ -16,6 +18,8 @@ const DEFAULT_RELEASE_NOTES = {
     'LDN, LBN und Barnard werden als getrennte Katalogfilter angeboten.'
   ],
   en: [
+    'The horizon editor has been made more robust for mouse, pen and touch input.',
+    'Settings to fully hide planning sections are now visible and saved correctly.',
     'Date selection now includes a calendar picker for long-term object planning.',
     'Weather-dependent sections are automatically hidden beyond the forecast range.',
     'Sections can be shown, hidden and configured with a default open or collapsed state.',
@@ -1721,7 +1725,7 @@ function resetDraftSection(section){
   if(section==='cloudMap')draft.central.cloudMap=deepClone(base.central.cloudMap);
   if(section==='weights')draft.central.weights=deepClone(base.central.weights);
   if(section==='display'){
-    draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);
+    draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);draft.central.visibleSections=deepClone(base.central.visibleSections);
   }
   if(section==='locations'){
     draft.locations=deepClone(base.locations);draft.selectedLocationId=base.selectedLocationId;draft.central.defaultLocationId=base.central.defaultLocationId;draft.central.gpsBehavior=base.central.gpsBehavior;draft.central.locationSearchCountry=base.central.locationSearchCountry;locationSearchResults=[];locationSearchQuery='';locationSearchError='';horizonUndoStack=[];
@@ -1835,7 +1839,7 @@ function renderCentral(){
     <div class="grid two" style="margin-top:12px"><div class="metric"><strong>Qualitätsampel</strong><div class="small muted">Rot 0 bis unter Gelb, Gelb bis unter Grün, Grün bis 100.</div><div class="grid two" style="margin-top:8px"><label>Gelb ab<input id="qualityYellow" type="number" min="1" max="98" step="1" value="${Number(c.qualityThresholds?.yellow??60)}"></label><label>Grün ab<input id="qualityGreen" type="number" min="2" max="99" step="1" value="${Number(c.qualityThresholds?.green??80)}"></label></div></div><div class="metric"><strong>Objektbeschriftungen in Aladin</strong><label class="chip" style="margin-top:8px"><input id="defaultAladinLabelsVisible" type="checkbox" ${c.aladinLabels?.visible!==false?'checked':''}>Objektnamen und Katalognummern anzeigen</label><label>Detailstufe<select id="defaultAladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label></div></div>
     <div class="display-config-selector static"><div class="section-title-row"><div><h3>Objektlisteninformationen konfigurieren</h3><div class="small muted">Sichtbarkeit, Reihenfolge und aktives Darstellungsprofil der Objektliste.</div></div><label>Objektliste Darstellungsprofil – aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div><div class="display-config-list">${Object.entries(c.listDisplay.profiles).map(([key,value])=>renderDisplayColumnConfigurator(key,value)).join('')}</div></div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label><label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label><label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label><label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label><label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric" style="margin-top:12px"><strong>${language==='en'?'Show or hide sections':'Rubriken anzeigen oder ausblenden'}</strong><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['meteoblue','Meteoblue'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${esc(label)} anzeigen</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['meteoblue','Meteoblue'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${esc(label)} anzeigen</label>`).join('')}</div></div>
     <details class="metric aladin-survey-settings" style="margin-top:16px"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin-Surveys</strong><span class="small muted">Weitere Surveys können manuell per HiPS-ID ergänzt werden. Monochrome Surveys werden nativ angezeigt.</span></summary><div class="section-title-row" style="margin-top:12px"><div><div class="small muted">Surveys in der Aladin-Auswahl aktivieren, umbenennen oder eigene HiPS-IDs ergänzen. Diese Expertenliste ist initial zugeklappt.</div></div><button id="addAladinSurvey" type="button">Survey hinzufügen</button></div>
       <div class="aladin-survey-list">${normalizeAladinSurveys(c.aladinSurveys).map(item=>`<div class="survey-config-row" data-survey-row="${esc(item.id)}"><label class="chip"><input data-aladin-survey="${esc(item.id)}" data-field="enabled" type="checkbox" ${item.enabled?'checked':''}>in Auswahl</label><label>Anzeigename<input data-aladin-survey="${esc(item.id)}" data-field="name" value="${esc(item.name)}"></label><label>HiPS-ID<input data-aladin-survey="${esc(item.id)}" data-field="hipsId" value="${esc(item.hipsId)}" ${item.builtin?'readonly':''}></label><label>Kategorie<input data-aladin-survey="${esc(item.id)}" data-field="category" value="${esc(item.category||'')}"></label>${item.builtin?'':`<button type="button" class="danger" data-delete-aladin-survey="${esc(item.id)}">Entfernen</button>`}</div>`).join('')}</div>
     </details>
@@ -2452,9 +2456,9 @@ function bindDetailTimeControls(){
       const marginLeft=62,plotWidth=canvas.width-62-22;
       applyDetailTimeFraction((internalX-marginLeft)/Math.max(1,plotWidth));
     };
-    canvas.addEventListener('pointerdown',event=>{dragging=true;canvas.setPointerCapture?.(event.pointerId);update(event)});
+    canvas.addEventListener('pointerdown',event=>{dragging=true;if(typeof event.pointerId==='number')canvas.setPointerCapture?.(event.pointerId);update(event)});
     canvas.addEventListener('pointermove',event=>{if(dragging)update(event)});
-    canvas.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;canvas.releasePointerCapture?.(event.pointerId);applyDetailTimeFraction(profile.planning.detailTimeFraction,{persist:true})});
+    canvas.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;if(typeof event.pointerId==='number')canvas.releasePointerCapture?.(event.pointerId);applyDetailTimeFraction(profile.planning.detailTimeFraction,{persist:true})});
     canvas.addEventListener('pointercancel',()=>{dragging=false});
   });
 }
@@ -2640,6 +2644,7 @@ function bindCentralDraft(){
   set('defaultProfilesCollapsed',element=>draft.central.collapsed.profiles=element.checked,'display');
   set('defaultWeatherSummaryCollapsed',element=>draft.central.collapsed.weatherSummary=element.checked,'display');
   set('defaultWeatherHourlyCollapsed',element=>draft.central.collapsed.weatherHourly=element.checked,'display');
+  document.querySelectorAll('[data-visible-section]').forEach(element=>element.onchange=()=>{draft.central.visibleSections=draft.central.visibleSections||{};draft.central.visibleSections[element.dataset.visibleSection]=element.checked;setSectionDirty('display')});
   document.querySelectorAll('[data-display-page-size]').forEach(element=>element.onchange=()=>{
     draft.central.listDisplay.profiles[element.dataset.displayPageSize].pageSize=Number(element.value);
     setSectionDirty('display');
@@ -2782,7 +2787,7 @@ function bindLocationDraft(){
       if(event.pointerType==='mouse'&&event.button!==0)return;
       event.preventDefault();
       drawing=true;activePointerId=event.pointerId;
-      canvas.setPointerCapture?.(event.pointerId);
+      if(typeof event.pointerId==='number')canvas.setPointerCapture?.(event.pointerId);
       horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);
       lastIndex=null;lastAltitude=null;
       const point=pointFromEvent(event);showTooltip(point);applyPoint(point);
@@ -2795,15 +2800,29 @@ function bindLocationDraft(){
     const stopDrawing=event=>{
       if(!drawing||activePointerId!==null&&event.pointerId!==activePointerId)return;
       drawing=false;activePointerId=null;lastIndex=null;lastAltitude=null;
-      canvas.releasePointerCapture?.(event.pointerId);
+      if(typeof event.pointerId==='number')canvas.releasePointerCapture?.(event.pointerId);
       hideTooltip();redrawCanvas();
     };
+    canvas.style.touchAction='none';
     canvas.addEventListener('pointerdown',beginDrawing);
     canvas.addEventListener('pointermove',moveDrawing);
     canvas.addEventListener('pointerup',stopDrawing);
     canvas.addEventListener('pointercancel',stopDrawing);
+    canvas.addEventListener('lostpointercapture',stopDrawing);
     canvas.addEventListener('pointerleave',event=>{if(!drawing)hideTooltip();});
-    canvas.addEventListener('mousemove',event=>{if(!window.PointerEvent)showTooltip(pointFromEvent(event));});
+    // Zusätzlicher Fallback: Einige Browser-/Gerätekombinationen liefern Pointer-Events im Canvas nicht zuverlässig.
+    const beginMouse=event=>{if(drawing||event.button!==0)return;beginDrawing({clientX:event.clientX,clientY:event.clientY,pointerId:'mouse',pointerType:'mouse',button:0,preventDefault:()=>event.preventDefault(),stopPropagation:()=>event.stopPropagation?.()});};
+    const moveMouse=event=>{if(!drawing||activePointerId!=='mouse'){showTooltip(pointFromEvent(event));return;}moveDrawing({clientX:event.clientX,clientY:event.clientY,pointerId:'mouse',preventDefault:()=>event.preventDefault()});};
+    const stopMouse=event=>{if(activePointerId==='mouse')stopDrawing({pointerId:'mouse'});};
+    canvas.addEventListener('mousedown',beginMouse);
+    window.addEventListener('mousemove',moveMouse);
+    window.addEventListener('mouseup',stopMouse);
+    const firstTouch=event=>event.touches&&event.touches[0]?event.touches[0]:event.changedTouches&&event.changedTouches[0]?event.changedTouches[0]:null;
+    canvas.addEventListener('touchstart',event=>{if(drawing)return;const touch=firstTouch(event);if(!touch)return;beginDrawing({clientX:touch.clientX,clientY:touch.clientY,pointerId:'touch',pointerType:'touch',button:0,preventDefault:()=>event.preventDefault()});},{passive:false});
+    canvas.addEventListener('touchmove',event=>{const touch=firstTouch(event);if(!touch)return;if(activePointerId==='touch')moveDrawing({clientX:touch.clientX,clientY:touch.clientY,pointerId:'touch',preventDefault:()=>event.preventDefault()});},{passive:false});
+    canvas.addEventListener('touchend',()=>{if(activePointerId==='touch')stopDrawing({pointerId:'touch'});},{passive:false});
+    canvas.addEventListener('touchcancel',()=>{if(activePointerId==='touch')stopDrawing({pointerId:'touch'});},{passive:false});
+    canvas.addEventListener('mousemove',event=>{if(!drawing)showTooltip(pointFromEvent(event));});
     redrawCanvas();
   }
   document.getElementById('addObstacle')?.addEventListener('click',()=>{entry().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});
@@ -2839,7 +2858,7 @@ async function saveDraftSection(section){
     const yellow=Math.round(Number(draft.central.qualityThresholds?.yellow)),green=Math.round(Number(draft.central.qualityThresholds?.green));
     if(!Number.isFinite(yellow)||!Number.isFinite(green)||yellow<1||green>100||yellow>=green){alert('Bitte gültige Qualitätsgrenzen eingeben: „Gelb ab“ muss kleiner als „Grün ab“ sein.');return}
     draft.central.qualityThresholds={yellow,green};
-    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.framing=deepClone(draft.central.framing);profile.central.qualityThresholds=deepClone(draft.central.qualityThresholds);profile.central.aladinLabels=deepClone(draft.central.aladinLabels);profile.central.aladinSurveys=deepClone(draft.central.aladinSurveys);profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.central.collapsed=deepClone(draft.central.collapsed);profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
+    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.framing=deepClone(draft.central.framing);profile.central.qualityThresholds=deepClone(draft.central.qualityThresholds);profile.central.aladinLabels=deepClone(draft.central.aladinLabels);profile.central.aladinSurveys=deepClone(draft.central.aladinSurveys);profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.central.collapsed=deepClone(draft.central.collapsed);profile.central.visibleSections=deepClone(draft.central.visibleSections||{});profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
   }
   if(section==='locations'){
     draft.locations.forEach(item=>{horizonProfilesFor(item).forEach(entry=>{ensureHorizonProfile(item,entry.id);entry.horizonProfile[72]=entry.horizonProfile[0]});syncCardinalHorizon(item,item.selectedHorizonProfileId)});

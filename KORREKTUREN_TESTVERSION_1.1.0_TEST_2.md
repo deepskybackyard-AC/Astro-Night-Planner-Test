@@ -1,4 +1,4 @@
-# Korrekturen und Erweiterungen - 1.1.0-test.2
+# Korrekturen und Erweiterungen - 1.1.0-test.3
 
 - Der interaktive Horizonteditor wurde korrigiert, sodass die Horizontlinie wieder per Maus, Stift oder Touch gezeichnet werden kann.
 - Der Tooltip mit Azimut und Höhe bleibt beim Zeichnen aktiv.

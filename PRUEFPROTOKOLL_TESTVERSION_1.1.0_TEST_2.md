@@ -1,4 +1,4 @@
-# Prüfprotokoll - Astro Night Planner 1.1.0-test.2
+# Prüfprotokoll - Astro Night Planner 1.1.0-test.3
 
 Geprüft:
 

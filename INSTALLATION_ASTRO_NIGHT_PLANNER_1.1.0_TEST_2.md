@@ -1,4 +1,4 @@
-# Installation - Astro Night Planner 1.1.0-test.2
+# Installation - Astro Night Planner 1.1.0-test.3
 
 Diese Testversion wird in das Test-Repository eingespielt. Der Ordner `.github/workflows` ist enthalten, damit der bestehende GitHub-Actions-Workflow weiter genutzt werden kann.
 
