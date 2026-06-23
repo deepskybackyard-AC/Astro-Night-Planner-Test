@@ -3,35 +3,21 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.8',
-  release: '1.1.0-test.8',
+  appVersion: '1.1.0-test.9',
+  release: '1.1.0-test.9',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.8',
+  documentTitle: 'Astro Night Planner 1.1.0-test.9',
   releaseNotes: {
     de: [
-    "iPad- und Tablet-Layouts wurden robuster gegen Überlappungen gemacht.",
-    "Neuanlage-Felder markieren Vorgabetexte beim ersten Antippen automatisch.",
-    "Kameras können zusätzlich über Auflösung/Megapixel beschrieben werden; Pixelgröße wird berechnet.",
-    "Teleskope/Objektive können über Brennweite und Blende gepflegt werden; die Öffnung wird berechnet.",
-    "Reducer/Barlow-Faktoren können als optische Zusatzkomponenten im Setup berücksichtigt werden.",
-    "Speichern-Aktionen sind auf Einstellungsseiten zusätzlich oben verfügbar.",
-    "Mondaufgang und Monduntergang zeigen bei Hinweisen nun auch die Uhrzeit.",
-    "Aladin-Infofelder können ein- und ausgeblendet sowie positioniert werden.",
-    "Der Kamerarahmen kann in Aladin frei auf die Bildmitte gesetzt werden.",
-    "Ungespeicherte Einstellungen warnen vor dem Verlassen der Seite."
-],
+      'Aladin-Hauptrahmen lässt sich im Verschiebemodus jetzt per Dragging innerhalb des Rahmens oder am Rahmenrand verschieben.',
+      'Aladin-Infofelder werden bei Position oben/unten nicht mehr abgeschnitten und lassen sich zuverlässig ausblenden.',
+      'Mondaufgang-/Monduntergang-Hinweise enthalten die tatsächliche Uhrzeit.'
+    ],
     en: [
-    "iPad and tablet layouts are more robust against overlap.",
-    "New-entry fields automatically select placeholder defaults on first tap.",
-    "Cameras can additionally be described by resolution/megapixels; pixel size is calculated.",
-    "Telescopes/lenses can be maintained by focal length and f-number; aperture is calculated.",
-    "Reducer/Barlow factors can be used as optical accessories in setups.",
-    "Save actions are additionally available at the top of settings pages.",
-    "Moonrise and moonset hints now include the actual time.",
-    "Aladin info boxes can be shown/hidden and positioned.",
-    "The camera frame can be freely set to the current Aladin view center.",
-    "Unsaved settings warn before leaving the page."
-]
+      'The main Aladin frame can now be dragged in move mode from inside the frame or from its border.',
+      'Aladin info boxes are no longer clipped in top/bottom positions and can be hidden reliably.',
+      'Moonrise/moonset hints include the actual time.'
+    ]
   }
 });

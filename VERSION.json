@@ -1,19 +1,19 @@
 {
-  "version": "1.1.0-test.8",
-  "release": "1.1.0-test.8",
+  "version": "1.1.0-test.9",
+  "release": "1.1.0-test.9",
   "environment": "test",
   "builtAt": "2026-06-24T00:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.8: Wetter-Tabs für Meteoblue, Flugwetter und MOSMIX, konfigurierbare deutsche Flugwetterstationen und MOSMIX-/METAR-/TAF-Anzeige mit Browser-Fallbacks.",
+  "notes": "Testversion 1.1.0-test.9: Korrektur für echtes Dragging des Aladin-Hauptrahmens, Infofelder oben/unten und Uhrzeit bei Mondaufgang/-untergang außerhalb des Planungszeitraums.",
   "releaseNotes": {
     "de": [
-      "Zusätzliche Wetterquellen werden als Tabs für Meteoblue, Flugwetter und MOSMIX angezeigt.",
-      "Flugwetterstationen in Deutschland können in den Einstellungen ausgewählt werden.",
-      "METAR/TAF und MOSMIX können direkt aus der Planung geladen werden; bei Browser-Sperren werden Hinweise und Quellenlinks angezeigt."
+      "Der Aladin-Hauptrahmen kann im Verschiebemodus jetzt durch Ziehen innerhalb des Rahmens oder am Rahmenrand verschoben werden.",
+      "Aladin-Infofelder werden bei Position oben/unten nicht mehr abgeschnitten und lassen sich zuverlässig ausblenden.",
+      "Mondaufgang-/Monduntergang-Hinweise enthalten die tatsächliche Uhrzeit, soweit berechenbar."
     ],
     "en": [
-      "Additional weather sources are shown as tabs for Meteoblue, aviation weather and MOSMIX.",
-      "German aviation weather stations can be selected in settings.",
-      "METAR/TAF and MOSMIX can be loaded from the planning view; hints and source links are shown if the browser blocks access."
+      "The main Aladin frame can now be dragged in move mode from inside the frame or from its border.",
+      "Aladin info boxes are no longer clipped in top/bottom positions and can be hidden reliably.",
+      "Moonrise/moonset hints include the actual time when calculable."
     ]
   }
 }

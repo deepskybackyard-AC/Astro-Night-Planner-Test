@@ -1,29 +1,25 @@
-/* Astro Night Planner 1.1.0-test.8 – Testversion B: Wetterquellen, Flugwetter und MOSMIX */
+/* Astro Night Planner 1.1.0-test.9 – Korrektur: Aladin-Rahmen, Infofelder und Mondzeiten */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.8', release:'1.1.0-test.8', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.8'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Wetter-Zusatzquellen werden jetzt in Tabs für Meteoblue, Flugwetter und MOSMIX dargestellt.',
-    'Flugwetterstationen in Deutschland können in den Einstellungen ausgewählt werden.',
-    'METAR/TAF-Daten können stationsbezogen abgerufen werden; bei Browser-Sperren werden direkte Quellenlinks angeboten.',
-    'MOSMIX/Standortprognosen können über eine DWD-basierte Punktprognose geladen werden.',
-    'Aladin-Rahmenverschiebung, Infofelder, Mondhinweise und Neuanlage-Eingabefelder bleiben aus der vorherigen Testversion enthalten.'
+    'Aladin-Rahmenverschiebung wurde als echtes Dragging des Hauptrahmens korrigiert.',
+    'Aladin-Infofelder lassen sich unabhängig von ihrer Position zuverlässig ausblenden und werden oben/unten nicht abgeschnitten.',
+    'Mondaufgang-/Monduntergang-Hinweise zeigen die tatsächliche Uhrzeit, wenn das Ereignis außerhalb des Planungszeitraums liegt.'
   ],
   en: [
-    'Additional weather sources are now shown as tabs for Meteoblue, aviation weather and MOSMIX.',
-    'German aviation weather stations can be selected in settings.',
-    'METAR/TAF data can be requested per station; direct source links are shown if the browser blocks access.',
-    'MOSMIX/location forecasts can be loaded via a DWD-based point forecast.',
-    'Aladin frame movement, info boxes, Moon hints and new-entry field handling remain included from the previous test version.'
+    'Aladin frame movement now works as true dragging of the main frame.',
+    'Aladin info boxes can be hidden reliably in every position and are no longer clipped at the top/bottom.',
+    'Moonrise/moonset hints include the actual time when the event is outside the planning window.'
   ]
 }
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
 const app = document.getElementById('app');
@@ -885,22 +881,36 @@ function addDays(key,n){const d=new Date(`${key}T12:00:00Z`);d.setUTCDate(d.getU
 function fmtDate(key,tz){return new Intl.DateTimeFormat('de-DE',{timeZone:tz,weekday:'short',day:'2-digit',month:'2-digit'}).format(new Date(`${key}T12:00:00Z`))}
 function fmtTime(date,tz){if(!date||isNaN(date))return'–';return new Intl.DateTimeFormat('de-DE',{timeZone:tz,hour:'2-digit',minute:'2-digit'}).format(date)}
 function fmtEventTime(date,tz,emptyText){return(!date||isNaN(date))?emptyText:fmtTime(date,tz)}
+function findMoonEventNear(type,mode,night,windowRange,loc){
+  const moonFn=(date,l)=>{const c=moonCoords(date);return altitude(c.raHours,c.decDeg,date,l.latitude,l.longitude)};
+  const targetDescending=type==='set';
+  const from=mode==='before'?new Date(windowRange.start.getTime()-36*3600000):new Date(windowRange.end.getTime());
+  const to=mode==='before'?new Date(windowRange.start.getTime()):new Date(windowRange.end.getTime()+36*3600000);
+  const crossings=findCrossings(from,to,loc,0,moonFn).filter(item=>Boolean(item.descending)===targetDescending);
+  if(!crossings.length)return null;
+  return mode==='before'?crossings[crossings.length-1].time:crossings[0].time;
+}
 function moonEventDisplay(date,type,night,windowRange,loc){
   const label=type==='rise'?'Mondaufgang':'Monduntergang';
-  const before=`${label} liegt vor dem Planungszeitraum`;
-  const after=`${label} liegt nach dem Planungszeitraum`;
+  const outsideText=(time,mode)=>`${label}${time?` ${time}`:''} – liegt ${mode==='before'?'vor':'nach'} dem Planungszeitraum`;
   const none=`kein ${label.toLowerCase()} in dieser Nacht`;
   if(date&&!isNaN(date)){
     const time=fmtTime(date,loc.timezone);
-    if(date<windowRange.start)return `${label} ${time} – liegt vor dem Planungszeitraum`;
-    if(date>windowRange.end)return `${label} ${time} – liegt nach dem Planungszeitraum`;
+    if(date<windowRange.start)return outsideText(time,'before');
+    if(date>windowRange.end)return outsideText(time,'after');
     return time;
   }
   const moonStart=moonCoords(windowRange.start),moonEnd=moonCoords(windowRange.end);
   const altStart=altitude(moonStart.raHours,moonStart.decDeg,windowRange.start,loc.latitude,loc.longitude);
   const altEnd=altitude(moonEnd.raHours,moonEnd.decDeg,windowRange.end,loc.latitude,loc.longitude);
-  if(type==='rise'&&altStart>0)return before;
-  if(type==='set'&&altEnd>0)return after;
+  if(type==='rise'&&altStart>0){
+    const event=findMoonEventNear(type,'before',night,windowRange,loc);
+    return outsideText(event?fmtTime(event,loc.timezone):'', 'before');
+  }
+  if(type==='set'&&altEnd>0){
+    const event=findMoonEventNear(type,'after',night,windowRange,loc);
+    return outsideText(event?fmtTime(event,loc.timezone):'', 'after');
+  }
   return none;
 }
 function fmtDateTime(date,tz){return new Intl.DateTimeFormat('de-DE',{timeZone:tz,day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date)}
