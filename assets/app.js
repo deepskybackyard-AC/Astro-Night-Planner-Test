@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.3 – Testversion A: Korrektur Horizonteditor und Rubriken-Sichtbarkeit */
+/* Astro Night Planner 1.1.0-test.4 – Testversion A: Korrektur Horizonteditor und Standortsuche */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.3', release:'1.1.0-test.3', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.3'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.4', release:'1.1.0-test.4', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.4'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -2695,8 +2695,13 @@ async function searchLocationCandidates(){
   finally{locationSearchLoading=false;render()}
 }
 async function applyLocationSearchResult(index){
-  const result=locationSearchResults[Number(index)],location=showAddLocationDialog?(pendingLocationDraft||(pendingLocationDraft=createEmptyLocationDraft())):(draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0]);
+  const result=locationSearchResults[Number(index)];
+  const hasLocations=Array.isArray(draft.locations)&&draft.locations.length>0;
+  const location=(showAddLocationDialog||!hasLocations)
+    ? (pendingLocationDraft||(pendingLocationDraft=createEmptyLocationDraft()))
+    : (draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0]);
   if(!result||!location)return;
+  if(!hasLocations)showAddLocationDialog=true;
   let timezone=location.timezone,elevation=location.elevation||0;
   try{
     const url=new URL('https://api.open-meteo.com/v1/forecast');
@@ -2737,11 +2742,11 @@ function bindLocationDraft(){
   document.getElementById('exportNinaHorizon')?.addEventListener('click',()=>{const locNow=location(),profileNow=entry();const values=ensureHorizonProfile(locNow,profileNow?.id);downloadTextFile(`nina-horizon-${safeName(locNow.name)}-${safeName(profileNow?.name||'horizon')}.hrz`,ninaHorizonTextFromValues(values));alert(language==='en'?'Horizon has been exported.':'Horizont wurde exportiert.');});
   const canvas=document.querySelector('.settings-horizon-chart[data-editable="true"]');
   if(canvas){
-    let drawing=false,lastIndex=null,lastAltitude=null,activePointerId=null;
-    let tooltip=document.querySelector('.horizon-editor-tooltip');
-    if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';canvas.closest('.horizon-editor-wrap')?.appendChild(tooltip)}
+    const wrap=canvas.closest('.horizon-editor-wrap');
+    let drawing=false,lastIndex=null,lastAltitude=null,tooltip=document.querySelector('.horizon-editor-tooltip');
+    if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';wrap?.appendChild(tooltip)}
     const currentValues=()=>ensureHorizonProfile(location(),entry()?.id);
-    const redrawCanvas=()=>{
+    const refreshCanvas=()=>{
       const values=currentValues();
       values[72]=values[0];
       canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[index*5,Number(altitude)||0])));
@@ -2751,79 +2756,83 @@ function bindLocationDraft(){
     const pointFromClient=(clientX,clientY)=>{
       const rect=canvas.getBoundingClientRect();
       const scaleX=canvas.width/Math.max(1,rect.width),scaleY=canvas.height/Math.max(1,rect.height);
-      const x=(clientX-rect.left)*scaleX,y=(clientY-rect.top)*scaleY;
-      const margin={left:62,right:22,top:22,bottom:68},plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;
-      const azimuth=clamp((x-margin.left)/Math.max(1,plotW)*360,0,360);
-      return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude:clamp(90-(y-margin.top)/Math.max(1,plotH)*90,0,90),clientX,clientY};
+      const px=(clientX-rect.left)*scaleX,py=(clientY-rect.top)*scaleY;
+      const margin={left:62,right:22,top:22,bottom:68};
+      const plotW=canvas.width-margin.left-margin.right,plotH=canvas.height-margin.top-margin.bottom;
+      const azimuth=clamp((px-margin.left)/Math.max(1,plotW)*360,0,360);
+      const altitude=clamp(90-(py-margin.top)/Math.max(1,plotH)*90,0,90);
+      return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude,clientX,clientY};
     };
-    const pointFromEvent=event=>pointFromClient(event.clientX,event.clientY);
+    const eventPoint=event=>{
+      const source=event.touches&&event.touches[0]?event.touches[0]:event.changedTouches&&event.changedTouches[0]?event.changedTouches[0]:event;
+      return pointFromClient(source.clientX,source.clientY);
+    };
     const showTooltip=point=>{
       if(!tooltip)return;
-      const wrap=canvas.closest('.horizon-editor-wrap')?.getBoundingClientRect();
+      const rect=wrap?.getBoundingClientRect();
       tooltip.textContent=horizonTooltipText(point);
       tooltip.style.display='block';
-      tooltip.style.left=`${Math.max(8,point.clientX-(wrap?.left||0)+14)}px`;
-      tooltip.style.top=`${Math.max(8,point.clientY-(wrap?.top||0)-34)}px`;
+      tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+14)}px`;
+      tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)-34)}px`;
     };
     const hideTooltip=()=>{if(tooltip&&!drawing)tooltip.style.display='none'};
-    const setDirtyAfterEdit=()=>{syncCardinalHorizon(location(),entry()?.id);setSectionDirty('locations');const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;};
     const applyPoint=point=>{
       const values=currentValues();
-      const altitude=Number(point.altitude)||0;
-      if(lastIndex===null){values[point.index]=altitude;}
-      else{
+      const altitude=clamp(Number(point.altitude)||0,0,90);
+      if(lastIndex===null){
+        values[point.index]=altitude;
+      }else{
         const from=Math.min(lastIndex,point.index),to=Math.max(lastIndex,point.index),span=Math.max(1,to-from);
         for(let index=from;index<=to;index++){
           const fraction=(index-from)/span;
-          const start=lastIndex<=point.index?lastAltitude:altitude,end=lastIndex<=point.index?altitude:lastAltitude;
+          const start=lastIndex<=point.index?lastAltitude:altitude;
+          const end=lastIndex<=point.index?altitude:lastAltitude;
           values[index]=start+(end-start)*fraction;
         }
       }
-      if(point.index===0||point.index===72){values[0]=altitude;values[72]=altitude;}
+      if(point.index===0||point.index===72){values[0]=altitude;values[72]=altitude}
       lastIndex=point.index;lastAltitude=altitude;
-      setDirtyAfterEdit();redrawCanvas();
+      syncCardinalHorizon(location(),entry()?.id);
+      setSectionDirty('locations');
+      const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;
+      refreshCanvas();
     };
-    const beginDrawing=event=>{
-      if(event.pointerType==='mouse'&&event.button!==0)return;
-      event.preventDefault();
-      drawing=true;activePointerId=event.pointerId;
-      if(typeof event.pointerId==='number')canvas.setPointerCapture?.(event.pointerId);
-      horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);
-      lastIndex=null;lastAltitude=null;
-      const point=pointFromEvent(event);showTooltip(point);applyPoint(point);
+    const begin=event=>{
+      if(event.type==='mousedown'&&event.button!==0)return;
+      event.preventDefault?.();event.stopPropagation?.();
+      if(!drawing){
+        horizonUndoStack.push(currentValues().slice());
+        horizonUndoStack=horizonUndoStack.slice(-20);
+      }
+      drawing=true;lastIndex=null;lastAltitude=null;
+      const point=eventPoint(event);showTooltip(point);applyPoint(point);
     };
-    const moveDrawing=event=>{
-      const point=pointFromEvent(event);showTooltip(point);
-      if(!drawing||activePointerId!==null&&event.pointerId!==activePointerId)return;
-      event.preventDefault();applyPoint(point);
+    const move=event=>{
+      const point=eventPoint(event);showTooltip(point);
+      if(!drawing)return;
+      event.preventDefault?.();event.stopPropagation?.();
+      applyPoint(point);
     };
-    const stopDrawing=event=>{
-      if(!drawing||activePointerId!==null&&event.pointerId!==activePointerId)return;
-      drawing=false;activePointerId=null;lastIndex=null;lastAltitude=null;
-      if(typeof event.pointerId==='number')canvas.releasePointerCapture?.(event.pointerId);
-      hideTooltip();redrawCanvas();
+    const endDrawing=event=>{
+      if(!drawing)return;
+      event?.preventDefault?.();event?.stopPropagation?.();
+      drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();
     };
     canvas.style.touchAction='none';
-    canvas.addEventListener('pointerdown',beginDrawing);
-    canvas.addEventListener('pointermove',moveDrawing);
-    canvas.addEventListener('pointerup',stopDrawing);
-    canvas.addEventListener('pointercancel',stopDrawing);
-    canvas.addEventListener('lostpointercapture',stopDrawing);
-    canvas.addEventListener('pointerleave',event=>{if(!drawing)hideTooltip();});
-    // Zusätzlicher Fallback: Einige Browser-/Gerätekombinationen liefern Pointer-Events im Canvas nicht zuverlässig.
-    const beginMouse=event=>{if(drawing||event.button!==0)return;beginDrawing({clientX:event.clientX,clientY:event.clientY,pointerId:'mouse',pointerType:'mouse',button:0,preventDefault:()=>event.preventDefault(),stopPropagation:()=>event.stopPropagation?.()});};
-    const moveMouse=event=>{if(!drawing||activePointerId!=='mouse'){showTooltip(pointFromEvent(event));return;}moveDrawing({clientX:event.clientX,clientY:event.clientY,pointerId:'mouse',preventDefault:()=>event.preventDefault()});};
-    const stopMouse=event=>{if(activePointerId==='mouse')stopDrawing({pointerId:'mouse'});};
-    canvas.addEventListener('mousedown',beginMouse);
-    window.addEventListener('mousemove',moveMouse);
-    window.addEventListener('mouseup',stopMouse);
-    const firstTouch=event=>event.touches&&event.touches[0]?event.touches[0]:event.changedTouches&&event.changedTouches[0]?event.changedTouches[0]:null;
-    canvas.addEventListener('touchstart',event=>{if(drawing)return;const touch=firstTouch(event);if(!touch)return;beginDrawing({clientX:touch.clientX,clientY:touch.clientY,pointerId:'touch',pointerType:'touch',button:0,preventDefault:()=>event.preventDefault()});},{passive:false});
-    canvas.addEventListener('touchmove',event=>{const touch=firstTouch(event);if(!touch)return;if(activePointerId==='touch')moveDrawing({clientX:touch.clientX,clientY:touch.clientY,pointerId:'touch',preventDefault:()=>event.preventDefault()});},{passive:false});
-    canvas.addEventListener('touchend',()=>{if(activePointerId==='touch')stopDrawing({pointerId:'touch'});},{passive:false});
-    canvas.addEventListener('touchcancel',()=>{if(activePointerId==='touch')stopDrawing({pointerId:'touch'});},{passive:false});
-    canvas.addEventListener('mousemove',event=>{if(!drawing)showTooltip(pointFromEvent(event));});
-    redrawCanvas();
+    canvas.addEventListener('mousedown',begin);
+    window.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',endDrawing);
+    canvas.addEventListener('mousemove',event=>{if(!drawing)showTooltip(eventPoint(event));});
+    canvas.addEventListener('mouseleave',()=>{if(!drawing)hideTooltip()});
+    canvas.addEventListener('click',event=>{if(event.detail===1){begin(event);endDrawing(event)}});
+    canvas.addEventListener('touchstart',begin,{passive:false});
+    window.addEventListener('touchmove',move,{passive:false});
+    window.addEventListener('touchend',endDrawing,{passive:false});
+    window.addEventListener('touchcancel',endDrawing,{passive:false});
+    canvas.addEventListener('pointerdown',event=>{if(event.pointerType&&event.pointerType!=='mouse'){begin(event)}});
+    window.addEventListener('pointermove',event=>{if(drawing&&event.pointerType&&event.pointerType!=='mouse')move(event)});
+    window.addEventListener('pointerup',event=>{if(event.pointerType&&event.pointerType!=='mouse')endDrawing(event)});
+    refreshCanvas();
   }
   document.getElementById('addObstacle')?.addEventListener('click',()=>{entry().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});
   document.querySelectorAll('[data-obstacle]').forEach(row=>row.querySelectorAll('[data-obstacle-field]').forEach(element=>{const update=()=>{const obstacle=entry().obstacles.find(item=>item.id===row.dataset.obstacle);obstacle[element.dataset.obstacleField]=element.type==='number'?Number(element.value):element.value;setSectionDirty('locations');syncSettingsHorizonCanvas()};element.oninput=update;element.onchange=update}));
