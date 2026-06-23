@@ -596,3 +596,6 @@ body{padding-bottom:0}
 .horizon-editor-tooltip{position:absolute;z-index:20;display:none;pointer-events:none;padding:5px 8px;border-radius:8px;background:rgba(4,10,18,.92);border:1px solid rgba(255,255,255,.22);color:#f6f4e8;font-size:12px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 @media (max-width:700px){.calendar-date-field{min-width:100%}.horizon-editor-tooltip{font-size:13px}}
 .inline-help-link{display:inline;border:0;background:transparent;color:#9dccff;text-decoration:underline;font-weight:800;padding:0;cursor:pointer;box-shadow:none}.inline-help-link:hover{color:#fff}
+
+.horizon-input-layer{position:absolute;z-index:15;background:transparent;outline:0;touch-action:none;cursor:crosshair}
+.horizon-input-layer:focus{box-shadow:inset 0 0 0 2px rgba(121,184,255,.35);border-radius:12px}

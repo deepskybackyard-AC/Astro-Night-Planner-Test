@@ -1,5 +1,3 @@
-# Astro Night Planner - Testversion 1.1.0-test.5
+# Astro Night Planner – Testversion 1.1.0-test.6
 
-Diese Testversion korrigiert den interaktiven Horizonteditor und die Übernahme von Standort-Suchergebnissen.
-
-Enthalten bleiben die Funktionen aus 1.1.0-test.3: Kalenderdatum, Rubriken-Sichtbarkeit, N.I.N.A.-Horizontimport/-export, N.I.N.A.-Export der aktuellen Aladin-Rahmung sowie die getrennte Kataloglogik für LDN/LBN.
+Testpaket für das Test-Repository. Enthält die korrigierte Horizontbearbeitung mit separater Eingabeebene, N.I.N.A.-Import/-Export, Kalenderplanung und Anzeigeoptionen.

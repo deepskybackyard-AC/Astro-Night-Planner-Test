@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.5 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
+/* Astro Night Planner 1.1.0-test.6 – Testversion A: Updateprozess, Horizonteditor, N.I.N.A. und Wiederherstellung */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.5', release:'1.1.0-test.5', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.5'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.6', release:'1.1.0-test.6', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.6'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -868,6 +868,7 @@ function visibleDisplayColumns(display){const order=Array.isArray(display?.colum
 function currentWeatherView(){return profile.planning.temporaryWeatherView||profile.central.weatherModels?.defaultView||'consensus'}
 function weatherViewLabel(view=currentWeatherView()){return optionLabel(WEATHER_VIEW_OPTIONS.find(([key])=>key===view)?.[1]||'Modellkonsens')}
 function cardinal(azimuth){const names=['N','NO','O','SO','S','SW','W','NW'];return names[Math.round((((azimuth%360)+360)%360)/45)%8]}
+function horizonTooltipText(point){const az=clamp(Number(point?.azimuth)||0,0,360),alt=clamp(Number(point?.altitude)||0,0,90),azLabel=Math.round(az),altLabel=Math.round(alt),dir=cardinal(az);return language==='en'?`Azimuth ${azLabel}° ${dir} · Altitude ${altLabel}°`:`Azimut ${azLabel}° ${dir} · Höhe ${altLabel}°`}
 function weightedValue(entries,key){
   const available=entries.filter(entry=>Number.isFinite(entry.row[key]));
   if(!available.length)return NaN;
@@ -2846,13 +2847,23 @@ function bindLocationDraft(){
     const wrap=canvas.closest('.horizon-editor-wrap');
     let drawing=false,lastIndex=null,lastAltitude=null,tooltip=document.querySelector('.horizon-editor-tooltip');
     if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';wrap?.appendChild(tooltip)}
+    let inputLayer=wrap?.querySelector('.horizon-input-layer');
+    if(wrap&&!inputLayer){inputLayer=document.createElement('div');inputLayer.className='horizon-input-layer';inputLayer.setAttribute('aria-label',language==='en'?'Draw horizon':'Horizont zeichnen');canvas.insertAdjacentElement('afterend',inputLayer)}
     const currentValues=()=>ensureHorizonProfile(location(),entry()?.id);
+    const positionInputLayer=()=>{
+      if(!wrap||!inputLayer)return;
+      inputLayer.style.left=`${canvas.offsetLeft}px`;
+      inputLayer.style.top=`${canvas.offsetTop}px`;
+      inputLayer.style.width=`${canvas.offsetWidth}px`;
+      inputLayer.style.height=`${canvas.offsetHeight}px`;
+    };
     const refreshCanvas=()=>{
       const values=currentValues();
       values[72]=values[0];
       canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[index*5,Number(altitude)||0])));
       canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry()?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));
       drawHorizonChart(canvas,false);
+      positionInputLayer();
     };
     const pointFromClient=(clientX,clientY)=>{
       const rect=canvas.getBoundingClientRect();
@@ -2866,7 +2877,7 @@ function bindLocationDraft(){
       return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude,clientX,clientY};
     };
     const eventPoint=event=>{const source=event.touches?.[0]||event.changedTouches?.[0]||event;return pointFromClient(source.clientX,source.clientY)};
-    const showTooltip=point=>{if(!tooltip)return;const rect=wrap?.getBoundingClientRect();tooltip.textContent=horizonTooltipText(point);tooltip.style.display='block';tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+14)}px`;tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)-34)}px`;};
+    const showTooltip=point=>{if(!tooltip)return;const rect=wrap?.getBoundingClientRect();tooltip.textContent=horizonTooltipText(point);tooltip.style.display='block';tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+(wrap?.scrollLeft||0)+14)}px`;tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)+(wrap?.scrollTop||0)-34)}px`;};
     const hideTooltip=()=>{if(tooltip&&!drawing)tooltip.style.display='none'};
     const applyPoint=point=>{
       const values=currentValues();
@@ -2887,23 +2898,33 @@ function bindLocationDraft(){
       const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;
       refreshCanvas();
     };
-    const begin=event=>{if(event.type==='mousedown'&&event.button!==0)return;event.preventDefault?.();event.stopPropagation?.();if(!drawing){horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);}drawing=true;lastIndex=null;lastAltitude=null;const point=eventPoint(event);showTooltip(point);applyPoint(point);};
-    const move=event=>{const point=eventPoint(event);showTooltip(point);if(!drawing)return;event.preventDefault?.();event.stopPropagation?.();applyPoint(point);};
+    const begin=event=>{if(event.type==='mousedown'&&event.button!==0)return;if(event.type==='pointerdown'&&event.button!==undefined&&event.button!==0)return;event.preventDefault?.();event.stopPropagation?.();if(!drawing){horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);}drawing=true;lastIndex=null;lastAltitude=null;const point=eventPoint(event);showTooltip(point);applyPoint(point);};
+    const hover=event=>{if(drawing)return;const point=eventPoint(event);showTooltip(point);};
+    const move=event=>{if(!drawing)return;event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);showTooltip(point);applyPoint(point);};
     const endDrawing=event=>{if(!drawing)return;event?.preventDefault?.();event?.stopPropagation?.();drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();};
-    const bindTarget=canvas;
-    canvas.style.touchAction='none';canvas.style.cursor='crosshair';canvas.tabIndex=0;
-    bindTarget.addEventListener('pointerdown',event=>{if(event.button!==undefined&&event.button!==0)return;try{bindTarget.setPointerCapture?.(event.pointerId)}catch(e){}begin(event);},{passive:false});
-    bindTarget.addEventListener('pointermove',event=>{move(event);},{passive:false});
-    bindTarget.addEventListener('pointerup',endDrawing,{passive:false});
-    bindTarget.addEventListener('pointercancel',endDrawing,{passive:false});
-    bindTarget.addEventListener('mousedown',begin,{passive:false});
-    window.addEventListener('mousemove',move,{passive:false});
-    window.addEventListener('mouseup',endDrawing,{passive:false});
-    bindTarget.addEventListener('touchstart',begin,{passive:false});
-    window.addEventListener('touchmove',move,{passive:false});
-    window.addEventListener('touchend',endDrawing,{passive:false});
-    window.addEventListener('touchcancel',endDrawing,{passive:false});
+    const bindTarget=inputLayer||canvas;
+    canvas.style.touchAction='none';canvas.style.cursor='crosshair';
+    if(inputLayer){inputLayer.style.touchAction='none';inputLayer.style.cursor='crosshair';inputLayer.tabIndex=0}
+    if(window.PointerEvent){
+      bindTarget.addEventListener('pointerdown',begin,{passive:false});
+      bindTarget.addEventListener('pointermove',hover,{passive:false});
+      window.addEventListener('pointermove',move,{passive:false});
+      window.addEventListener('pointerup',endDrawing,{passive:false});
+      window.addEventListener('pointercancel',endDrawing,{passive:false});
+    }else{
+      bindTarget.addEventListener('mousedown',begin,{passive:false});
+      bindTarget.addEventListener('mousemove',hover,{passive:false});
+      window.addEventListener('mousemove',move,{passive:false});
+      window.addEventListener('mouseup',endDrawing,{passive:false});
+      bindTarget.addEventListener('touchstart',begin,{passive:false});
+      bindTarget.addEventListener('touchmove',hover,{passive:false});
+      window.addEventListener('touchmove',move,{passive:false});
+      window.addEventListener('touchend',endDrawing,{passive:false});
+      window.addEventListener('touchcancel',endDrawing,{passive:false});
+    }
     bindTarget.addEventListener('mouseleave',()=>{if(!drawing)hideTooltip()});
+    window.addEventListener('resize',positionInputLayer,{passive:true});
+    wrap?.addEventListener('scroll',positionInputLayer,{passive:true});
     refreshCanvas();
   }
   document.getElementById('addObstacle')?.addEventListener('click',()=>{entry().obstacles.push({id:uid('obs'),name:'Baum/Gebäude',azimuth:180,altitude:20});setSectionDirty('locations');render()});

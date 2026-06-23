@@ -3,25 +3,23 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.5',
-  release: '1.1.0-test.5',
+  appVersion: '1.1.0-test.6',
+  release: '1.1.0-test.6',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.5',
+  documentTitle: 'Astro Night Planner 1.1.0-test.6',
   releaseNotes: {
     de: [
-      'Der Update-Button aktualisiert App-Dateien und Cache robuster.',
-      'Der Horizonteditor wurde erneut überarbeitet und verwendet direkte Maus-, Stift- und Touch-Eingaben.',
-      'N.I.N.A.-Horizontimport und -export öffnen jetzt Datei-Dialog bzw. Download.',
-      'Beim Erststart kann direkt eine vorhandene Gesamtsicherung wiederhergestellt werden.',
-      'Die Hilfe enthält ein FAQ-Kapitel zu Browserdaten und dauerhaftem lokalen Speicher.'
+      'Der Horizonteditor verwendet jetzt eine separate transparente Eingabeebene über der Grafik.',
+      'Der Tooltip für Azimut und Höhe ist korrigiert und blockiert das Zeichnen nicht mehr.',
+      'Maus-, Stift- und Touch-Eingaben werden robuster verarbeitet.',
+      'N.I.N.A.-Import und -Export bleiben unverändert verfügbar.'
     ],
     en: [
-      'The update button refreshes app files and cache more reliably.',
-      'The horizon editor has been revised again and uses direct mouse, pen and touch input.',
-      'N.I.N.A. horizon import and export now open the file dialog or download.',
-      'The first-run screen can directly restore an existing full backup.',
-      'The help contains an FAQ section about browser data and persistent local storage.'
+      'The horizon editor now uses a separate transparent input layer above the chart.',
+      'The azimuth and altitude tooltip has been fixed and no longer blocks drawing.',
+      'Mouse, pen and touch input is handled more robustly.',
+      'N.I.N.A. import and export remain available.'
     ]
   }
 });
