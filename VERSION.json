@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.12",
-  "release": "1.1.0-test.12",
+  "version": "1.1.0-test.13",
+  "release": "1.1.0-test.13",
   "environment": "test",
-  "builtAt": "2026-06-24T22:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.12: Die Flugwetter-Proxy-URL wird nun bereits beim Tippen als Änderung erkannt und beim Speichern zusätzlich direkt aus dem Eingabefeld übernommen.",
+  "builtAt": "2026-06-24T22:25:00+02:00",
+  "notes": "Testversion 1.1.0-test.13: Korrigiert die persistente Speicherung der Flugwetter-Proxy-URL im tatsächlich sichtbaren Wolkenkarten-/Flugwetter-Abschnitt.",
   "releaseNotes": {
     "de": [
-      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter wird beim Tippen sofort als ungespeicherte Änderung erkannt.",
-      "Beim Speichern der Wettermodell-Einstellungen wird die Proxy-URL zusätzlich direkt aus dem Eingabefeld übernommen, auch wenn das Feld noch nicht verlassen wurde.",
-      "Nach dem Speichern werden veraltete Flugwetter-Rohdaten verworfen, damit der nächste METAR/TAF-Abruf die neue Proxy-Adresse verwendet.",
-      "Der HTML-Titel wurde auf die aktuelle Testversion korrigiert."
+      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter gehört in der Oberfläche zum Abschnitt Wolkenkarte/Flugwetter und wird nun auch dort als Änderung markiert.",
+      "Beim Speichern von „Wolkenkarte speichern“ werden Proxy-URL, automatische nächste Station und Stationsauswahl dauerhaft in IndexedDB übernommen.",
+      "Die Speicherung funktioniert jetzt auch dann, wenn das Eingabefeld beim Klick auf Speichern noch fokussiert ist.",
+      "Veraltete METAR/TAF-Daten werden nach einer Änderung verworfen, damit der nächste Abruf die neue Proxy-Adresse nutzt."
     ],
     "en": [
-      "The Cloudflare Worker/proxy URL for aviation weather is now marked dirty while typing.",
-      "When saving weather-model settings, the proxy URL is additionally read directly from the input field, even if the field has not lost focus yet.",
-      "After saving, stale aviation-weather data is cleared so the next METAR/TAF fetch uses the new proxy address.",
-      "The HTML title has been updated to the current test version."
+      "The Cloudflare Worker/proxy URL for aviation weather belongs to the visible cloud-map/aviation-weather section and is now marked dirty there.",
+      "Saving via ‘Save cloud map’ now persists the proxy URL, automatic nearest station and selected stations to IndexedDB.",
+      "Saving also works when the input field still has focus while the save button is clicked.",
+      "Stale METAR/TAF data is cleared after a change so the next fetch uses the new proxy address."
     ]
   }
 }

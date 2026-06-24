@@ -1,4 +1,4 @@
-# Astro Night Planner 1.1.0-test.7
+# Astro Night Planner 1.1.0-test.13
 
 Testversion mit erweiterten Ausrüstungsdaten, optischen Setup-Faktoren, verbesserter Aladin-Rahmung, Tablet-Layoutverbesserungen und Warnung bei ungespeicherten Einstellungen.
 
@@ -16,3 +16,8 @@ Diese Testversion ergänzt den vorbereiteten Cloudflare-Worker-Proxy für integr
 ## 1.1.0-test.12
 
 Korrektur: Die Flugwetter-Proxy-URL wird gespeichert und nach dem Speichern im Flugwetter-Tab verwendet.
+
+
+## 1.1.0-test.13
+
+Korrektur: Die Flugwetter-Proxy-URL wurde im sichtbaren Abschnitt der Wolkenkarten-/Flugwetter-Einstellungen angezeigt, aber bisher als Wettermodell-Änderung markiert. Dadurch wurde beim naheliegenden Klick auf „Wolkenkarte speichern“ nur die Wolkenkarte gespeichert, nicht aber die Proxy-URL. In dieser Version speichert „Wolkenkarte speichern“ die Proxy-URL, die automatische nächste Station und die Stationsauswahl dauerhaft mit.

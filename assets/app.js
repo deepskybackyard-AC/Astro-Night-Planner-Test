@@ -1968,7 +1968,7 @@ function resetDraftSection(section){
     draft.central.windUnit=base.central.windUnit;draft.central.activeWindProfile=base.central.activeWindProfile;draft.central.windProfiles=deepClone(base.central.windProfiles);draft.central.dew=deepClone(base.central.dew);draft.central.jet=deepClone(base.central.jet);
   }
   if(section==='weatherModels')draft.central.weatherModels=deepClone(base.central.weatherModels);
-  if(section==='cloudMap')draft.central.cloudMap=deepClone(base.central.cloudMap);
+  if(section==='cloudMap'){draft.central.cloudMap=deepClone(base.central.cloudMap);draft.central.flightWeather=deepClone(base.central.flightWeather);}
   if(section==='weights')draft.central.weights=deepClone(base.central.weights);
   if(section==='display'){
     draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);draft.central.visibleSections=deepClone(base.central.visibleSections);
@@ -2952,9 +2952,9 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
-  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'weatherModels','input');
-  set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'weatherModels');
-  document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('weatherModels')});
+  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'cloudMap','input');
+  set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'cloudMap');
+  document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('cloudMap')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
     setSectionDirty('weights');
@@ -3205,7 +3205,12 @@ async function saveDraftSection(section){
     profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
   }
   if(section==='cloudMap'){
-    profile.central.cloudMap={...deepClone(draft.central.cloudMap)};profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
+    syncFlightWeatherSettingsFromInputs(draft);
+    profile.central.cloudMap={...deepClone(draft.central.cloudMap)};
+    profile.central.flightWeather=deepClone(draft.central.flightWeather||{});
+    flightWeatherData=null;
+    flightWeatherError='';
+    profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
   }
   if(section==='weights'){
     const total=Object.values(draft.central.weights).reduce((sum,value)=>sum+Number(value),0);
