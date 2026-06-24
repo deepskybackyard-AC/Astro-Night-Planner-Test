@@ -3186,7 +3186,10 @@ async function saveDraftSection(section){
   if(section==='weatherModels'){
     const total=Object.values(draft.central.weatherModels.weights).reduce((sum,value)=>sum+Number(value),0);
     if(total!==100){alert('Die Gewichtung der Wettermodelle muss exakt 100 % ergeben.');return}
-    profile.central.weatherModels=deepClone(draft.central.weatherModels);profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
+    profile.central.weatherModels=deepClone(draft.central.weatherModels);
+    profile.central.flightWeather=deepClone(draft.central.flightWeather||{});
+    profile.central.mosmix=deepClone(draft.central.mosmix||{});
+    profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
   }
   if(section==='cloudMap'){
     profile.central.cloudMap={...deepClone(draft.central.cloudMap)};profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');

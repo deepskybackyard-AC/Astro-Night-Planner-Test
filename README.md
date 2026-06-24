@@ -11,3 +11,8 @@ Diese Testversion ergänzt die Wetter-Tabs Meteoblue, Flugwetter und MOSMIX. Flu
 ## Test 1.1.0-test.10
 
 Diese Testversion ergänzt den vorbereiteten Cloudflare-Worker-Proxy für integrierte METAR-/TAF-Flugwetterdaten. Der Worker liegt im Ordner `cloudflare-worker/`. In den Einstellungen kann die Proxy-URL für die Flugwetterdaten gesetzt werden.
+
+
+## 1.1.0-test.11
+
+Korrektur: Die Flugwetter-Proxy-URL wird gespeichert und nach dem Speichern im Flugwetter-Tab verwendet.

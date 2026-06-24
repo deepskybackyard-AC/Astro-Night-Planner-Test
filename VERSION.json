@@ -1,19 +1,19 @@
 {
-  "version": "1.1.0-test.10",
-  "release": "1.1.0-test.10",
+  "version": "1.1.0-test.11",
+  "release": "1.1.0-test.11",
   "environment": "test",
   "builtAt": "2026-06-24T00:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.10: Cloudflare-Worker-Proxy für integrierte METAR/TAF-Flugwetterdaten vorbereitet.",
+  "notes": "Testversion 1.1.0-test.11: Die Flugwetter-Proxy-URL wird korrekt gespeichert und nach dem Speichern für den METAR/TAF-Abruf verwendet.",
   "releaseNotes": {
     "de": [
-      "Flugwetterdaten können über einen Cloudflare-Worker-Proxy direkt in der App geladen werden.",
-      "Eine Worker-Vorlage für METAR/TAF liegt im Ordner cloudflare-worker bei.",
-      "Der Flugwetter-Tab zeigt Proxy-Status, Stationskarten, Kurzinterpretation und Fallback-Links."
+      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter wird jetzt korrekt gespeichert.",
+      "Der Flugwetter-Tab verwendet nach dem Speichern die eingetragene workers.dev-Adresse.",
+      "METAR/TAF-Stationen, Proxy-Status und Fallback-Links bleiben erhalten."
     ],
     "en": [
-      "Aviation weather can be loaded through a Cloudflare Worker proxy directly in the app.",
-      "A Worker template for METAR/TAF is included in the cloudflare-worker folder.",
-      "The aviation-weather tab shows proxy status, station cards, short interpretation and fallback links."
+      "The Cloudflare Worker/proxy URL for aviation weather is now saved correctly.",
+      "After saving, the aviation-weather tab uses the configured workers.dev address.",
+      "METAR/TAF stations, proxy status and fallback links are preserved."
     ]
   }
 }
