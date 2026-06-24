@@ -619,3 +619,10 @@ body{padding-bottom:0}
 @media (max-width: 780px){.grid.two,.grid.three,.grid.four,.framing-header-grid,.extended-equipment-row{grid-template-columns:1fr}.settings-tabs{overflow-x:auto;flex-wrap:nowrap}.app-header-inner{flex-wrap:wrap}.profile-bar{flex-wrap:wrap}.framing-controls{flex-wrap:wrap}}
 
 .framing-view .framing-info.hidden{display:none!important}
+
+/* Test 15: direkter Hilfe-Button in der Kopfzeile */
+.header-help-button{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(121,184,255,.28);border-radius:14px;background:rgba(7,17,31,.62);color:#dcecff;text-decoration:none;font-size:1.35rem;font-weight:900;line-height:1;box-shadow:0 8px 28px rgba(0,0,0,.24)}
+.header-help-button:hover{border-color:var(--accent);background:rgba(121,184,255,.12);transform:translateY(-1px)}
+.flight-taf-summary{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:rgba(7,19,33,.62);line-height:1.45}
+.flight-weather-actions button{max-width:420px}
+@media(max-width:620px){.header-help-button{order:3;width:48px;height:42px}.header-actions select{order:4}.header-actions #installButton{order:5}}

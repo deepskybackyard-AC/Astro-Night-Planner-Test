@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.9 – Korrektur: Aladin-Rahmen, Infofelder und Mondzeiten */
+/* Astro Night Planner 1.1.0-test.15 – Flugwetter-Proxy fest hinterlegt und Hilfe direkter erreichbar */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -22,6 +22,7 @@ const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
 const DB_VERSION = 7;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
+const FLIGHT_WEATHER_PROXY_BASE = 'https://astro-night-weather-proxy.deepskybackyard.workers.dev';
 const app = document.getElementById('app');
 const importInput = document.getElementById('fileImport');
 const LANGUAGE_STORAGE_KEY = 'astroNightPlanner.language.v1';
@@ -38,11 +39,11 @@ const docLink = (kind='html') => `./docs/ASTRO_NIGHT_PLANNER_HANDBUCH_${language
 const UI_TEXT = {
   de: {
     updateAvailable:'Eine neue App-Version ist verfügbar.', updateNow:'Jetzt aktualisieren', headerEyebrow:'✦ Astrofotografie-Planung', version:'Version', profile:'lokales Profil', install:'App installieren', loading:'Planner wird vorbereitet …',
-    footer:{impressum:'Impressum',datenschutz:'Datenschutz',nutzung:'Nutzungshinweise',quellen:'Datenquellen & Lizenzen',hilfe:'Hilfe',version:'Version'}, close:'Schließen', mainPlan:'Planung', mainSettings:'Einstellungen', settingsArea:'Einstellungsbereiche', profileSelect:'Aktives Benutzerprofil', helpBrowser:'Handbuch im Browser', helpPdf:'Handbuch als PDF', helpTitle:'Ausführliche browserbasierte Hilfe', helpSub:'Bedienung, Daten und Funktionen der Anwendung', helpNote:'Die Links öffnen die deutschsprachige Hilfe. Über 🌐 DE | EN wird zwischen deutscher und englischer Dokumentation gewechselt.'
+    footer:{impressum:'Impressum',datenschutz:'Datenschutz',nutzung:'Nutzungshinweise',quellen:'Datenquellen & Lizenzen',hilfe:'Hilfe',version:'Version'}, close:'Schließen', mainPlan:'Planung', mainSettings:'Einstellungen', settingsArea:'Einstellungsbereiche', profileSelect:'Aktives Benutzerprofil', helpBrowser:'Handbuch im Browser', helpPdf:'Handbuch als PDF', helpTitle:'Ausführliche browserbasierte Hilfe', helpSub:'Bedienung, Daten und Funktionen der Anwendung', helpNote:'Die Links öffnen die deutschsprachige Hilfe. Über 🌐 DE | EN wird zwischen deutscher und englischer Dokumentation gewechselt.', headerHelp:'Hilfe öffnen'
   },
   en: {
     updateAvailable:'A new app version is available.', updateNow:'Update now', headerEyebrow:'✦ Astrophotography planning', version:'Version', profile:'local profile', install:'Install app', loading:'Preparing planner …',
-    footer:{impressum:'Legal notice',datenschutz:'Privacy',nutzung:'Usage notes',quellen:'Data sources & licenses',hilfe:'Help',version:'Version'}, close:'Close', mainPlan:'Planning', mainSettings:'Settings', settingsArea:'Settings areas', profileSelect:'Active user profile', helpBrowser:'Open help in browser', helpPdf:'Open PDF manual', helpTitle:'Detailed browser-based help', helpSub:'Workflow, data and app functions', helpNote:'These links open the English help. Use 🌐 DE | EN to switch between German and English documentation.'
+    footer:{impressum:'Legal notice',datenschutz:'Privacy',nutzung:'Usage notes',quellen:'Data sources & licenses',hilfe:'Help',version:'Version'}, close:'Close', mainPlan:'Planning', mainSettings:'Settings', settingsArea:'Settings areas', profileSelect:'Active user profile', helpBrowser:'Open help in browser', helpPdf:'Open PDF manual', helpTitle:'Detailed browser-based help', helpSub:'Workflow, data and app functions', helpNote:'These links open the English help. Use 🌐 DE | EN to switch between German and English documentation.', headerHelp:'Open help'
   }
 };
 const EN_EXACT = {
@@ -72,6 +73,33 @@ Object.assign(EN_EXACT,{
   'Wikipedia-Symbol':'Wikipedia icon','Schließen':'Close','Gespeicherten Umriss löschen':'Delete saved outline','Gespeicherter Umriss gelöscht':'Saved outline deleted','Kein gespeicherter Umriss vorhanden':'No saved outline available','Umriss löschen':'Delete outline','Aufklappen':'Expand','Zuklappen':'Collapse',
   'Automatische Aktualisierung nach 1,5 Sekunden; Enter sucht sofort.':'Automatic update after 1.5 seconds; Enter searches immediately.'
 });
+Object.assign(EN_EXACT,{
+  'Flugwetterstationen Deutschland':'Aviation weather stations Germany',
+  'Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.':'Choose the major airports shown in the aviation weather tab. The nearest station can be added automatically.',
+  'Nächstgelegene Station automatisch anzeigen':'Automatically show nearest station',
+  'METAR/TAF-Daten aktualisieren':'Refresh METAR/TAF data',
+  'METAR/TAF werden geladen …':'Loading METAR/TAF ...',
+  'Stationen':'Stations',
+  'Quelle':'Source',
+  'App-Proxy':'App proxy',
+  'noch nicht geladen':'not loaded yet',
+  'METAR noch nicht geladen.':'METAR not loaded yet.',
+  'TAF noch nicht geladen.':'TAF not loaded yet.',
+  'Keine Flugwetterstation ausgewählt.':'No aviation weather station selected.',
+  'Flugwetterdaten konnten derzeit nicht geladen werden.':'Aviation weather data could not be loaded at the moment.',
+  'Flugwetter / Stationsabgleich':'Aviation weather / station check',
+  'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.':'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check and are not automatically included in the score.',
+  'Die Daten werden über den festen App-Proxy geladen und unten als verständliche Stationskarten angezeigt. Externe AWC-Fachkarten werden nicht als Hauptfunktion geöffnet, weil sie für Deutschland nur eingeschränkt hilfreich sind.':'The data is loaded through the fixed app proxy and shown below as readable station cards. External AWC expert maps are not opened as a main function because they are of limited use for Germany.',
+  'Der feste App-Proxy ist intern hinterlegt. In den Einstellungen muss keine Proxy-Adresse eingetragen werden.':'The fixed app proxy is stored internally. No proxy address needs to be entered in settings.',
+  'TAF-Kurzprognose':'TAF short forecast',
+  'Keine auffälligen Einschränkungen aus METAR erkennbar':'No notable METAR restrictions apparent',
+  'Keine auffälligen Einschränkungen aus TAF erkennbar':'No notable TAF restrictions apparent',
+  'TAF weist auf mögliche Einschränkungen hin':'TAF indicates possible restrictions',
+  'Sicht':'Visibility',
+  'Wolken':'Clouds',
+  'Wind':'Wind',
+  'Flugkategorie':'Flight category'
+});
 function tx(key){return (UI_TEXT[language]||UI_TEXT.de)[key]||UI_TEXT.de[key]||key}
 function txFooter(key){return (UI_TEXT[language]||UI_TEXT.de).footer[key]||UI_TEXT.de.footer[key]||key}
 function optionLabel(label){return language==='en'?(EN_EXACT[label]||label):label}
@@ -85,6 +113,7 @@ function updateStaticLanguageUi(){
   const footerButtons={impressum:txFooter('impressum'),datenschutz:txFooter('datenschutz'),nutzung:txFooter('nutzung'),quellen:txFooter('quellen'),version:txFooter('version')};
   document.querySelectorAll('[data-legal-page]').forEach(btn=>{const key=btn.dataset.legalPage;if(footerButtons[key])btn.textContent=footerButtons[key]});
   const footerHelp=document.getElementById('footerHelpLink'); if(footerHelp){footerHelp.textContent=txFooter('hilfe');footerHelp.href=docLink('html')}
+  const headerHelp=document.getElementById('headerHelpButton'); if(headerHelp){headerHelp.href=docLink('html');headerHelp.title=tx('headerHelp');headerHelp.setAttribute('aria-label',tx('headerHelp'))}
 }
 function localizeExactText(root=document.body){
   if(language!=='en'||!root)return;
@@ -327,7 +356,7 @@ function standardProfile(){
       aladinLabels:{visible:true,detail:'auto'},
       aladinInfo:{visible:true,position:'right'},
       aladinSurveys:defaultAladinSurveys(),
-      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF'],proxyUrl:'https://weather-api.deepskyastrophoto.de'},
+      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF'],proxyUrl:FLIGHT_WEATHER_PROXY_BASE},
       mosmix:{enabled:true},
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
@@ -422,22 +451,31 @@ function airportWeatherLink(st){return `https://aviationweather.gov/data/metar/?
 function airportTafLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded&taf=true`;}
 function aviationMapLink(ids){return `https://aviationweather.gov/?metar=${encodeURIComponent(ids||'')}`;}
 function aviationApiUrl(kind,ids){return `https://aviationweather.gov/api/data/${kind}?ids=${encodeURIComponent(ids)}&format=json`;}
-function aviationProxyBase(){return String(profile?.central?.flightWeather?.proxyUrl||'').trim().replace(/\/+$/,'');}
-function aviationProxyUrl(ids){const base=aviationProxyBase();return base?`${base}/flight?stations=${encodeURIComponent(ids)}`:'';}
-function aviationProxyUrlFromBase(base,ids){const clean=String(base||'').trim().replace(/\/+$/,'');return clean?`${clean}/flight?stations=${encodeURIComponent(ids)}`:'';}
+function aviationProxyBase(){return FLIGHT_WEATHER_PROXY_BASE.replace(/\/+$/,'');}
+function aviationProxyUrl(ids){const base=aviationProxyBase();return `${base}/flight?stations=${encodeURIComponent(ids)}`;}
 function flightAstroHint(metar){
   const raw=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text).toUpperCase();
   const cat=String(metar?.fltCat||metar?.flightCategory||'').toUpperCase();
   const clouds=Array.isArray(metar?.clouds)?metar.clouds.map(c=>String(c.cover||c.coverage||'').toUpperCase()).join(' '):raw;
   const dewGap=(Number.isFinite(Number(metar?.temp))&&Number.isFinite(Number(metar?.dewp)))?Number(metar.temp)-Number(metar.dewp):null;
   const hints=[];
-  if(/CAVOK/.test(raw))hints.push('CAVOK: gute Sicht, keine niedrigen Wolken gemeldet');
-  if(/(OVC|BKN)\d{3}/.test(raw)||/(OVC|BKN)/.test(clouds))hints.push('BKN/OVC: geschlossene oder durchbrochene Bewölkung prüfen');
-  if(/(FG|BR|HZ|FU)/.test(raw))hints.push('Sichttrübung/Nebel/Dunst gemeldet');
-  if(/(VCSH|SHRA|RA|SN|TS)/.test(raw))hints.push('Niederschlag/Gewitterhinweis vorhanden');
-  if(cat&&cat!=='VFR')hints.push(`Flugkategorie ${cat}: Sicht/Wolken eingeschränkt`);
-  if(Number.isFinite(dewGap)&&dewGap<3)hints.push(`Taupunktabstand nur ${fmt(dewGap,1)} °C`);
-  return hints.length?hints.join(' · '):'Keine auffälligen Einschränkungen aus METAR erkennbar';
+  if(/\bCAVOK\b/.test(raw))hints.push(language==='en'?'CAVOK: good visibility, no low clouds reported':'CAVOK: gute Sicht, keine niedrigen Wolken gemeldet');
+  if(/\b(OVC|BKN)\d{3}\b/.test(raw)||/\b(OVC|BKN)\b/.test(clouds))hints.push(language==='en'?'BKN/OVC: check broken or overcast cloud layers':'BKN/OVC: geschlossene oder durchbrochene Bewölkung prüfen');
+  if(/\b(FG|BR|HZ|FU)\b/.test(raw))hints.push(language==='en'?'Mist/fog/reduced visibility reported':'Sichttrübung/Nebel/Dunst gemeldet');
+  if(/\b(VCSH|SHRA|RA|SN|TS)\b/.test(raw))hints.push(language==='en'?'Precipitation/thunderstorm indication present':'Niederschlag/Gewitterhinweis vorhanden');
+  if(cat&&cat!=='VFR')hints.push(language==='en'?`Flight category ${cat}: visibility/clouds restricted`:`Flugkategorie ${cat}: Sicht/Wolken eingeschränkt`);
+  if(Number.isFinite(dewGap)&&dewGap<3)hints.push(language==='en'?`Dew point spread only ${fmt(dewGap,1)} °C`:`Taupunktabstand nur ${fmt(dewGap,1)} °C`);
+  return hints.length?hints.join(' · '):(language==='en'?'No notable METAR restrictions apparent':'Keine auffälligen Einschränkungen aus METAR erkennbar');
+}
+function tafAstroHint(taf){
+  const raw=safeRawText(taf?.rawTAF||taf?.raw_text||taf?.raw||taf?.text).toUpperCase();
+  if(!raw)return language==='en'?'TAF not loaded yet.':'TAF noch nicht geladen.';
+  const hints=[];
+  if(/\b(TS|CB|TCU|RA|SHRA|DZ|SN|FG|BR|HZ)\b/.test(raw))hints.push(language==='en'?'weather or visibility restrictions possible':'mögliche Wetter-/Sichteinschränkungen');
+  if(/\b(BKN|OVC)(00[0-9]|01[0-9]|02[0-9]|03[0-9])\b/.test(raw))hints.push(language==='en'?'low closed cloud layer possible':'tiefe geschlossene Wolken möglich');
+  if(/\b(VRB|\d{3})(1[5-9]|[2-9]\d)(G\d{2})?KT\b/.test(raw))hints.push(language==='en'?'stronger wind possible':'stärkerer Wind möglich');
+  if(/\bCAVOK\b/.test(raw)&&!hints.length)return language==='en'?'CAVOK forecast, no notable TAF restrictions apparent':'CAVOK-Prognose, keine auffälligen Einschränkungen aus TAF erkennbar';
+  return hints.length?hints.join(' · '):(language==='en'?'No notable TAF restrictions apparent':'Keine auffälligen Einschränkungen aus TAF erkennbar');
 }
 function brightskyMosmixUrl(loc){const key=selectedDateKey||dateKeyFor(new Date(),loc.timezone);const end=addDays(key,2);return `https://api.brightsky.dev/weather?lat=${encodeURIComponent(loc.latitude)}&lon=${encodeURIComponent(loc.longitude)}&date=${encodeURIComponent(key)}&last_date=${encodeURIComponent(end)}&tz=${encodeURIComponent(loc.timezone||'Europe/Berlin')}`;}
 function safeRawText(value){return String(value||'').replace(/\s+/g,' ').trim();}
@@ -624,7 +662,7 @@ function normalizeProfile(p){
   out.central.aladinInfo={...base.central.aladinInfo,...(p.central?.aladinInfo||{})};
   out.central.flightWeather={...base.central.flightWeather,...(p.central?.flightWeather||{})};
   out.central.flightWeather.selectedStations=Array.isArray(out.central.flightWeather.selectedStations)?out.central.flightWeather.selectedStations.filter(id=>GERMAN_AVIATION_STATIONS.some(st=>st.id===id)):base.central.flightWeather.selectedStations.slice();
-  out.central.flightWeather.proxyUrl=String(out.central.flightWeather.proxyUrl||base.central.flightWeather.proxyUrl||'').trim();
+  out.central.flightWeather.proxyUrl=FLIGHT_WEATHER_PROXY_BASE;
   out.central.mosmix={...base.central.mosmix,...(p.central?.mosmix||{})};
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
@@ -836,7 +874,7 @@ function legalPageContent(page){
     impressum:{title:'Impressum',html:`<p><strong>Angaben zum Anbieter</strong></p><p>Andreas Cordt<br>Schwarzwaldstraße 15<br>70794 Filderstadt<br>Deutschland</p><p>E-Mail: <a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a><br>Homepage: <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p><p>Der Astro Night Planner wird rein privat unter dem eigenen Namen angeboten.</p>`},
     datenschutz:{title:'Datenschutz',html:`<p><strong>Verantwortlicher</strong><br>Andreas Cordt, Schwarzwaldstraße 15, 70794 Filderstadt<br><a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a></p><p><strong>Lokale Datenhaltung</strong><br>Profile, Ausrüstung, Standorte, Horizonte und Einstellungen werden lokal im Browser in IndexedDB gespeichert. PWA-Programmdateien liegen in Cache Storage. Es bestehen keine Benutzerkonten, keine Kontaktformulare und keine zentrale Synchronisierung.</p><p><strong>Keine eigene Reichweitenmessung</strong><br>Der Betreiber setzt keine eigene Besucherstatistik, kein Tracking und keine eigene Fehleranalyse ein.</p><p><strong>Hosting und externe Abrufe</strong><br>Die Anwendung wird über GitHub Pages bereitgestellt. Beim Abruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse, durch GitHub verarbeitet werden. Je nach genutzter Funktion stellt der Browser direkte Verbindungen zu Open-Meteo, OpenStreetMap/Nominatim, OpenFreeMap, MapLibre einschließlich der Geländeschattierung, CDS/Aladin Lite, Meteoblue sowie gegebenenfalls dem GitHub-Rohdatenserver her. Dabei können IP-Adresse, Zeitpunkt, Browserdaten und die gewählten Koordinaten an den jeweiligen Anbieter übertragen werden.</p><p><strong>Standort</strong><br>Der Browserstandort wird nur nach ausdrücklicher Freigabe verwendet. Alternativ kann ein Ort manuell ausgewählt werden.</p><p><strong>Aktuelle Installationsadresse</strong><br><code>${esc(publicUrl)}</code></p><p class="notice warn">Vor der Veröffentlichung im Produktivsystem werden die endgültige URL und die tatsächlich eingebundenen Dienste nochmals aus dem ausgelieferten Programmstand geprüft.</p>`},
     nutzung:{title:'Nutzungshinweise',html:`<p>Wetterprognosen, Modellkonsens, Wolkenkarten, astronomische Berechnungen und Qualitätsbewertungen sind Planungshilfen. Sie stellen keine Garantie für tatsächliche Beobachtungs- oder Aufnahmebedingungen dar.</p><p>Sicherheitsentscheidungen für Personen und Ausrüstung müssen anhand der aktuellen Bedingungen vor Ort sowie gegebenenfalls offizieller Wetter- und Warninformationen getroffen werden. Die Qualitätsfarben bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit einer Montierung oder anderer Ausrüstung.</p><p><strong>Entwicklungshinweis</strong><br>Der Astro Night Planner wurde von Andreas Cordt mit Unterstützung generativer KI entwickelt und fortlaufend getestet. Trotz sorgfältiger Entwicklung können Prognose-, Berechnungs-, Darstellungs- und Programmfehler nicht vollständig ausgeschlossen werden.</p>`},
-    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS einschließlich MapLibre-Demotiles für die Geländeschattierung. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Kontrollvorhersage:</strong> Meteoblue Astronomy Seeing und Meteoblue-Wetterkarten.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul>`},
+    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS einschließlich MapLibre-Demotiles für die Geländeschattierung. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Kontrollvorhersage:</strong> Meteoblue Astronomy Seeing und Meteoblue-Wetterkarten.</li><li><strong>Flugwetter:</strong> METAR-/TAF-Stationsdaten über den fest hinterlegten Cloudflare-Worker-Proxy und AviationWeather-Datenquelle.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul>`},
     version:{title:'Version',html:`<p><strong>Astro Night Planner ${esc(RELEASE)}</strong></p><p>Programmversion: <code>${esc(APP_VERSION)}</code><br>Umgebung: <code>${esc(ENV==='test'?'TESTVERSION':'Produktivversion')}</code><br>Profilschema: 7</p>${versionNotesHtml('de')}<p>© Andreas Cordt · <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p>`}
   };
   return pages[page]||pages.version;
@@ -1864,70 +1902,47 @@ function renderFlightWeather(loc){
   const ids=stations.map(st=>st.id).join(',');
   const data=flightWeatherData||{};
   const loadedAt=data.loadedAt?new Date(data.loadedAt):null;
-  const sourceLabel=data.source==='proxy'?'Cloudflare-Worker-Proxy':(data.source==='direct'?'Direkte AviationWeather-API':'noch nicht geladen');
+  const sourceLabel=data.source==='proxy'?(language==='en'?'App proxy':'App-Proxy'):(language==='en'?'not loaded yet':'noch nicht geladen');
+  const byId=(array)=>new Map((array||[]).map(item=>[String(item.icaoId||item.station_id||item.id||'').toUpperCase(),item]));
+  const metars=byId(data.metars),tafs=byId(data.tafs);
+  const label=(de,en)=>language==='en'?en:de;
   const cards=stations.map(st=>{
-    const metar=(data.metars||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
-    const taf=(data.tafs||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
-    const rawMetar=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text);
+    const metar=metars.get(st.id)||{}, taf=tafs.get(st.id)||{};
+    const rawMetar=safeRawText(metar.rawOb||metar.raw_text||metar.rawMETAR||metar.raw);
     const rawTaf=safeRawText(taf?.rawTAF||taf?.raw_text||taf?.raw||taf?.text);
-    const clouds=Array.isArray(metar?.clouds)?metar.clouds.map(c=>`${c.cover||c.coverage||''}${c.base?` ${c.base} ft`:''}`).join(', '):'';
-    const wind=[metar?.wdir ?? metar?.windDir, metar?.wspd ?? metar?.windSpeed].filter(v=>v!==undefined&&v!==null&&v!=='').join('° / ');
+    const clouds=(metar.clouds||[]).map(c=>`${c.cover||c.coverage||''} ${c.base||c.base_feet_agl||''}`).join(', ');
+    const wind=[metar.wdir||metar.windDir||metar.wind_direction_degrees,metar.wspd||metar.windSpeed||metar.wind_speed_kt].filter(Boolean).join('° / ');
+    const visibility=metar.visib||metar.visibility||'';
+    const flightCategory=metar.fltCat||metar.flightCategory||'';
     return `<div class="flight-weather-card metric"><strong>${esc(aviationStationLabel(st,loc))}</strong><div class="small muted">${esc(st.lat.toFixed(3))}°, ${esc(st.lon.toFixed(3))}°</div>
-      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">Sicht ${esc(metar.visib||metar.visibility||'')} · Wolken ${esc(clouds||'keine Detailangabe')} · Wind ${esc(wind||'–')} · Flugkategorie ${esc(metar.fltCat||metar.flightCategory||'')}</div><div class="notice subtle">${esc(flightAstroHint(metar))}</div>`:`<div class="small muted">METAR noch nicht geladen.</div>`}
-      ${rawTaf?`<details><summary>TAF-Prognose</summary><div class="raw-block">${esc(rawTaf)}</div></details>`:`<div class="small muted">TAF noch nicht geladen.</div>`}
-      <details class="external-source-links"><summary>Externe AWC-Links</summary><div class="data-actions compact"><a class="button small" href="${airportWeatherLink(st)}" target="_blank" rel="noopener noreferrer">Externe AWC-Seite</a><a class="button small" href="${airportTafLink(st)}" target="_blank" rel="noopener noreferrer">Externe decodierte Ansicht</a></div></details></div>`;
+      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">${label('Sicht','Visibility')} ${esc(visibility||'–')} · ${label('Wolken','Clouds')} ${esc(clouds||label('keine Detailangabe','no details'))} · ${label('Wind','Wind')} ${esc(wind||'–')} · ${label('Flugkategorie','Flight category')} ${esc(flightCategory||'–')}</div><div class="notice subtle">${esc(flightAstroHint(metar))}</div>`:`<div class="small muted">${label('METAR noch nicht geladen.','METAR not loaded yet.')}</div>`}
+      ${rawTaf?`<div class="flight-taf-summary"><b>${label('TAF-Kurzprognose','TAF short forecast')}:</b> ${esc(tafAstroHint(taf))}</div>`:`<div class="small muted">${label('TAF noch nicht geladen.','TAF not loaded yet.')}</div>`}</div>`;
   }).join('');
   const proxy=aviationProxyUrl(ids);
   return `<details open class="weather-inner-details"><summary><strong>${language==='en'?'Aviation weather / station check':'Flugwetter / Stationsabgleich'}</strong></summary>
-    <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check, not another model in the automatic score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
-    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?'Lade Flugwetter …':'METAR/TAF in der App laden'}</button><span class="small muted">Stationen: ${esc(ids||'keine')} · Quelle: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
-    ${proxy?`<div class="small muted" style="margin-top:6px">Proxy: ${esc(proxy)}</div>`:`<div class="notice warn" style="margin-top:10px">Kein Flugwetter-Proxy konfiguriert. Direkte Browserabfragen können durch CORS blockiert werden. Trage in den Einstellungen den Cloudflare-Worker ein oder nutze die AWC-Links.</div>`}
-    <div class="notice subtle" style="margin-top:8px">Für die integrierte Anzeige bitte den Button „METAR/TAF in der App laden“ verwenden. Die AWC-Links darunter öffnen bewusst externe AviationWeather-Seiten als Fallback.</div>
-    <details class="external-source-links" style="margin-top:10px"><summary>Externe AviationWeather-Quellenlinks</summary><div class="data-actions compact"><a class="button small" href="${aviationMapLink(ids)}" target="_blank" rel="noopener noreferrer">Externe AWC-Karte öffnen</a></div></details>
-    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}<br><span class="small">Wenn der Proxy noch nicht eingerichtet ist, nutze vorübergehend die Quellenlinks. Die App erwartet den Worker-Endpunkt /flight?stations=EDDS,EDDM.</span></div>`:''}
+    <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check and are not automatically included in the score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
+    <div class="data-actions flight-weather-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?(language==='en'?'Loading METAR/TAF ...':'METAR/TAF werden geladen …'):(language==='en'?'Refresh METAR/TAF data':'METAR/TAF-Daten aktualisieren')}</button><span class="small muted">${language==='en'?'Stations':'Stationen'}: ${esc(ids||'–')} · ${language==='en'?'Source':'Quelle'}: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
+    <div class="notice subtle" style="margin-top:8px">${language==='en'?'The data is loaded through the fixed app proxy and shown below as readable station cards. External AWC expert maps are not opened as a main function because they are of limited use for Germany.':'Die Daten werden über den festen App-Proxy geladen und unten als verständliche Stationskarten angezeigt. Externe AWC-Fachkarten werden nicht als Hauptfunktion geöffnet, weil sie für Deutschland nur eingeschränkt hilfreich sind.'}</div>
+    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}</div>`:''}
     <div class="grid two flight-weather-grid" style="margin-top:12px">${cards}</div>
-    <details style="margin-top:12px"><summary>Rohdaten / API-Adressen</summary><div class="raw-block">Proxy: ${esc(proxy||'nicht konfiguriert')}
-METAR direkt: ${esc(aviationApiUrl('metar',ids))}
-TAF direkt: ${esc(aviationApiUrl('taf',ids))}</div></details>
   </details>`;
 }
 async function fetchFlightWeather(){
-  const loc=activeLocation(), stations=selectedAviationStations(loc), ids=stations.map(st=>st.id).join(',');
-  if(!ids){flightWeatherError='Keine Flugwetterstation ausgewählt.';render();return}
+  const ids=selectedAviationStations(activeLocation()).map(st=>st.id).join(',');
+  if(!ids){flightWeatherError=language==='en'?'No aviation weather station selected.':'Keine Flugwetterstation ausgewählt.';render();return}
   flightWeatherLoading=true;flightWeatherError='';render();
   try{
     const proxy=aviationProxyUrl(ids);
-    if(proxy){
-      const res=await fetch(proxy,{cache:'no-store'});
-      if(!res.ok)throw new Error(`Proxy HTTP ${res.status}`);
-      const payload=await res.json();
-      flightWeatherData={metars:Array.isArray(payload.metars)?payload.metars:[],tafs:Array.isArray(payload.tafs)?payload.tafs:[],loadedAt:payload.fetchedAt||new Date().toISOString(),source:'proxy'};
-    }else{
-      const [metarRes,tafRes]=await Promise.all([fetch(aviationApiUrl('metar',ids),{cache:'no-store'}),fetch(aviationApiUrl('taf',ids),{cache:'no-store'})]);
-      const metars=metarRes.status===204?[]:await metarRes.json();
-      const tafs=tafRes.status===204?[]:await tafRes.json();
-      flightWeatherData={metars:Array.isArray(metars)?metars:[],tafs:Array.isArray(tafs)?tafs:[],loadedAt:new Date().toISOString(),source:'direct'};
-    }
+    const res=await fetch(proxy,{cache:'no-store'});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const payload=await res.json();
+    flightWeatherData={metars:Array.isArray(payload.metars)?payload.metars:[],tafs:Array.isArray(payload.tafs)?payload.tafs:[],loadedAt:payload.fetchedAt||new Date().toISOString(),source:'proxy'};
   }catch(error){
-    flightWeatherError='METAR/TAF konnten nicht geladen werden. Grund: '+(error?.message||String(error))+' Die App öffnet keine externe AviationWeather-Seite automatisch; externe AWC-Links sind nur als bewusst anklickbarer Fallback vorgesehen.';
+    flightWeatherError=(language==='en'?'Aviation weather data could not be loaded at the moment. Reason: ':'Flugwetterdaten konnten derzeit nicht geladen werden. Grund: ')+(error?.message||String(error));
   }finally{flightWeatherLoading=false;render();}
 }
 async function testFlightWeatherProxy(){
-  const input=document.getElementById('flightProxyUrl');
-  const base=String(input?.value||profile?.central?.flightWeather?.proxyUrl||'').trim();
-  const url=aviationProxyUrlFromBase(base,'EDDS');
-  if(!url){alert('Bitte zuerst eine Cloudflare-Worker-/Proxy-URL eintragen.');return;}
-  try{
-    const res=await fetch(url,{cache:'no-store'});
-    const text=await res.text();
-    if(!res.ok)throw new Error(`HTTP ${res.status}: ${text.slice(0,180)}`);
-    const payload=JSON.parse(text);
-    const metars=Array.isArray(payload.metars)?payload.metars.length:0;
-    const tafs=Array.isArray(payload.tafs)?payload.tafs.length:0;
-    alert(`Proxy-Test erfolgreich.\nEndpunkt: ${url}\nMETAR: ${metars} · TAF: ${tafs}`);
-  }catch(error){
-    alert('Proxy-Test fehlgeschlagen.\nEndpunkt: '+url+'\nGrund: '+(error?.message||String(error)));
-  }
+  alert(language==='en'?'The proxy is fixed in the app and no manual test is required.':'Der Proxy ist fest in der App hinterlegt und muss nicht manuell getestet werden.');
 }
 async function fetchMosmix(){
   const loc=activeLocation(); if(!loc)return;
@@ -2081,7 +2096,7 @@ function renderCentral(){
       <label>Glättung der Wolkenfelder<select id="cloudMapSmoothing">${CLOUD_SMOOTHING_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.smoothing===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
     </div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>Flugwetterstationen Deutschland</strong><div class="small muted">Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.</div><label>Cloudflare-Worker/Proxy-URL<input id="flightProxyUrl" value="${esc(c.flightWeather?.proxyUrl||'')}" placeholder="https://weather-api.deepskyastrophoto.de"></label><div class="data-actions compact" style="margin-top:6px"><button type="button" id="flightProxyTest">Proxy testen</button><span class="small muted">Testet /flight?stations=EDDS gegen die eingetragene Basisadresse.</span></div><div class="small muted">Für integrierte METAR/TAF-Daten benötigt die GitHub-Pages-App einen CORS-fähigen Proxy. Ohne Proxy bleiben die AviationWeather-Links als bewusst externer Fallback verfügbar.</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>Nächstgelegene Station automatisch anzeigen</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${(c.flightWeather?.selectedStations||[]).includes(st.id)?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>${language==='en'?'Aviation weather stations Germany':'Flugwetterstationen Deutschland'}</strong><div class="small muted">${language==='en'?'Choose the major airports shown in the aviation weather tab. The nearest station can be added automatically.':'Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.'}</div><div class="small muted" style="margin-top:6px">${language==='en'?'The fixed app proxy is stored internally. No proxy address needs to be entered in settings.':'Der feste App-Proxy ist intern hinterlegt. In den Einstellungen muss keine Proxy-Adresse eingetragen werden.'}</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>${language==='en'?'Automatically show nearest station':'Nächstgelegene Station automatisch anzeigen'}</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${((c.flightWeather?.selectedStations||['EDDS','EDDM','EDDF']).includes(st.id))?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
@@ -2258,7 +2273,7 @@ function renderInfo(){
     <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Planungszeitraum, Aufnahmequalitätsprofil, Darstellungsprofil, Wetteransicht, Teleskop, Kamera und Horizontprofil können für die aktuelle Nacht temporär gewählt werden. Teleskop und Kamera wirken sofort auf Bildfeld, Framingbewertung und Aladin-Rahmung; das Horizontprofil auf die Horizontansicht. Keine dieser Auswahlen überschreibt einen gespeicherten Standard. Dauerhafte Standards werden ausschließlich in den Einstellungen festgelegt.</p></section>
     <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
     <section id="help-cloudmap"><h3>Animierte 24-Stunden-Wolkenkarte</h3><p>In der Planung kann temporär zwischen „Karte + Wolken“ und „Nur Wolken“ gewechselt werden. Die kombinierte Ansicht nutzt eine bewusst dunkle, reduzierte topografische Basiskarte. Straßen, Gebäude und POIs werden ausgeblendet; Gelände, Gewässer, Grenzen und wenige Ortsnamen bleiben dezent zur Orientierung. Wolken erscheinen bei allen Modellen einheitlich weiß: je höher der Wolkenanteil, desto deckender die Fläche. Der Modus „Nur Wolken“ zeigt dieselben Felder auf neutral dunklem Hintergrund. Der Modus Modellabweichung bleibt farbig und zeigt die Streuung der drei Modelle.</p><p>Die orangefarbenen Prozentangaben stehen an den tatsächlichen Prognosepunkten und können kompakt ein- oder ausgeblendet werden. Ihre Dichte passt sich an Raster und Bildschirmbreite an. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge. Die Glättung kann direkt in der Planung temporär als „Strukturiert“, „Ausgewogen“ oder „Weich“ gewählt werden, ohne zusätzliche Wetterdaten abzurufen. Das Zeitraster ist mit 15, 30 oder 60 Minuten wählbar; Standard sind 30 Minuten. Zwischenbilder werden aus den stündlichen Modellwerten interpoliert und erhöhen nicht die Prognosegenauigkeit. Bei geringer Sicherheit erscheint „Bewegungsrichtung unsicher“.</p></section>
-    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten. Wenn ein Browser externe Daten durch CORS oder Datenschutzregeln blockiert, zeigt die App direkte Quellenlinks und Hinweise.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. Die Daten werden über einen fest hinterlegten App-Proxy geladen, damit keine manuelle Proxy-Adresse gepflegt werden muss. Externe AWC-Fachkarten werden nicht als Hauptfunktion geöffnet, weil sie für Deutschland nur eingeschränkt hilfreich sind. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten.</p></section>
     <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Die Suche innerhalb der aktiven Filter verfeinert diese Auswahl. Die Direktsuche rechts daneben sucht dagegen nach Katalognummer, Objektname oder Alias und ignoriert bewusst alle anderen gesetzten Filter. So findest du zum Beispiel SH 2-119 oder NGC 7000 auch dann, wenn ein Katalog, Objekttyp, Größenbereich oder eine Mindesthöhe sie gerade ausblenden würde.</p><p>Texteingaben werden nach 1,5 Sekunden übernommen, damit nicht nach jedem Zeichen neu gerechnet wird; Enter oder „Filter anwenden“ startet sofort. Aktive Suchfelder werden hervorgehoben. Änderungen setzen die Ergebnisliste auf Seite 1 zurück. „Basisfilter zurücksetzen“ stellt nur die Werte dieser Basisfilter-Rubrik auf Standard zurück; Kataloge, Aufnahmefilter, Objekttypen, Ausrüstung und Anzeigeprofile bleiben unverändert.</p><p>Der Katalogfilter LDN/LBN enthält in dieser Version benannte LDN-Dunkelnebel. LBN-Objekte sind noch nicht als eigener Katalog importiert. Größenwerte der LDN-Objekte werden aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet und dienen als praktische Filter- und Rahmungshilfe.</p></section>
     <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Im Darstellungsprofil können die Informationen über eine aufklappbare Auswahlliste ein- oder ausgeschaltet und per Drag-and-drop beziehungsweise Auf-/Ab-Schaltflächen sortiert werden. Der Objektname bleibt immer sichtbar.</p><p>„Beste Stunde“ ist die Stunde mit dem höchsten Qualitätswert innerhalb des nautischen Planungszeitraums, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Meridian und Kulmination bleiben getrennte Informationen. Das Mini-Höhenprofil verwendet den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
     <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt. In der Horizontansicht kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des gewählten Standorts ausgewählt werden.</p></section>
@@ -2897,8 +2912,7 @@ function markDirty(section){setSectionDirty(section)}
 function syncFlightWeatherSettingsFromInputs(target=draft){
   const central=target.central=target.central||{};
   const flight=central.flightWeather=central.flightWeather||{};
-  const proxyInput=document.getElementById('flightProxyUrl');
-  if(proxyInput)flight.proxyUrl=String(proxyInput.value||'').trim();
+  flight.proxyUrl=FLIGHT_WEATHER_PROXY_BASE;
   const autoNearest=document.getElementById('flightAutoNearest');
   if(autoNearest)flight.autoNearest=autoNearest.checked;
   const stationInputs=[...document.querySelectorAll('[data-flight-station]')];
@@ -2972,8 +2986,6 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
-  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'cloudMap','input');
-  document.getElementById('flightProxyTest')?.addEventListener('click',testFlightWeatherProxy);
   set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'cloudMap');
   document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('cloudMap')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{

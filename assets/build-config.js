@@ -3,21 +3,21 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.14',
-  release: '1.1.0-test.14',
+  appVersion: '1.1.0-test.15',
+  release: '1.1.0-test.15',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.14',
+  documentTitle: 'Astro Night Planner 1.1.0-test.15',
   releaseNotes: {
     de: [
-      'Die Flugwetter-Abfrage ist jetzt klar von externen AviationWeather-Fallback-Links getrennt.',
-      'Der Hauptbutton heißt „METAR/TAF in der App laden“; externe AWC-Links liegen in eingeklappten Bereichen.',
-      'In den Einstellungen kann die eingetragene Proxy-Adresse direkt mit „Proxy testen“ geprüft werden.'
+      'Der Flugwetter-Proxy ist fest im Code hinterlegt; Proxy-Eingabefeld und Proxy-Test wurden entfernt.',
+      'Der Flugwetter-Button heißt jetzt „METAR/TAF-Daten aktualisieren“ und zeigt nur noch verständliche Stationskarten ohne externe AWC-Fachlinks.',
+      'Ein Fragezeichen-Button in der Kopfzeile öffnet die Hilfe direkt; neue Flugwettertexte wurden für DE/EN ergänzt.'
     ],
     en: [
-      'The aviation-weather fetch is now clearly separated from external AviationWeather fallback links.',
-      'The main button loads METAR/TAF inside the app; external AWC links are placed in collapsed sections.',
-      'Settings now include a direct “Test proxy” check for the configured proxy URL.'
+      'The aviation-weather proxy is fixed in the code; the proxy input and proxy test have been removed.',
+      'The aviation-weather button is now labelled “Refresh METAR/TAF data” and only shows readable station cards without external AWC expert links.',
+      'A question-mark button in the header opens the help directly; new aviation-weather labels have been added in DE/EN.'
     ]
   }
 });

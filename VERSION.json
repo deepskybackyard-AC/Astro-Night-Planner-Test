@@ -1,21 +1,23 @@
 {
-  "version": "1.1.0-test.14",
-  "release": "1.1.0-test.14",
+  "version": "1.1.0-test.15",
+  "release": "1.1.0-test.15",
   "environment": "test",
-  "builtAt": "2026-06-24T22:55:00+02:00",
-  "notes": "Testversion 1.1.0-test.14: Trennt die integrierte Flugwetter-Abfrage klar von externen AviationWeather-Fallback-Links und ergänzt einen Proxy-Test in den Einstellungen.",
+  "builtAt": "2026-06-24T23:20:00+02:00",
+  "notes": "Testversion 1.1.0-test.15: Flugwetter-Proxy fest hinterlegt, Proxy-Einstellungen entfernt, Flugwetteranzeige auf verständliche Stationskarten reduziert und Hilfe-Button ergänzt.",
   "releaseNotes": {
     "de": [
-      "Die Flugwetter-Schaltfläche ist nun eindeutig als „METAR/TAF in der App laden“ beschriftet.",
-      "Externe AviationWeather-Links sind in eingeklappte Fallback-Bereiche verschoben und öffnen nicht mehr so leicht versehentlich eine NOAA/AWC-Seite.",
-      "Bei Ladefehlern weist die App darauf hin, dass keine externe AviationWeather-Seite automatisch geöffnet wird.",
-      "In den Einstellungen wurde ein Button „Proxy testen“ ergänzt, der /flight?stations=EDDS gegen die eingetragene Proxy-Basisadresse prüft."
+      "Der Cloudflare-Worker-/Proxy-Link ist fest im Code hinterlegt; Eingabefeld und Proxy-Testbutton wurden entfernt.",
+      "Der Flugwetter-Button heißt jetzt „METAR/TAF-Daten aktualisieren“ und öffnet keine externe AWC-Karte.",
+      "TAF-Rohdaten, externe AWC-Links und Rohdaten/API-Adressen wurden aus der normalen Flugwetteranzeige entfernt.",
+      "Rechts oben neben Planung/Einstellungen gibt es einen Fragezeichen-Button für die Hilfe.",
+      "Neue Flugwetter- und Einstellungstexte wurden für DE/EN ergänzt."
     ],
     "en": [
-      "The aviation-weather button is now clearly labelled as loading METAR/TAF inside the app.",
-      "External AviationWeather links have been moved into collapsed fallback sections to avoid accidentally opening the NOAA/AWC site.",
-      "On load errors, the app clarifies that it does not open external AviationWeather pages automatically.",
-      "A “Test proxy” button has been added to settings and checks /flight?stations=EDDS against the configured proxy base URL."
+      "The Cloudflare Worker/proxy URL is fixed in the code; the input field and proxy test button have been removed.",
+      "The aviation-weather button is now labelled “Refresh METAR/TAF data” and does not open an external AWC map.",
+      "Raw TAF blocks, external AWC links and raw data/API addresses have been removed from the normal aviation-weather view.",
+      "A question-mark help button has been added to the top-right header next to Planning/Settings.",
+      "New aviation-weather and settings labels have been added in DE/EN."
     ]
   }
 }
