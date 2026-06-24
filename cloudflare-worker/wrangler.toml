@@ -1,0 +1,8 @@
+name = "astro-night-planner-weather-proxy"
+main = "worker.js"
+compatibility_date = "2026-06-24"
+
+# Add a custom route in Cloudflare, for example:
+# routes = [
+#   { pattern = "weather-api.deepskyastrophoto.de/*", custom_domain = true }
+# ]

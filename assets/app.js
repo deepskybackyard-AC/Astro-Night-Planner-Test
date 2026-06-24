@@ -19,7 +19,7 @@ const DEFAULT_RELEASE_NOTES = {
   ]
 }
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 const LOCAL_CATALOG_URL = 'assets/catalog.generated.json';
 const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/deepskybackyard-AC/Astro-Night-Planner/refs/heads/main/src/data/catalog.generated.json';
 const app = document.getElementById('app');
@@ -327,7 +327,7 @@ function standardProfile(){
       aladinLabels:{visible:true,detail:'auto'},
       aladinInfo:{visible:true,position:'right'},
       aladinSurveys:defaultAladinSurveys(),
-      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF']},
+      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF'],proxyUrl:'https://weather-api.deepskyastrophoto.de'},
       mosmix:{enabled:true},
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
@@ -419,7 +419,25 @@ function nearestAviationStation(loc){if(!loc)return GERMAN_AVIATION_STATIONS[0];
 function selectedAviationStations(loc){const cfg=profile?.central?.flightWeather||{};const ids=new Set(Array.isArray(cfg.selectedStations)?cfg.selectedStations:['EDDS','EDDM','EDDF']);if(cfg.autoNearest!==false){const near=nearestAviationStation(loc);if(near)ids.add(near.id);}return GERMAN_AVIATION_STATIONS.filter(st=>ids.has(st.id));}
 function aviationStationLabel(st,loc){const d=loc?haversineKm(loc.latitude,loc.longitude,st.lat,st.lon):null;return `${st.id} ${st.name}${Number.isFinite(d)?` · ${fmt(d,0)} km`:''}`;}
 function airportWeatherLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded`;}
+function airportTafLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded&taf=true`;}
+function aviationMapLink(ids){return `https://aviationweather.gov/?metar=${encodeURIComponent(ids||'')}`;}
 function aviationApiUrl(kind,ids){return `https://aviationweather.gov/api/data/${kind}?ids=${encodeURIComponent(ids)}&format=json`;}
+function aviationProxyBase(){return String(profile?.central?.flightWeather?.proxyUrl||'').trim().replace(/\/+$/,'');}
+function aviationProxyUrl(ids){const base=aviationProxyBase();return base?`${base}/flight?stations=${encodeURIComponent(ids)}`:'';}
+function flightAstroHint(metar){
+  const raw=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text).toUpperCase();
+  const cat=String(metar?.fltCat||metar?.flightCategory||'').toUpperCase();
+  const clouds=Array.isArray(metar?.clouds)?metar.clouds.map(c=>String(c.cover||c.coverage||'').toUpperCase()).join(' '):raw;
+  const dewGap=(Number.isFinite(Number(metar?.temp))&&Number.isFinite(Number(metar?.dewp)))?Number(metar.temp)-Number(metar.dewp):null;
+  const hints=[];
+  if(/CAVOK/.test(raw))hints.push('CAVOK: gute Sicht, keine niedrigen Wolken gemeldet');
+  if(/(OVC|BKN)\d{3}/.test(raw)||/(OVC|BKN)/.test(clouds))hints.push('BKN/OVC: geschlossene oder durchbrochene Bewölkung prüfen');
+  if(/(FG|BR|HZ|FU)/.test(raw))hints.push('Sichttrübung/Nebel/Dunst gemeldet');
+  if(/(VCSH|SHRA|RA|SN|TS)/.test(raw))hints.push('Niederschlag/Gewitterhinweis vorhanden');
+  if(cat&&cat!=='VFR')hints.push(`Flugkategorie ${cat}: Sicht/Wolken eingeschränkt`);
+  if(Number.isFinite(dewGap)&&dewGap<3)hints.push(`Taupunktabstand nur ${fmt(dewGap,1)} °C`);
+  return hints.length?hints.join(' · '):'Keine auffälligen Einschränkungen aus METAR erkennbar';
+}
 function brightskyMosmixUrl(loc){const key=selectedDateKey||dateKeyFor(new Date(),loc.timezone);const end=addDays(key,2);return `https://api.brightsky.dev/weather?lat=${encodeURIComponent(loc.latitude)}&lon=${encodeURIComponent(loc.longitude)}&date=${encodeURIComponent(key)}&last_date=${encodeURIComponent(end)}&tz=${encodeURIComponent(loc.timezone||'Europe/Berlin')}`;}
 function safeRawText(value){return String(value||'').replace(/\s+/g,' ').trim();}
 
@@ -605,6 +623,7 @@ function normalizeProfile(p){
   out.central.aladinInfo={...base.central.aladinInfo,...(p.central?.aladinInfo||{})};
   out.central.flightWeather={...base.central.flightWeather,...(p.central?.flightWeather||{})};
   out.central.flightWeather.selectedStations=Array.isArray(out.central.flightWeather.selectedStations)?out.central.flightWeather.selectedStations.filter(id=>GERMAN_AVIATION_STATIONS.some(st=>st.id===id)):base.central.flightWeather.selectedStations.slice();
+  out.central.flightWeather.proxyUrl=String(out.central.flightWeather.proxyUrl||base.central.flightWeather.proxyUrl||'').trim();
   out.central.mosmix={...base.central.mosmix,...(p.central?.mosmix||{})};
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
@@ -1843,34 +1862,30 @@ function renderFlightWeather(loc){
   const stations=selectedAviationStations(loc);
   const ids=stations.map(st=>st.id).join(',');
   const data=flightWeatherData||{};
+  const loadedAt=data.loadedAt?new Date(data.loadedAt):null;
+  const sourceLabel=data.source==='proxy'?'Cloudflare-Worker-Proxy':(data.source==='direct'?'Direkte AviationWeather-API':'noch nicht geladen');
   const cards=stations.map(st=>{
     const metar=(data.metars||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
     const taf=(data.tafs||[]).find(x=>String(x.icaoId||x.stationId||x.id||'').toUpperCase()===st.id);
     const rawMetar=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text);
     const rawTaf=safeRawText(taf?.rawTAF||taf?.raw_text||taf?.raw||taf?.text);
     const clouds=Array.isArray(metar?.clouds)?metar.clouds.map(c=>`${c.cover||c.coverage||''}${c.base?` ${c.base} ft`:''}`).join(', '):'';
+    const wind=[metar?.wdir ?? metar?.windDir, metar?.wspd ?? metar?.windSpeed].filter(v=>v!==undefined&&v!==null&&v!=='').join('° / ');
     return `<div class="flight-weather-card metric"><strong>${esc(aviationStationLabel(st,loc))}</strong><div class="small muted">${esc(st.lat.toFixed(3))}°, ${esc(st.lon.toFixed(3))}°</div>
-      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">Sicht ${esc(metar.visib||metar.visibility||'')} · Wolken ${esc(clouds||'keine Detailangabe')} · Flugkategorie ${esc(metar.fltCat||'')}</div>`:`<div class="small muted">METAR noch nicht geladen.</div>`}
+      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">Sicht ${esc(metar.visib||metar.visibility||'')} · Wolken ${esc(clouds||'keine Detailangabe')} · Wind ${esc(wind||'–')} · Flugkategorie ${esc(metar.fltCat||metar.flightCategory||'')}</div><div class="notice subtle">${esc(flightAstroHint(metar))}</div>`:`<div class="small muted">METAR noch nicht geladen.</div>`}
       ${rawTaf?`<details><summary>TAF-Prognose</summary><div class="raw-block">${esc(rawTaf)}</div></details>`:`<div class="small muted">TAF noch nicht geladen.</div>`}
-      <a class="button small" href="${airportWeatherLink(st)}" target="_blank" rel="noopener noreferrer">Quelle öffnen</a></div>`;
+      <div class="data-actions compact"><a class="button small" href="${airportWeatherLink(st)}" target="_blank" rel="noopener noreferrer">AWC METAR/TAF</a><a class="button small" href="${airportTafLink(st)}" target="_blank" rel="noopener noreferrer">Decodiert</a></div></div>`;
   }).join('');
+  const proxy=aviationProxyUrl(ids);
   return `<details open class="weather-inner-details"><summary><strong>${language==='en'?'Aviation weather / station check':'Flugwetter / Stationsabgleich'}</strong></summary>
     <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check, not another model in the automatic score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
-    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?'Lade Flugwetter …':'METAR/TAF laden'}</button><span class="small muted">Stationen: ${esc(ids||'keine')}</span></div>
-    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}<br><span class="small">Die NOAA AviationWeather API ist im Browser teilweise durch CORS geschützt. Nutze dann die Quellenlinks oder prüfe später erneut.</span></div>`:''}
+    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?'Lade Flugwetter …':'METAR/TAF laden'}</button><a class="button" href="${aviationMapLink(ids)}" target="_blank" rel="noopener noreferrer">AWC-Karte öffnen</a><span class="small muted">Stationen: ${esc(ids||'keine')} · Quelle: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
+    ${proxy?`<div class="small muted" style="margin-top:6px">Proxy: ${esc(proxy)}</div>`:`<div class="notice warn" style="margin-top:10px">Kein Flugwetter-Proxy konfiguriert. Direkte Browserabfragen können durch CORS blockiert werden. Trage in den Einstellungen den Cloudflare-Worker ein oder nutze die AWC-Links.</div>`}
+    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}<br><span class="small">Wenn der Proxy noch nicht eingerichtet ist, nutze vorübergehend die Quellenlinks. Die App erwartet den Worker-Endpunkt /flight?stations=EDDS,EDDM.</span></div>`:''}
     <div class="grid two flight-weather-grid" style="margin-top:12px">${cards}</div>
-    <details style="margin-top:12px"><summary>Rohdaten / API-Adressen</summary><div class="raw-block">METAR: ${esc(aviationApiUrl('metar',ids))}\nTAF: ${esc(aviationApiUrl('taf',ids))}</div></details>
-  </details>`;
-}
-function renderMosmix(loc,night,windowRange){
-  const rows=Array.isArray(mosmixData?.weather)?mosmixData.weather.slice(0,36):[];
-  const table=rows.length?`<div class="table-wrap"><table><thead><tr><th>Zeit</th><th>Bewölkung</th><th>Wind</th><th>Temp.</th><th>Taupunkt</th><th>Niederschlag</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${esc(fmtTime(new Date(row.timestamp),loc.timezone))}</td><td>${esc(row.cloud_cover??row.cloud_cover_total??'–')} %</td><td>${esc(row.wind_speed??'–')} km/h</td><td>${esc(row.temperature??'–')} °C</td><td>${esc(row.dew_point??'–')} °C</td><td>${esc(row.precipitation??'–')}</td></tr>`).join('')}</tbody></table></div>`:`<div class="notice">Noch keine MOSMIX-/Punktprognose geladen.</div>`;
-  return `<details open class="weather-inner-details"><summary><strong>MOSMIX / Standortprognose</strong></summary>
-    <div class="notice" style="margin-top:12px">MOSMIX wird hier als standortnahe Punktprognose dargestellt. Sie ergänzt den Modellkonsens und hilft besonders bei Temperatur, Wind, Taupunkt und Nebel-/Taurisiko.</div>
-    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadMosmix" ${mosmixLoading?'disabled':''}>${mosmixLoading?'Lade MOSMIX …':'MOSMIX laden'}</button><span class="small muted">${esc(loc.name)} · ${esc(selectedDateKey)}</span></div>
-    ${mosmixError?`<div class="notice warn" style="margin-top:10px">${esc(mosmixError)}</div>`:''}
-    ${table}
-    <details style="margin-top:12px"><summary>Quelle / API-Adresse</summary><div class="raw-block">${esc(brightskyMosmixUrl(loc))}</div></details>
+    <details style="margin-top:12px"><summary>Rohdaten / API-Adressen</summary><div class="raw-block">Proxy: ${esc(proxy||'nicht konfiguriert')}
+METAR direkt: ${esc(aviationApiUrl('metar',ids))}
+TAF direkt: ${esc(aviationApiUrl('taf',ids))}</div></details>
   </details>`;
 }
 async function fetchFlightWeather(){
@@ -1878,12 +1893,20 @@ async function fetchFlightWeather(){
   if(!ids){flightWeatherError='Keine Flugwetterstation ausgewählt.';render();return}
   flightWeatherLoading=true;flightWeatherError='';render();
   try{
-    const [metarRes,tafRes]=await Promise.all([fetch(aviationApiUrl('metar',ids),{cache:'no-store'}),fetch(aviationApiUrl('taf',ids),{cache:'no-store'})]);
-    const metars=metarRes.status===204?[]:await metarRes.json();
-    const tafs=tafRes.status===204?[]:await tafRes.json();
-    flightWeatherData={metars:Array.isArray(metars)?metars:[],tafs:Array.isArray(tafs)?tafs:[],loadedAt:new Date().toISOString()};
+    const proxy=aviationProxyUrl(ids);
+    if(proxy){
+      const res=await fetch(proxy,{cache:'no-store'});
+      if(!res.ok)throw new Error(`Proxy HTTP ${res.status}`);
+      const payload=await res.json();
+      flightWeatherData={metars:Array.isArray(payload.metars)?payload.metars:[],tafs:Array.isArray(payload.tafs)?payload.tafs:[],loadedAt:payload.fetchedAt||new Date().toISOString(),source:'proxy'};
+    }else{
+      const [metarRes,tafRes]=await Promise.all([fetch(aviationApiUrl('metar',ids),{cache:'no-store'}),fetch(aviationApiUrl('taf',ids),{cache:'no-store'})]);
+      const metars=metarRes.status===204?[]:await metarRes.json();
+      const tafs=tafRes.status===204?[]:await tafRes.json();
+      flightWeatherData={metars:Array.isArray(metars)?metars:[],tafs:Array.isArray(tafs)?tafs:[],loadedAt:new Date().toISOString(),source:'direct'};
+    }
   }catch(error){
-    flightWeatherError='METAR/TAF konnten im Browser nicht direkt geladen werden. Grund: '+(error?.message||String(error));
+    flightWeatherError='METAR/TAF konnten nicht geladen werden. Grund: '+(error?.message||String(error));
   }finally{flightWeatherLoading=false;render();}
 }
 async function fetchMosmix(){
@@ -2038,7 +2061,7 @@ function renderCentral(){
       <label>Glättung der Wolkenfelder<select id="cloudMapSmoothing">${CLOUD_SMOOTHING_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.smoothing===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
     </div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>Flugwetterstationen Deutschland</strong><div class="small muted">Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>Nächstgelegene Station automatisch anzeigen</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${(c.flightWeather?.selectedStations||[]).includes(st.id)?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>Flugwetterstationen Deutschland</strong><div class="small muted">Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.</div><label>Cloudflare-Worker/Proxy-URL<input id="flightProxyUrl" value="${esc(c.flightWeather?.proxyUrl||'')}" placeholder="https://weather-api.deepskyastrophoto.de"></label><div class="small muted">Für integrierte METAR/TAF-Daten benötigt die GitHub-Pages-App einen CORS-fähigen Proxy. Ohne Proxy bleiben die AviationWeather-Links als Fallback verfügbar.</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>Nächstgelegene Station automatisch anzeigen</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${(c.flightWeather?.selectedStations||[]).includes(st.id)?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
@@ -2919,6 +2942,7 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
+  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'weatherModels');
   set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'weatherModels');
   document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('weatherModels')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{

@@ -6,3 +6,8 @@ Testversion mit erweiterten Ausrüstungsdaten, optischen Setup-Faktoren, verbess
 ## Testversion 1.1.0-test.9
 
 Diese Testversion ergänzt die Wetter-Tabs Meteoblue, Flugwetter und MOSMIX. Flugwetterstationen können in den Einstellungen gewählt werden. METAR/TAF nutzt die AviationWeather-API, MOSMIX/Punktprognose Bright Sky/DWD-Daten. Bei Browser-CORS-Sperren zeigt die App Quellenlinks und Hinweise.
+
+
+## Test 1.1.0-test.10
+
+Diese Testversion ergänzt den vorbereiteten Cloudflare-Worker-Proxy für integrierte METAR-/TAF-Flugwetterdaten. Der Worker liegt im Ordner `cloudflare-worker/`. In den Einstellungen kann die Proxy-URL für die Flugwetterdaten gesetzt werden.
