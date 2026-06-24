@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.16",
-  "release": "1.1.0-test.16",
+  "version": "1.1.0-test.17",
+  "release": "1.1.0-test.17",
   "environment": "test",
-  "builtAt": "2026-06-24T23:40:00+02:00",
-  "notes": "Testversion 1.1.0-test.16: Flugwetterkarte optional wieder erreichbar, Hilfeaufrufe auf integrierte aktuelle Hilfe umgestellt und Flugwetteranzeige beibehalten.",
+  "builtAt": "2026-06-24T23:58:00+02:00",
+  "notes": "Testversion 1.1.0-test.17: Externe AWC-Flugwetterkarte durch integrierte Stationskarte ersetzt und MOSMIX-Punktprognose repariert.",
   "releaseNotes": {
     "de": [
-      "Neben „METAR/TAF-Daten aktualisieren“ gibt es wieder einen separaten Button „Flugwetterkarte öffnen“.",
-      "Der Kartenbutton öffnet die externe AWC-GFA-Karte nur als optionale Expertenansicht; die App-Auswertung bleibt die verständliche Stationskarte.",
-      "Der Fragezeichen-Button und der Hilfe-Link unten öffnen jetzt die integrierte aktuelle Hilfe statt der alten HTML-Hilfedatei.",
-      "Der Browserhilfe-Button in der Hilfe-Rubrik wurde auf „Integrierte Hilfe öffnen“ umgestellt; das PDF-Handbuch bleibt separat verfügbar."
+      "Der Flugwetter-Kartenbutton öffnet keine externe AWC-GFA-Karte mehr, sondern zeigt eine integrierte Stationskarte in der App.",
+      "Die Stationskarte markiert die ausgewählten Flugwetterstationen sowie den Planungsstandort und färbt Marker nach METAR-Flugkategorie.",
+      "Der MOSMIX-Tab enthält jetzt eine funktionierende Ladefunktion mit standortnaher Punktprognose und tabellarischer Übersicht.",
+      "Flugwetter- und MOSMIX-Texte wurden für DE/EN ergänzt."
     ],
     "en": [
-      "A separate “Open aviation weather map” button is back next to “Refresh METAR/TAF data”.",
-      "The map button opens the external AWC GFA map only as an optional expert view; the app’s readable station cards remain the main view.",
-      "The question-mark button and footer help link now open the current integrated help instead of the outdated HTML help file.",
-      "The browser-help button in the help section now opens the integrated help; the PDF manual remains available separately."
+      "The aviation weather map button no longer opens the external AWC GFA map; it now shows an integrated station map inside the app.",
+      "The station map marks selected aviation weather stations and the planning location, with marker colors based on the METAR flight category.",
+      "The MOSMIX tab now includes a working load action with a local point forecast and tabular overview.",
+      "Aviation weather and MOSMIX texts have been completed for DE/EN."
     ]
   }
 }

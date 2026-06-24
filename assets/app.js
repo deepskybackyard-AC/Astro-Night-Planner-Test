@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.16 – Flugwetterkarte wieder optional erreichbar und Hilfe intern verlinkt */
+/* Astro Night Planner 1.1.0-test.17 – integrierte Flugwetter-Stationskarte und MOSMIX-Ansicht */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -78,7 +78,7 @@ Object.assign(EN_EXACT,{
   'Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.':'Choose the major airports shown in the aviation weather tab. The nearest station can be added automatically.',
   'Nächstgelegene Station automatisch anzeigen':'Automatically show nearest station',
   'METAR/TAF-Daten aktualisieren':'Refresh METAR/TAF data',
-  'Flugwetterkarte öffnen':'Open aviation weather map',
+  'Stationskarte anzeigen':'Show station map',
   'METAR/TAF werden geladen …':'Loading METAR/TAF ...',
   'Stationen':'Stations',
   'Quelle':'Source',
@@ -90,7 +90,7 @@ Object.assign(EN_EXACT,{
   'Flugwetterdaten konnten derzeit nicht geladen werden.':'Aviation weather data could not be loaded at the moment.',
   'Flugwetter / Stationsabgleich':'Aviation weather / station check',
   'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.':'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check and are not automatically included in the score.',
-  'Die Daten werden über den festen App-Proxy geladen und unten als verständliche Stationskarten angezeigt. Die externe AWC-GFA-Karte kann optional geöffnet werden, ist für Deutschland aber nur eingeschränkt hilfreich.':'The data is loaded through the fixed app proxy and shown below as readable station cards. The external AWC GFA map can be opened optionally, but it is of limited use for Germany.',
+  'Die Daten werden über den festen App-Proxy geladen und unten als verständliche Stationskarten angezeigt. Die Stationskarte wird direkt in der App dargestellt.':'The data is loaded through the fixed app proxy and shown below as readable station cards. The station map is displayed directly in the app.',
   'Der feste App-Proxy ist intern hinterlegt. In den Einstellungen muss keine Proxy-Adresse eingetragen werden.':'The fixed app proxy is stored internally. No proxy address needs to be entered in settings.',
   'TAF-Kurzprognose':'TAF short forecast',
   'Keine auffälligen Einschränkungen aus METAR erkennbar':'No notable METAR restrictions apparent',
@@ -450,7 +450,6 @@ function selectedAviationStations(loc){const cfg=profile?.central?.flightWeather
 function aviationStationLabel(st,loc){const d=loc?haversineKm(loc.latitude,loc.longitude,st.lat,st.lon):null;return `${st.id} ${st.name}${Number.isFinite(d)?` · ${fmt(d,0)} km`:''}`;}
 function airportWeatherLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded`;}
 function airportTafLink(st){return `https://aviationweather.gov/data/metar/?ids=${encodeURIComponent(st.id)}&format=decoded&taf=true`;}
-function aviationMapLink(ids){return 'https://aviationweather.gov/gfa/#obs';}
 function aviationApiUrl(kind,ids){return `https://aviationweather.gov/api/data/${kind}?ids=${encodeURIComponent(ids)}&format=json`;}
 function aviationProxyBase(){return FLIGHT_WEATHER_PROXY_BASE.replace(/\/+$/,'');}
 function aviationProxyUrl(ids){const base=aviationProxyBase();return `${base}/flight?stations=${encodeURIComponent(ids)}`;}
@@ -477,6 +476,64 @@ function tafAstroHint(taf){
   if(/\b(VRB|\d{3})(1[5-9]|[2-9]\d)(G\d{2})?KT\b/.test(raw))hints.push(language==='en'?'stronger wind possible':'stärkerer Wind möglich');
   if(/\bCAVOK\b/.test(raw)&&!hints.length)return language==='en'?'CAVOK forecast, no notable TAF restrictions apparent':'CAVOK-Prognose, keine auffälligen Einschränkungen aus TAF erkennbar';
   return hints.length?hints.join(' · '):(language==='en'?'No notable TAF restrictions apparent':'Keine auffälligen Einschränkungen aus TAF erkennbar');
+}
+
+function flightCategoryFromMetar(metar){
+  const raw=safeRawText(metar?.rawOb||metar?.raw_text||metar?.raw||metar?.text).toUpperCase();
+  const cat=String(metar?.fltCat||metar?.flightCategory||'').toUpperCase();
+  if(['VFR','MVFR','IFR','LIFR'].includes(cat))return cat;
+  if(/\bCAVOK\b/.test(raw))return 'VFR';
+  if(/\b(FG|TS|CB|OVC00[0-9]|BKN00[0-9])\b/.test(raw))return 'IFR';
+  if(/\b(BKN|OVC|BR|HZ|RA|SHRA|SN)\b/.test(raw))return 'MVFR';
+  return raw?'VFR':'UNKNOWN';
+}
+function flightCategoryClass(category){return `flight-category-${String(category||'UNKNOWN').toLowerCase()}`}
+function renderFlightStationMap(loc,stations,metars,tafs){
+  const label=(de,en)=>language==='en'?en:de;
+  const bounds={minLat:47.0,maxLat:55.2,minLon:5.5,maxLon:15.4};
+  const xFor=lon=>clamp((Number(lon)-bounds.minLon)/(bounds.maxLon-bounds.minLon)*100,3,97);
+  const yFor=lat=>clamp((bounds.maxLat-Number(lat))/(bounds.maxLat-bounds.minLat)*100,3,97);
+  const outline='51,96 45,88 35,88 31,80 22,73 18,63 11,56 12,45 18,37 17,29 26,18 38,11 49,6 61,8 70,16 75,27 84,35 88,49 84,64 79,75 70,83 65,94';
+  const markers=stations.map(st=>{
+    const metar=metars.get(st.id)||{}, taf=tafs.get(st.id)||{};
+    const category=flightCategoryFromMetar(metar), rawMetar=safeRawText(metar.rawOb||metar.raw_text||metar.rawMETAR||metar.raw);
+    const title=[aviationStationLabel(st,loc), category, rawMetar, tafAstroHint(taf)].filter(Boolean).join(' · ');
+    return `<div class="flight-station-marker ${flightCategoryClass(category)}" style="left:${xFor(st.lon)}%;top:${yFor(st.lat)}%" title="${esc(title)}"><span>${esc(st.id)}</span></div>`;
+  }).join('');
+  const site=(loc&&Number.isFinite(Number(loc.latitude))&&Number.isFinite(Number(loc.longitude)))?`<div class="flight-site-marker" style="left:${xFor(loc.longitude)}%;top:${yFor(loc.latitude)}%" title="${esc(loc.name||label('Planungsstandort','Planning location'))}"><span>★</span></div>`:'';
+  return `<div class="flight-station-map-wrap">
+    <div class="flight-station-map-header"><strong>${label('Integrierte Stationskarte','Integrated station map')}</strong><span class="small muted">${label('Schematische Übersicht der ausgewählten Stationen. Markerfarbe nach METAR-Flugkategorie.','Schematic overview of selected stations. Marker color follows the METAR flight category.')}</span></div>
+    <div class="flight-station-map" role="img" aria-label="${label('Flugwetter-Stationskarte','Aviation weather station map')}">
+      <svg class="flight-germany-outline" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><polyline points="${outline}" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round" opacity=".45"/></svg>
+      <div class="flight-map-label flight-map-label-north">N</div><div class="flight-map-label flight-map-label-south">S</div><div class="flight-map-label flight-map-label-west">W</div><div class="flight-map-label flight-map-label-east">${label('O','E')}</div>
+      ${markers}${site}
+    </div>
+    <div class="flight-station-legend"><span><i class="flight-category-vfr"></i>VFR / unauffällig</span><span><i class="flight-category-mvfr"></i>MVFR / prüfen</span><span><i class="flight-category-ifr"></i>IFR/LIFR / kritisch</span><span><i class="flight-category-unknown"></i>${label('noch nicht geladen','not loaded yet')}</span><span><i class="flight-site-dot"></i>${label('Planungsstandort','Planning location')}</span></div>
+  </div>`;
+}
+function mosmixRowsForDisplay(data,windowRange){
+  const rawRows=Array.isArray(data?.weather)?data.weather:[];
+  const parsed=rawRows.map(row=>({...row,time:new Date(row.timestamp||row.time||row.date)})).filter(row=>Number.isFinite(row.time.getTime()));
+  if(!parsed.length)return [];
+  const start=windowRange?.start instanceof Date?windowRange.start:null, end=windowRange?.end instanceof Date?windowRange.end:null;
+  const inWindow=start&&end?parsed.filter(row=>row.time>=start&&row.time<=end):[];
+  return (inWindow.length?inWindow:parsed).slice(0,18);
+}
+function mosmixValue(row,...keys){for(const key of keys){const value=row?.[key];if(Number.isFinite(Number(value)))return Number(value)}return NaN}
+function mosmixConditionLabel(row){return String(row?.condition||row?.icon||'').replace(/_/g,' ')||'–'}
+function renderMosmix(loc,night,windowRange){
+  const label=(de,en)=>language==='en'?en:de;
+  const rows=mosmixRowsForDisplay(mosmixData,windowRange);
+  const loadedAt=mosmixData?.loadedAt?new Date(mosmixData.loadedAt):null;
+  const avg=key=>{const values=rows.map(row=>mosmixValue(row,key)).filter(Number.isFinite);return values.length?values.reduce((a,b)=>a+b,0)/values.length:NaN};
+  const summary=rows.length?`<div class="grid four" style="margin-top:12px"><div class="metric"><div class="label">${label('Zeitraum','Window')}</div><div class="value">${esc(fmtTime(rows[0].time,loc.timezone))}–${esc(fmtTime(rows[rows.length-1].time,loc.timezone))}</div></div><div class="metric"><div class="label">${label('Ø Wolken','Avg. clouds')}</div><div class="value ${valueClass(100-avg('cloud_cover'))}">${Number.isFinite(avg('cloud_cover'))?fmt(avg('cloud_cover'))+' %':'–'}</div></div><div class="metric"><div class="label">${label('Ø Wind','Avg. wind')}</div><div class="value">${Number.isFinite(avg('wind_speed'))?fmt(avg('wind_speed'),1)+' km/h':'–'}</div></div><div class="metric"><div class="label">${label('Datenquelle','Source')}</div><div class="value">Bright Sky</div><div class="small muted">DWD</div></div></div>`:'';
+  const table=rows.length?`<div class="table-wrap mosmix-table"><table><thead><tr><th>${label('Zeit','Time')}</th><th>${label('Wolken','Clouds')}</th><th>${label('Sicht','Visibility')}</th><th>${label('Temp.','Temp.')}</th><th>${label('Taupunkt','Dew point')}</th><th>${label('Wind','Wind')}</th><th>${label('Böen','Gusts')}</th><th>${label('Niederschlag','Precip.')}</th><th>${label('Zustand','Condition')}</th></tr></thead><tbody>${rows.map(row=>`<tr><td><strong>${esc(fmtTime(row.time,loc.timezone))}</strong></td><td>${Number.isFinite(mosmixValue(row,'cloud_cover'))?fmt(mosmixValue(row,'cloud_cover'))+' %':'–'}</td><td>${Number.isFinite(mosmixValue(row,'visibility'))?fmt(mosmixValue(row,'visibility')/1000,1)+' km':'–'}</td><td>${Number.isFinite(mosmixValue(row,'temperature'))?fmt(mosmixValue(row,'temperature'),1)+' °C':'–'}</td><td>${Number.isFinite(mosmixValue(row,'dew_point'))?fmt(mosmixValue(row,'dew_point'),1)+' °C':'–'}</td><td>${Number.isFinite(mosmixValue(row,'wind_speed'))?fmt(mosmixValue(row,'wind_speed'),1)+' km/h':'–'}</td><td>${Number.isFinite(mosmixValue(row,'wind_gust_speed'))?fmt(mosmixValue(row,'wind_gust_speed'),1)+' km/h':'–'}</td><td>${Number.isFinite(mosmixValue(row,'precipitation'))?fmt(mosmixValue(row,'precipitation'),1)+' mm':'–'}</td><td>${esc(mosmixConditionLabel(row))}</td></tr>`).join('')}</tbody></table></div>`:'';
+  return `<details open class="weather-inner-details"><summary><strong>${label('MOSMIX-Punktprognose','MOSMIX point forecast')}</strong></summary>
+    <div class="notice" style="margin-top:12px">${label('MOSMIX ergänzt die Modellbewertung als standortnahe DWD-Punktprognose. Die Werte dienen als Kontrollquelle und werden nicht automatisch in die Bewertung eingerechnet.','MOSMIX complements the model score as a DWD point forecast near the planning location. These values are a reference source and are not automatically included in the score.')}</div>
+    <div class="data-actions" style="margin-top:10px"><button type="button" id="loadMosmix" ${mosmixLoading?'disabled':''}>${mosmixLoading?label('MOSMIX wird geladen …','Loading MOSMIX ...'):label('MOSMIX-Punktprognose laden','Load MOSMIX point forecast')}</button><span class="small muted">${esc(loc.name||'')} ${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${label('geladen','loaded')} ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
+    ${mosmixError?`<div class="notice warn" style="margin-top:10px">${esc(mosmixError)}</div>`:''}
+    ${rows.length?summary+table:`<div class="notice subtle" style="margin-top:12px">${label('Noch keine MOSMIX-Daten geladen. Bitte den Button oben verwenden.','No MOSMIX data loaded yet. Use the button above.')}</div>`}
+  </details>`;
 }
 function brightskyMosmixUrl(loc){const key=selectedDateKey||dateKeyFor(new Date(),loc.timezone);const end=addDays(key,2);return `https://api.brightsky.dev/weather?lat=${encodeURIComponent(loc.latitude)}&lon=${encodeURIComponent(loc.longitude)}&date=${encodeURIComponent(key)}&last_date=${encodeURIComponent(end)}&tz=${encodeURIComponent(loc.timezone||'Europe/Berlin')}`;}
 function safeRawText(value){return String(value||'').replace(/\s+/g,' ').trim();}
@@ -515,6 +572,7 @@ let weatherSourceTab='meteoblue';
 let flightWeatherData=null;
 let flightWeatherLoading=false;
 let flightWeatherError='';
+let flightStationMapOpen=false;
 let mosmixData=null;
 let mosmixLoading=false;
 let mosmixError='';
@@ -1919,12 +1977,13 @@ function renderFlightWeather(loc){
       ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">${label('Sicht','Visibility')} ${esc(visibility||'–')} · ${label('Wolken','Clouds')} ${esc(clouds||label('keine Detailangabe','no details'))} · ${label('Wind','Wind')} ${esc(wind||'–')} · ${label('Flugkategorie','Flight category')} ${esc(flightCategory||'–')}</div><div class="notice subtle">${esc(flightAstroHint(metar))}</div>`:`<div class="small muted">${label('METAR noch nicht geladen.','METAR not loaded yet.')}</div>`}
       ${rawTaf?`<div class="flight-taf-summary"><b>${label('TAF-Kurzprognose','TAF short forecast')}:</b> ${esc(tafAstroHint(taf))}</div>`:`<div class="small muted">${label('TAF noch nicht geladen.','TAF not loaded yet.')}</div>`}</div>`;
   }).join('');
-  const proxy=aviationProxyUrl(ids);
+  const stationMap=flightStationMapOpen?renderFlightStationMap(loc,stations,metars,tafs):'';
   return `<details open class="weather-inner-details"><summary><strong>${language==='en'?'Aviation weather / station check':'Flugwetter / Stationsabgleich'}</strong></summary>
     <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check and are not automatically included in the score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
-    <div class="data-actions flight-weather-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?(language==='en'?'Loading METAR/TAF ...':'METAR/TAF werden geladen …'):(language==='en'?'Refresh METAR/TAF data':'METAR/TAF-Daten aktualisieren')}</button><button type="button" id="openFlightWeatherMap" class="ghost">${language==='en'?'Open aviation weather map':'Flugwetterkarte öffnen'}</button><span class="small muted">${language==='en'?'Stations':'Stationen'}: ${esc(ids||'–')} · ${language==='en'?'Source':'Quelle'}: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
-    <div class="notice subtle" style="margin-top:8px">${language==='en'?'The data is loaded through the fixed app proxy and shown below as readable station cards. The map button opens the external AWC GFA map only as an optional expert view; for Germany it is of limited use.':'Die Daten werden über den festen App-Proxy geladen und unten als verständliche Stationskarten angezeigt. Der Kartenbutton öffnet die externe AWC-GFA-Karte nur als optionale Expertenansicht; für Deutschland ist sie nur eingeschränkt hilfreich.'}</div>
+    <div class="data-actions flight-weather-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?(language==='en'?'Loading METAR/TAF ...':'METAR/TAF werden geladen …'):(language==='en'?'Refresh METAR/TAF data':'METAR/TAF-Daten aktualisieren')}</button><button type="button" id="toggleFlightStationMap" class="ghost">${flightStationMapOpen?(language==='en'?'Hide station map':'Stationskarte ausblenden'):(language==='en'?'Show station map':'Stationskarte anzeigen')}</button><span class="small muted">${language==='en'?'Stations':'Stationen'}: ${esc(ids||'–')} · ${language==='en'?'Source':'Quelle'}: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
+    <div class="notice subtle" style="margin-top:8px">${language==='en'?'The data is loaded through the fixed app proxy and shown as readable station cards. The station map is drawn directly inside the app and does not open the external AWC map.':'Die Daten werden über den festen App-Proxy geladen und als verständliche Stationskarten angezeigt. Die Stationskarte wird direkt in der App gezeichnet und öffnet keine externe AWC-Karte.'}</div>
     ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}</div>`:''}
+    ${stationMap}
     <div class="grid two flight-weather-grid" style="margin-top:12px">${cards}</div>
   </details>`;
 }
@@ -1951,8 +2010,9 @@ async function fetchMosmix(){
   try{
     const response=await fetch(brightskyMosmixUrl(loc),{cache:'no-store'});
     if(!response.ok)throw new Error(`${response.status} ${response.statusText}`);
-    mosmixData=await response.json();
-  }catch(error){mosmixError='MOSMIX-/Punktprognose konnte nicht geladen werden: '+(error?.message||String(error));}
+    const payload=await response.json();
+    mosmixData={...payload,loadedAt:new Date().toISOString(),source:'Bright Sky / DWD'};
+  }catch(error){mosmixError=(language==='en'?'MOSMIX point forecast could not be loaded: ':'MOSMIX-/Punktprognose konnte nicht geladen werden: ')+(error?.message||String(error));}
   finally{mosmixLoading=false;render();}
 }
 
@@ -2274,7 +2334,7 @@ function renderInfo(){
     <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Planungszeitraum, Aufnahmequalitätsprofil, Darstellungsprofil, Wetteransicht, Teleskop, Kamera und Horizontprofil können für die aktuelle Nacht temporär gewählt werden. Teleskop und Kamera wirken sofort auf Bildfeld, Framingbewertung und Aladin-Rahmung; das Horizontprofil auf die Horizontansicht. Keine dieser Auswahlen überschreibt einen gespeicherten Standard. Dauerhafte Standards werden ausschließlich in den Einstellungen festgelegt.</p></section>
     <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
     <section id="help-cloudmap"><h3>Animierte 24-Stunden-Wolkenkarte</h3><p>In der Planung kann temporär zwischen „Karte + Wolken“ und „Nur Wolken“ gewechselt werden. Die kombinierte Ansicht nutzt eine bewusst dunkle, reduzierte topografische Basiskarte. Straßen, Gebäude und POIs werden ausgeblendet; Gelände, Gewässer, Grenzen und wenige Ortsnamen bleiben dezent zur Orientierung. Wolken erscheinen bei allen Modellen einheitlich weiß: je höher der Wolkenanteil, desto deckender die Fläche. Der Modus „Nur Wolken“ zeigt dieselben Felder auf neutral dunklem Hintergrund. Der Modus Modellabweichung bleibt farbig und zeigt die Streuung der drei Modelle.</p><p>Die orangefarbenen Prozentangaben stehen an den tatsächlichen Prognosepunkten und können kompakt ein- oder ausgeblendet werden. Ihre Dichte passt sich an Raster und Bildschirmbreite an. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge. Die Glättung kann direkt in der Planung temporär als „Strukturiert“, „Ausgewogen“ oder „Weich“ gewählt werden, ohne zusätzliche Wetterdaten abzurufen. Das Zeitraster ist mit 15, 30 oder 60 Minuten wählbar; Standard sind 30 Minuten. Zwischenbilder werden aus den stündlichen Modellwerten interpoliert und erhöhen nicht die Prognosegenauigkeit. Bei geringer Sicherheit erscheint „Bewegungsrichtung unsicher“.</p></section>
-    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. Die Daten werden über einen fest hinterlegten App-Proxy geladen, damit keine manuelle Proxy-Adresse gepflegt werden muss. Die externe AWC-GFA-Karte kann optional geöffnet werden, ist für Deutschland aber nur eingeschränkt hilfreich. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. Die Daten werden über einen fest hinterlegten App-Proxy geladen, damit keine manuelle Proxy-Adresse gepflegt werden muss. Die integrierte Stationskarte zeigt die ausgewählten Flughäfen ohne externe AWC-Karte als einfache Übersicht. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten.</p></section>
     <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Die Suche innerhalb der aktiven Filter verfeinert diese Auswahl. Die Direktsuche rechts daneben sucht dagegen nach Katalognummer, Objektname oder Alias und ignoriert bewusst alle anderen gesetzten Filter. So findest du zum Beispiel SH 2-119 oder NGC 7000 auch dann, wenn ein Katalog, Objekttyp, Größenbereich oder eine Mindesthöhe sie gerade ausblenden würde.</p><p>Texteingaben werden nach 1,5 Sekunden übernommen, damit nicht nach jedem Zeichen neu gerechnet wird; Enter oder „Filter anwenden“ startet sofort. Aktive Suchfelder werden hervorgehoben. Änderungen setzen die Ergebnisliste auf Seite 1 zurück. „Basisfilter zurücksetzen“ stellt nur die Werte dieser Basisfilter-Rubrik auf Standard zurück; Kataloge, Aufnahmefilter, Objekttypen, Ausrüstung und Anzeigeprofile bleiben unverändert.</p><p>Der Katalogfilter LDN/LBN enthält in dieser Version benannte LDN-Dunkelnebel. LBN-Objekte sind noch nicht als eigener Katalog importiert. Größenwerte der LDN-Objekte werden aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet und dienen als praktische Filter- und Rahmungshilfe.</p></section>
     <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Im Darstellungsprofil können die Informationen über eine aufklappbare Auswahlliste ein- oder ausgeschaltet und per Drag-and-drop beziehungsweise Auf-/Ab-Schaltflächen sortiert werden. Der Objektname bleibt immer sichtbar.</p><p>„Beste Stunde“ ist die Stunde mit dem höchsten Qualitätswert innerhalb des nautischen Planungszeitraums, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Meridian und Kulmination bleiben getrennte Informationen. Das Mini-Höhenprofil verwendet den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
     <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt. In der Horizontansicht kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des gewählten Standorts ausgewählt werden.</p></section>
@@ -2365,7 +2425,7 @@ function bindRendered(){
   document.getElementById('weatherRefresh')?.addEventListener('click',fetchWeather);
   document.querySelectorAll('[data-weather-source-tab]').forEach(button=>button.addEventListener('click',async()=>{profile.planning.weatherSourceTab=button.dataset.weatherSourceTab;await saveProfile();render();}));
   document.getElementById('loadFlightWeather')?.addEventListener('click',fetchFlightWeather);
-  document.getElementById('openFlightWeatherMap')?.addEventListener('click',()=>{const loc=activeLocation();const ids=selectedAviationStations(loc).map(st=>st.id).join(',');window.open(aviationMapLink(ids),'_blank','noopener');});
+  document.getElementById('toggleFlightStationMap')?.addEventListener('click',()=>{flightStationMapOpen=!flightStationMapOpen;render();});
   document.getElementById('loadMosmix')?.addEventListener('click',fetchMosmix);
   const planningWindowTop=document.getElementById('planningWindowTop');
   if(planningWindowTop)planningWindowTop.onchange=async()=>{
