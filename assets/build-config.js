@@ -3,21 +3,21 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.15',
-  release: '1.1.0-test.15',
+  appVersion: '1.1.0-test.16',
+  release: '1.1.0-test.16',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.15',
+  documentTitle: 'Astro Night Planner 1.1.0-test.16',
   releaseNotes: {
     de: [
-      'Der Flugwetter-Proxy ist fest im Code hinterlegt; Proxy-Eingabefeld und Proxy-Test wurden entfernt.',
-      'Der Flugwetter-Button heißt jetzt „METAR/TAF-Daten aktualisieren“ und zeigt nur noch verständliche Stationskarten ohne externe AWC-Fachlinks.',
-      'Ein Fragezeichen-Button in der Kopfzeile öffnet die Hilfe direkt; neue Flugwettertexte wurden für DE/EN ergänzt.'
+      'Neben „METAR/TAF-Daten aktualisieren“ gibt es wieder einen separaten Button „Flugwetterkarte öffnen“.',
+      'Der Kartenbutton öffnet die externe AWC-GFA-Karte nur als optionale Expertenansicht; die App-Auswertung bleibt die verständliche Stationskarte.',
+      'Der Fragezeichen-Button und der Hilfe-Link unten öffnen jetzt die integrierte aktuelle Hilfe statt der alten HTML-Hilfedatei.'
     ],
     en: [
-      'The aviation-weather proxy is fixed in the code; the proxy input and proxy test have been removed.',
-      'The aviation-weather button is now labelled “Refresh METAR/TAF data” and only shows readable station cards without external AWC expert links.',
-      'A question-mark button in the header opens the help directly; new aviation-weather labels have been added in DE/EN.'
+      'A separate “Open aviation weather map” button is back next to “Refresh METAR/TAF data”.',
+      'The map button opens the external AWC GFA map only as an optional expert view; the app’s readable station cards remain the main view.',
+      'The question-mark button and footer help link now open the current integrated help instead of the outdated HTML help file.'
     ]
   }
 });
