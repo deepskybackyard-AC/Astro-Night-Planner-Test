@@ -2874,6 +2874,16 @@ function setSectionDirty(section){
   for(const [tab,sections]of Object.entries(tabGroups))if(sections.includes(section))document.querySelector(`[data-settings-tab="${tab}"]`)?.classList.add('dirty-dot');
 }
 function markDirty(section){setSectionDirty(section)}
+function syncFlightWeatherSettingsFromInputs(target=draft){
+  const central=target.central=target.central||{};
+  const flight=central.flightWeather=central.flightWeather||{};
+  const proxyInput=document.getElementById('flightProxyUrl');
+  if(proxyInput)flight.proxyUrl=String(proxyInput.value||'').trim();
+  const autoNearest=document.getElementById('flightAutoNearest');
+  if(autoNearest)flight.autoNearest=autoNearest.checked;
+  const stationInputs=[...document.querySelectorAll('[data-flight-station]')];
+  if(stationInputs.length)flight.selectedStations=stationInputs.filter(element=>element.checked).map(element=>element.dataset.flightStation).filter(Boolean);
+}
 function bindEquipmentDraft(){
   const recalcAndMark=()=>{updateCalculatedEquipmentValues(draft.equipment);setSectionDirty('equipment')};
   document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(element=>element.onchange=()=>{const item=draft.equipment.telescopes.find(value=>value.id===row.dataset.scopeRow);if(!item)return;item[element.dataset.scope]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;recalcAndMark();render()}));
@@ -2942,7 +2952,7 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
-  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'weatherModels');
+  set('flightProxyUrl',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.proxyUrl=element.value.trim()},'weatherModels','input');
   set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'weatherModels');
   document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('weatherModels')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
@@ -3184,10 +3194,13 @@ async function saveDraftSection(section){
     profile.central.windUnit=draft.central.windUnit;profile.central.activeWindProfile=draft.central.activeWindProfile;profile.central.windProfiles=deepClone(draft.central.windProfiles);profile.central.dew=deepClone(draft.central.dew);profile.central.jet=deepClone(draft.central.jet);dirtySections.delete('centralWind');
   }
   if(section==='weatherModels'){
+    syncFlightWeatherSettingsFromInputs(draft);
     const total=Object.values(draft.central.weatherModels.weights).reduce((sum,value)=>sum+Number(value),0);
     if(total!==100){alert('Die Gewichtung der Wettermodelle muss exakt 100 % ergeben.');return}
     profile.central.weatherModels=deepClone(draft.central.weatherModels);
     profile.central.flightWeather=deepClone(draft.central.flightWeather||{});
+    flightWeatherData=null;
+    flightWeatherError='';
     profile.central.mosmix=deepClone(draft.central.mosmix||{});
     profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
   }

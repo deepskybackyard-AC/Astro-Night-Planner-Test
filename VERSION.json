@@ -1,19 +1,21 @@
 {
-  "version": "1.1.0-test.11",
-  "release": "1.1.0-test.11",
+  "version": "1.1.0-test.12",
+  "release": "1.1.0-test.12",
   "environment": "test",
-  "builtAt": "2026-06-24T00:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.11: Die Flugwetter-Proxy-URL wird korrekt gespeichert und nach dem Speichern für den METAR/TAF-Abruf verwendet.",
+  "builtAt": "2026-06-24T22:00:00+02:00",
+  "notes": "Testversion 1.1.0-test.12: Die Flugwetter-Proxy-URL wird nun bereits beim Tippen als Änderung erkannt und beim Speichern zusätzlich direkt aus dem Eingabefeld übernommen.",
   "releaseNotes": {
     "de": [
-      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter wird jetzt korrekt gespeichert.",
-      "Der Flugwetter-Tab verwendet nach dem Speichern die eingetragene workers.dev-Adresse.",
-      "METAR/TAF-Stationen, Proxy-Status und Fallback-Links bleiben erhalten."
+      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter wird beim Tippen sofort als ungespeicherte Änderung erkannt.",
+      "Beim Speichern der Wettermodell-Einstellungen wird die Proxy-URL zusätzlich direkt aus dem Eingabefeld übernommen, auch wenn das Feld noch nicht verlassen wurde.",
+      "Nach dem Speichern werden veraltete Flugwetter-Rohdaten verworfen, damit der nächste METAR/TAF-Abruf die neue Proxy-Adresse verwendet.",
+      "Der HTML-Titel wurde auf die aktuelle Testversion korrigiert."
     ],
     "en": [
-      "The Cloudflare Worker/proxy URL for aviation weather is now saved correctly.",
-      "After saving, the aviation-weather tab uses the configured workers.dev address.",
-      "METAR/TAF stations, proxy status and fallback links are preserved."
+      "The Cloudflare Worker/proxy URL for aviation weather is now marked dirty while typing.",
+      "When saving weather-model settings, the proxy URL is additionally read directly from the input field, even if the field has not lost focus yet.",
+      "After saving, stale aviation-weather data is cleared so the next METAR/TAF fetch uses the new proxy address.",
+      "The HTML title has been updated to the current test version."
     ]
   }
 }
