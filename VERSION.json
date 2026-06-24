@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.13",
-  "release": "1.1.0-test.13",
+  "version": "1.1.0-test.14",
+  "release": "1.1.0-test.14",
   "environment": "test",
-  "builtAt": "2026-06-24T22:25:00+02:00",
-  "notes": "Testversion 1.1.0-test.13: Korrigiert die persistente Speicherung der Flugwetter-Proxy-URL im tatsächlich sichtbaren Wolkenkarten-/Flugwetter-Abschnitt.",
+  "builtAt": "2026-06-24T22:55:00+02:00",
+  "notes": "Testversion 1.1.0-test.14: Trennt die integrierte Flugwetter-Abfrage klar von externen AviationWeather-Fallback-Links und ergänzt einen Proxy-Test in den Einstellungen.",
   "releaseNotes": {
     "de": [
-      "Die Cloudflare-Worker-/Proxy-URL für Flugwetter gehört in der Oberfläche zum Abschnitt Wolkenkarte/Flugwetter und wird nun auch dort als Änderung markiert.",
-      "Beim Speichern von „Wolkenkarte speichern“ werden Proxy-URL, automatische nächste Station und Stationsauswahl dauerhaft in IndexedDB übernommen.",
-      "Die Speicherung funktioniert jetzt auch dann, wenn das Eingabefeld beim Klick auf Speichern noch fokussiert ist.",
-      "Veraltete METAR/TAF-Daten werden nach einer Änderung verworfen, damit der nächste Abruf die neue Proxy-Adresse nutzt."
+      "Die Flugwetter-Schaltfläche ist nun eindeutig als „METAR/TAF in der App laden“ beschriftet.",
+      "Externe AviationWeather-Links sind in eingeklappte Fallback-Bereiche verschoben und öffnen nicht mehr so leicht versehentlich eine NOAA/AWC-Seite.",
+      "Bei Ladefehlern weist die App darauf hin, dass keine externe AviationWeather-Seite automatisch geöffnet wird.",
+      "In den Einstellungen wurde ein Button „Proxy testen“ ergänzt, der /flight?stations=EDDS gegen die eingetragene Proxy-Basisadresse prüft."
     ],
     "en": [
-      "The Cloudflare Worker/proxy URL for aviation weather belongs to the visible cloud-map/aviation-weather section and is now marked dirty there.",
-      "Saving via ‘Save cloud map’ now persists the proxy URL, automatic nearest station and selected stations to IndexedDB.",
-      "Saving also works when the input field still has focus while the save button is clicked.",
-      "Stale METAR/TAF data is cleared after a change so the next fetch uses the new proxy address."
+      "The aviation-weather button is now clearly labelled as loading METAR/TAF inside the app.",
+      "External AviationWeather links have been moved into collapsed fallback sections to avoid accidentally opening the NOAA/AWC site.",
+      "On load errors, the app clarifies that it does not open external AviationWeather pages automatically.",
+      "A “Test proxy” button has been added to settings and checks /flight?stations=EDDS against the configured proxy base URL."
     ]
   }
 }
