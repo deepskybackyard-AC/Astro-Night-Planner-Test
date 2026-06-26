@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.17 – integrierte Flugwetter-Stationskarte und MOSMIX-Ansicht */
+/* Astro Night Planner 1.1.0-test.18 – zusätzliche Wetterquellen als Tabs */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -8,14 +8,14 @@ const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Aladin-Rahmenverschiebung wurde als echtes Dragging des Hauptrahmens korrigiert.',
-    'Aladin-Infofelder lassen sich unabhängig von ihrer Position zuverlässig ausblenden und werden oben/unten nicht abgeschnitten.',
-    'Mondaufgang-/Monduntergang-Hinweise zeigen die tatsächliche Uhrzeit, wenn das Ereignis außerhalb des Planungszeitraums liegt.'
+    'Flugwetter/METAR/TAF und MOSMIX wurden aus der normalen Oberfläche entfernt.',
+    'Zusätzliche Wetterquellen werden jetzt als Tabs für Meteoblue, Clear Outside, Windy und Ventusky angezeigt.',
+    'Die externen Wetterquellen werden erst beim Anwählen des Tabs geladen und nutzen den aktuellen Planungsstandort.'
   ],
   en: [
-    'Aladin frame movement now works as true dragging of the main frame.',
-    'Aladin info boxes can be hidden reliably in every position and are no longer clipped at the top/bottom.',
-    'Moonrise/moonset hints include the actual time when the event is outside the planning window.'
+    'Aviation weather/METAR/TAF and MOSMIX have been removed from the normal interface.',
+    'Additional weather sources are now shown as tabs for Meteoblue, Clear Outside, Windy and Ventusky.',
+    'External weather sources are loaded only when their tab is selected and use the current planning location.'
   ]
 }
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
@@ -100,6 +100,38 @@ Object.assign(EN_EXACT,{
   'Wolken':'Clouds',
   'Wind':'Wind',
   'Flugkategorie':'Flight category'
+});
+Object.assign(EN_EXACT,{
+  'Zusätzliche Wetterquellen':'Additional weather sources',
+  'Externe Wetterquellen':'External weather sources',
+  'Meteoblue':'Meteoblue',
+  'Clear Outside':'Clear Outside',
+  'Windy':'Windy',
+  'Ventusky':'Ventusky',
+  'Kontrollquelle':'Reference source',
+  'Standort':'Location',
+  'Großansicht':'Full-screen view',
+  'In neuem Tab öffnen':'Open in new tab',
+  'Bei Meteoblue öffnen':'Open at Meteoblue',
+  'Wetterkarten bei Meteoblue öffnen':'Open weather maps at Meteoblue',
+  'Clear Outside in neuem Tab öffnen':'Open Clear Outside in a new tab',
+  'Windy in neuem Tab öffnen':'Open Windy in a new tab',
+  'Ventusky in neuem Tab öffnen':'Open Ventusky in a new tab',
+  'Meteoblue-Tab anzeigen':'Show Meteoblue tab',
+  'Clear-Outside-Tab anzeigen':'Show Clear Outside tab',
+  'Windy-Tab anzeigen':'Show Windy tab',
+  'Ventusky-Tab anzeigen':'Show Ventusky tab',
+  'Ausgewählte externe Wetterquellen werden in der Planung als Tabs angezeigt. Sie werden erst beim Anwählen geladen und fließen nicht automatisch in die Astro-Bewertung ein.':'Selected external weather sources are shown as tabs in the planning view. They are loaded only when selected and are not automatically included in the astro score.',
+  'Externe Wetterquellen nutzen den aktuellen Planungsstandort. Sie dienen als Kontrollblick und ersetzen nicht die eigene ANP-Bewertung.':'External weather sources use the current planning location. They are a reference check and do not replace the ANP score.',
+  'Meteoblue Astronomy Seeing und Wetterkarten':'Meteoblue Astronomy Seeing and weather maps',
+  'Clear Outside Astro-Prognosebild':'Clear Outside astronomy forecast image',
+  'Interaktive Windy-Wetterkarte':'Interactive Windy weather map',
+  'Interaktive Ventusky-Wetterkarte':'Interactive Ventusky weather map'
+});
+
+Object.assign(EN_EXACT,{
+  'Zusätzliche Wetterquellen':'Additional weather sources',
+  'Die zusätzlichen Wetterquellen sind als Tabs organisiert. Meteoblue, Clear Outside, Windy und Ventusky nutzen den aktuell gewählten Planungsstandort und werden erst geladen, wenn der jeweilige Tab angewählt wird. Sie sind externe Kontrollquellen und fließen nicht automatisch in die Astro-Bewertung ein. Clear Outside wird als Prognosebild eingebunden und kann zusätzlich in einem separaten Browser-Tab geöffnet werden.':'Additional weather sources are organized as tabs. Meteoblue, Clear Outside, Windy and Ventusky use the currently selected planning location and are loaded only when their tab is selected. They are external reference sources and are not automatically included in the astro score. Clear Outside is embedded as a forecast image and can also be opened in a separate browser tab.'
 });
 function tx(key){return (UI_TEXT[language]||UI_TEXT.de)[key]||UI_TEXT.de[key]||key}
 function txFooter(key){return (UI_TEXT[language]||UI_TEXT.de).footer[key]||UI_TEXT.de.footer[key]||key}
@@ -336,7 +368,7 @@ function curatedOutlineForObject(obj){return CURATED_OBJECT_OUTLINES[outlineKeyF
 
 function standardProfile(){
   return {
-    id:'standard', name:'Standard', schemaVersion:7, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+    id:'standard', name:'Standard', schemaVersion:8, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
     equipment:{
       telescopes:[], selectedTelescopeId:'',
       cameras:[], selectedCameraId:'',
@@ -357,8 +389,7 @@ function standardProfile(){
       aladinLabels:{visible:true,detail:'auto'},
       aladinInfo:{visible:true,position:'right'},
       aladinSurveys:defaultAladinSurveys(),
-      flightWeather:{autoNearest:true,selectedStations:['EDDS','EDDM','EDDF'],proxyUrl:FLIGHT_WEATHER_PROXY_BASE},
-      mosmix:{enabled:true},
+      weatherSources:{meteoblue:true,clearoutside:true,windy:true,ventusky:true},
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
       detailPanels:{altitudeCollapsed:true,horizonCollapsed:true},
@@ -719,10 +750,7 @@ function normalizeProfile(p){
   out.central.qualityThresholds={...base.central.qualityThresholds,...(p.central?.qualityThresholds||{})};
   out.central.aladinLabels={...base.central.aladinLabels,...(p.central?.aladinLabels||{})};
   out.central.aladinInfo={...base.central.aladinInfo,...(p.central?.aladinInfo||{})};
-  out.central.flightWeather={...base.central.flightWeather,...(p.central?.flightWeather||{})};
-  out.central.flightWeather.selectedStations=Array.isArray(out.central.flightWeather.selectedStations)?out.central.flightWeather.selectedStations.filter(id=>GERMAN_AVIATION_STATIONS.some(st=>st.id===id)):base.central.flightWeather.selectedStations.slice();
-  out.central.flightWeather.proxyUrl=FLIGHT_WEATHER_PROXY_BASE;
-  out.central.mosmix={...base.central.mosmix,...(p.central?.mosmix||{})};
+  out.central.weatherSources={...base.central.weatherSources,...(p.central?.weatherSources||{})};
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
   out.central.filterDefaults.selectedFilters=Array.isArray(out.central.filterDefaults.selectedFilters)?out.central.filterDefaults.selectedFilters.filter(x=>FILTER_KEYS.includes(x)):DEFAULT_SELECTED_FILTERS.slice();
@@ -759,7 +787,7 @@ function normalizeProfile(p){
     return{...x,horizonProfiles:profiles,defaultHorizonProfileId:defaultId,selectedHorizonProfileId:selectedId,horizonProfile:selected.horizonProfile.slice(),horizon:Array.from({length:8},(_,index)=>Number(selected.horizonProfile[index*9]||0)),obstacles:selected.obstacles.map(item=>({...item}))};
   });
   out.planning={...base.planning,...(p.planning||{})};
-  if(!['meteoblue','flight','mosmix'].includes(out.planning.weatherSourceTab))out.planning.weatherSourceTab='meteoblue';
+  if(!['meteoblue','clearoutside','windy','ventusky'].includes(out.planning.weatherSourceTab))out.planning.weatherSourceTab='meteoblue';
   out.planning.search=String(out.planning.search||'');
   out.planning.directSearch=String(out.planning.directSearch||'');
   const defaultSize=out.central.sizeProfiles.find(x=>x.id===(out.planning.sizeProfileId||out.central.activeSizeProfileId))||out.central.sizeProfiles[0];
@@ -782,7 +810,7 @@ function normalizeProfile(p){
     const selected=BUILTIN_OBJECTS.find(item=>item.id===out.planning.selectedObjectId);
     out.planning.objectRotation=normalizedAngle180((Number(selected?.positionAngleDeg)||0)+(Number(out.planning.objectRotation)||0));
   }
-  out.schemaVersion=7;
+  out.schemaVersion=8;
   if(out.planning.locationId&&!out.locations.some(item=>item.id===out.planning.locationId))out.planning.locationId=null;
   if(out.planning.temporaryTelescopeId&&!out.equipment.telescopes.some(item=>item.id===out.planning.temporaryTelescopeId))out.planning.temporaryTelescopeId=null;
   if(out.planning.temporarySetupId&&!out.equipment.setups.some(item=>item.id===out.planning.temporarySetupId))out.planning.temporarySetupId=null;
@@ -933,7 +961,7 @@ function legalPageContent(page){
     impressum:{title:'Impressum',html:`<p><strong>Angaben zum Anbieter</strong></p><p>Andreas Cordt<br>Schwarzwaldstraße 15<br>70794 Filderstadt<br>Deutschland</p><p>E-Mail: <a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a><br>Homepage: <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p><p>Der Astro Night Planner wird rein privat unter dem eigenen Namen angeboten.</p>`},
     datenschutz:{title:'Datenschutz',html:`<p><strong>Verantwortlicher</strong><br>Andreas Cordt, Schwarzwaldstraße 15, 70794 Filderstadt<br><a href="mailto:andreas@deepskyastrophoto.de">andreas@deepskyastrophoto.de</a></p><p><strong>Lokale Datenhaltung</strong><br>Profile, Ausrüstung, Standorte, Horizonte und Einstellungen werden lokal im Browser in IndexedDB gespeichert. PWA-Programmdateien liegen in Cache Storage. Es bestehen keine Benutzerkonten, keine Kontaktformulare und keine zentrale Synchronisierung.</p><p><strong>Keine eigene Reichweitenmessung</strong><br>Der Betreiber setzt keine eigene Besucherstatistik, kein Tracking und keine eigene Fehleranalyse ein.</p><p><strong>Hosting und externe Abrufe</strong><br>Die Anwendung wird über GitHub Pages bereitgestellt. Beim Abruf können technisch erforderliche Verbindungsdaten, insbesondere die IP-Adresse, durch GitHub verarbeitet werden. Je nach genutzter Funktion stellt der Browser direkte Verbindungen zu Open-Meteo, OpenStreetMap/Nominatim, OpenFreeMap, MapLibre einschließlich der Geländeschattierung, CDS/Aladin Lite, Meteoblue sowie gegebenenfalls dem GitHub-Rohdatenserver her. Dabei können IP-Adresse, Zeitpunkt, Browserdaten und die gewählten Koordinaten an den jeweiligen Anbieter übertragen werden.</p><p><strong>Standort</strong><br>Der Browserstandort wird nur nach ausdrücklicher Freigabe verwendet. Alternativ kann ein Ort manuell ausgewählt werden.</p><p><strong>Aktuelle Installationsadresse</strong><br><code>${esc(publicUrl)}</code></p><p class="notice warn">Vor der Veröffentlichung im Produktivsystem werden die endgültige URL und die tatsächlich eingebundenen Dienste nochmals aus dem ausgelieferten Programmstand geprüft.</p>`},
     nutzung:{title:'Nutzungshinweise',html:`<p>Wetterprognosen, Modellkonsens, Wolkenkarten, astronomische Berechnungen und Qualitätsbewertungen sind Planungshilfen. Sie stellen keine Garantie für tatsächliche Beobachtungs- oder Aufnahmebedingungen dar.</p><p>Sicherheitsentscheidungen für Personen und Ausrüstung müssen anhand der aktuellen Bedingungen vor Ort sowie gegebenenfalls offizieller Wetter- und Warninformationen getroffen werden. Die Qualitätsfarben bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit einer Montierung oder anderer Ausrüstung.</p><p><strong>Entwicklungshinweis</strong><br>Der Astro Night Planner wurde von Andreas Cordt mit Unterstützung generativer KI entwickelt und fortlaufend getestet. Trotz sorgfältiger Entwicklung können Prognose-, Berechnungs-, Darstellungs- und Programmfehler nicht vollständig ausgeschlossen werden.</p>`},
-    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS einschließlich MapLibre-Demotiles für die Geländeschattierung. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Kontrollvorhersage:</strong> Meteoblue Astronomy Seeing und Meteoblue-Wetterkarten.</li><li><strong>Flugwetter:</strong> METAR-/TAF-Stationsdaten über den fest hinterlegten Cloudflare-Worker-Proxy und AviationWeather-Datenquelle.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul>`},
+    quellen:{title:'Datenquellen & Lizenzen',html:`<ul><li><strong>Wetter:</strong> Open-Meteo mit DWD ICON, ECMWF IFS und NOAA GFS.</li><li><strong>Karten und Geocoding:</strong> OpenStreetMap/Nominatim, OpenFreeMap und MapLibre GL JS einschließlich MapLibre-Demotiles für die Geländeschattierung. OpenStreetMap-Daten © OpenStreetMap-Mitwirkende.</li><li><strong>Himmelsbild:</strong> Aladin Lite und CDS Strasbourg; genutzte Surveys unterliegen den Angaben der jeweiligen Datenanbieter.</li><li><strong>Externe Wetterquellen:</strong> Meteoblue Astronomy Seeing/Wetterkarten, Clear Outside, Windy und Ventusky als Kontrollquellen mit Standortübergabe.</li><li><strong>Astronomische Berechnungen:</strong> Astronomy Engine sowie anwendungseigene Berechnungen.</li><li><strong>Objektkatalog:</strong> mitgelieferter Planner-Katalog; optionaler Rohdatenabruf aus dem zugehörigen GitHub-Repository.</li></ul>`},
     version:{title:'Version',html:`<p><strong>Astro Night Planner ${esc(RELEASE)}</strong></p><p>Programmversion: <code>${esc(APP_VERSION)}</code><br>Umgebung: <code>${esc(ENV==='test'?'TESTVERSION':'Produktivversion')}</code><br>Profilschema: 7</p>${versionNotesHtml('de')}<p>© Andreas Cordt · <a href="https://www.deepskyastrophoto.de" target="_blank" rel="noopener noreferrer">www.deepskyastrophoto.de</a></p>`}
   };
   return pages[page]||pages.version;
@@ -1947,45 +1975,73 @@ function renderFraming(o,windowRange,loc){
   </section>`;
 }
 
+function normalizedLocationNumber(value,digits=3){const n=Number(value);return Number.isFinite(n)?n.toFixed(digits):'0'}
+function externalWeatherUrls(loc){
+  const lat=Number(loc?.latitude)||0, lon=Number(loc?.longitude)||0, name=String(loc?.name||'Planungsstandort').trim()||'Planungsstandort';
+  const lat3=normalizedLocationNumber(lat,3), lon3=normalizedLocationNumber(lon,3), lat2=normalizedLocationNumber(lat,2), lon2=normalizedLocationNumber(lon,2);
+  const windyParams=new URLSearchParams({type:'map',location:'coordinates',metricRain:'mm',metricTemp:'°C',metricWind:'km/h',zoom:'8',overlay:'clouds',product:'ecmwf',level:'surface',lat:lat3,lon:lon3,marker:'true'});
+  const ventuskyParams=new URLSearchParams({p:`${lat3};${lon3};7`,l:'clouds-total',pin:`${lat3};${lon3};dot;${name}`});
+  return {
+    clearoutsidePage:`https://clearoutside.com/forecast/${lat2}/${lon2}`,
+    clearoutsideImage:`https://clearoutside.com/forecast_image_large/${lat2}/${lon2}/forecast.png`,
+    clearoutsideEmbed:`https://clearoutside.com/forecast_embed/${lat2}/${lon2}`,
+    windyEmbed:`https://embed.windy.com/embed.html?${windyParams.toString()}`,
+    windyPage:`https://www.windy.com/?clouds,${lat3},${lon3},8`,
+    ventuskyEmbed:`https://embed.ventusky.com/?${ventuskyParams.toString()}`,
+    ventuskyPage:`https://www.ventusky.com/?p=${lat3};${lon3};7&l=clouds-total`
+  };
+}
+function enabledWeatherSourceKeys(){
+  const defaults={meteoblue:true,clearoutside:true,windy:true,ventusky:true};
+  const settings={...defaults,...(profile.central.weatherSources||{})};
+  return ['meteoblue','clearoutside','windy','ventusky'].filter(key=>settings[key]!==false);
+}
+function weatherSourceLabel(key){return ({meteoblue:'Meteoblue',clearoutside:'Clear Outside',windy:'Windy',ventusky:'Ventusky'})[key]||key}
+function ensureActiveWeatherSourceTab(){
+  const keys=enabledWeatherSourceKeys();
+  if(!keys.length)return '';
+  if(!keys.includes(profile.planning.weatherSourceTab))profile.planning.weatherSourceTab=keys[0];
+  return profile.planning.weatherSourceTab;
+}
 function renderWeatherSourceTabs(loc,night,windowRange){
-  const active=profile.planning.weatherSourceTab||'meteoblue';
-  return `<section class="card weather-source-tabs-card"><div class="section-title-row"><div><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="small muted">${language==='en'?'Meteoblue, aviation weather and MOSMIX are independent reference sources.':'Meteoblue, Flugwetter und MOSMIX sind unabhängige Zusatz- und Kontrollquellen.'}</div></div></div>
-    <div class="settings-tabs weather-source-tabs" style="margin-top:12px">${[['meteoblue','Meteoblue'],['flight',language==='en'?'Aviation weather':'Flugwetter'],['mosmix','MOSMIX']].map(([key,label])=>`<button type="button" data-weather-source-tab="${key}" class="${active===key?'active':''}">${label}</button>`).join('')}</div>
-    <div class="weather-source-panel ${active==='meteoblue'?'active':''}">${active==='meteoblue'?renderMeteoblue(loc):''}</div>
-    <div class="weather-source-panel ${active==='flight'?'active':''}">${active==='flight'?renderFlightWeather(loc):''}</div>
-    <div class="weather-source-panel ${active==='mosmix'?'active':''}">${active==='mosmix'?renderMosmix(loc,night,windowRange):''}</div>
+  const enabled=enabledWeatherSourceKeys();
+  if(!enabled.length)return `<section class="card weather-source-tabs-card"><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="notice subtle">${language==='en'?'No external weather source tab is enabled in Settings.':'In den Einstellungen ist keine externe Wetterquelle als Tab aktiviert.'}</div></section>`;
+  const active=ensureActiveWeatherSourceTab();
+  return `<section class="card weather-source-tabs-card"><div class="section-title-row"><div><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="small muted">${language==='en'?'External reference sources for the selected planning location. Loaded only when the tab is opened.':'Externe Kontrollquellen für den gewählten Planungsstandort. Geladen wird erst beim Öffnen des jeweiligen Tabs.'}</div></div></div>
+    <div class="settings-tabs weather-source-tabs" style="margin-top:12px">${enabled.map(key=>`<button type="button" data-weather-source-tab="${key}" class="${active===key?'active':''}">${esc(weatherSourceLabel(key))}</button>`).join('')}</div>
+    <div class="weather-source-panel active">${renderWeatherSourcePanel(active,loc)}</div>
   </section>`;
 }
-function renderFlightWeather(loc){
-  const stations=selectedAviationStations(loc);
-  const ids=stations.map(st=>st.id).join(',');
-  const data=flightWeatherData||{};
-  const loadedAt=data.loadedAt?new Date(data.loadedAt):null;
-  const sourceLabel=data.source==='proxy'?(language==='en'?'App proxy':'App-Proxy'):(language==='en'?'not loaded yet':'noch nicht geladen');
-  const byId=(array)=>new Map((array||[]).map(item=>[String(item.icaoId||item.station_id||item.id||'').toUpperCase(),item]));
-  const metars=byId(data.metars),tafs=byId(data.tafs);
-  const label=(de,en)=>language==='en'?en:de;
-  const cards=stations.map(st=>{
-    const metar=metars.get(st.id)||{}, taf=tafs.get(st.id)||{};
-    const rawMetar=safeRawText(metar.rawOb||metar.raw_text||metar.rawMETAR||metar.raw);
-    const rawTaf=safeRawText(taf?.rawTAF||taf?.raw_text||taf?.raw||taf?.text);
-    const clouds=(metar.clouds||[]).map(c=>`${c.cover||c.coverage||''} ${c.base||c.base_feet_agl||''}`).join(', ');
-    const wind=[metar.wdir||metar.windDir||metar.wind_direction_degrees,metar.wspd||metar.windSpeed||metar.wind_speed_kt].filter(Boolean).join('° / ');
-    const visibility=metar.visib||metar.visibility||'';
-    const flightCategory=metar.fltCat||metar.flightCategory||'';
-    return `<div class="flight-weather-card metric"><strong>${esc(aviationStationLabel(st,loc))}</strong><div class="small muted">${esc(st.lat.toFixed(3))}°, ${esc(st.lon.toFixed(3))}°</div>
-      ${rawMetar?`<div class="flight-decoded"><b>METAR:</b> ${esc(rawMetar)}</div><div class="small muted">${label('Sicht','Visibility')} ${esc(visibility||'–')} · ${label('Wolken','Clouds')} ${esc(clouds||label('keine Detailangabe','no details'))} · ${label('Wind','Wind')} ${esc(wind||'–')} · ${label('Flugkategorie','Flight category')} ${esc(flightCategory||'–')}</div><div class="notice subtle">${esc(flightAstroHint(metar))}</div>`:`<div class="small muted">${label('METAR noch nicht geladen.','METAR not loaded yet.')}</div>`}
-      ${rawTaf?`<div class="flight-taf-summary"><b>${label('TAF-Kurzprognose','TAF short forecast')}:</b> ${esc(tafAstroHint(taf))}</div>`:`<div class="small muted">${label('TAF noch nicht geladen.','TAF not loaded yet.')}</div>`}</div>`;
-  }).join('');
-  const stationMap=flightStationMapOpen?renderFlightStationMap(loc,stations,metars,tafs):'';
-  return `<details open class="weather-inner-details"><summary><strong>${language==='en'?'Aviation weather / station check':'Flugwetter / Stationsabgleich'}</strong></summary>
-    <div class="notice" style="margin-top:12px">${language==='en'?'METAR and TAF are station reports and short-range aviation forecasts. They are a reality check and are not automatically included in the score.':'METAR und TAF sind Stationsmeldungen und flugmeteorologische Kurzfristprognosen. Sie dienen als Realitätsabgleich und fließen nicht automatisch in die Bewertung ein.'}</div>
-    <div class="data-actions flight-weather-actions" style="margin-top:10px"><button type="button" id="loadFlightWeather" ${flightWeatherLoading?'disabled':''}>${flightWeatherLoading?(language==='en'?'Loading METAR/TAF ...':'METAR/TAF werden geladen …'):(language==='en'?'Refresh METAR/TAF data':'METAR/TAF-Daten aktualisieren')}</button><button type="button" id="toggleFlightStationMap" class="ghost">${flightStationMapOpen?(language==='en'?'Hide station map':'Stationskarte ausblenden'):(language==='en'?'Show station map':'Stationskarte anzeigen')}</button><span class="small muted">${language==='en'?'Stations':'Stationen'}: ${esc(ids||'–')} · ${language==='en'?'Source':'Quelle'}: ${esc(sourceLabel)}${loadedAt&&Number.isFinite(loadedAt.getTime())?` · ${esc(fmtTime(loadedAt,loc.timezone))}`:''}</span></div>
-    <div class="notice subtle" style="margin-top:8px">${language==='en'?'The data is loaded through the fixed app proxy and shown as readable station cards. The station map is drawn directly inside the app and does not open the external AWC map.':'Die Daten werden über den festen App-Proxy geladen und als verständliche Stationskarten angezeigt. Die Stationskarte wird direkt in der App gezeichnet und öffnet keine externe AWC-Karte.'}</div>
-    ${flightWeatherError?`<div class="notice warn" style="margin-top:10px">${esc(flightWeatherError)}</div>`:''}
-    ${stationMap}
-    <div class="grid two flight-weather-grid" style="margin-top:12px">${cards}</div>
-  </details>`;
+function renderWeatherSourcePanel(key,loc){
+  if(key==='meteoblue')return renderMeteoblue(loc);
+  if(key==='clearoutside')return renderClearOutside(loc);
+  if(key==='windy')return renderWindy(loc);
+  if(key==='ventusky')return renderVentusky(loc);
+  return '';
+}
+function renderExternalSourceShell({title,subtitle,notice,embedId,frameTitle,frameUrl,pageUrl,buttonText,content,sourceName}){
+  return `<section class="card external-weather-card"><details open class="weather-inner-details"><summary><strong>${esc(title)}</strong> · ${esc(subtitle)}</summary>
+    <div class="notice" style="margin-top:12px">${notice}</div>
+    <div class="meteoblue-actions external-weather-actions" style="margin-top:10px">
+      <button type="button" data-meteoblue-fullscreen="${esc(embedId)}">⛶ ${language==='en'?'Full-screen view':'Großansicht'}</button>
+      <a class="button primary" href="${esc(pageUrl)}" target="_blank" rel="noopener noreferrer">${esc(buttonText)}</a>
+    </div>
+    <div class="meteoblue-embed external-weather-embed" id="${esc(embedId)}">${content||`<iframe class="meteoblue-frame external-weather-frame" title="${esc(frameTitle)}" src="${esc(frameUrl)}" loading="lazy" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe>`}</div>
+    <div class="meteoblue-credit"><a href="${esc(pageUrl)}" target="_blank" rel="noopener noreferrer">${esc(sourceName)}</a></div>
+  </details></section>`;
+}
+function renderClearOutside(loc){
+  const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
+  const content=`<a class="clearoutside-image-link" href="${esc(urls.clearoutsidePage)}" target="_blank" rel="noopener noreferrer"><img class="clearoutside-forecast-image" src="${esc(urls.clearoutsideImage)}" alt="Clear Outside Forecast ${esc(place)}" loading="lazy"></a>`;
+  return renderExternalSourceShell({title:'Clear Outside',subtitle:language==='en'?'astronomy forecast image':'Astro-Prognosebild',notice:language==='en'?`Clear Outside is embedded as an automatically updated forecast image for ${esc(place)}. Open it in a separate browser tab for the full interactive forecast.`:`Clear Outside wird als automatisch aktualisiertes Prognosebild für ${esc(place)} eingebunden. Für die vollständige Ansicht kannst du die Quelle in einem separaten Browser-Tab öffnen.`,embedId:'clearOutsideWrap',pageUrl:urls.clearoutsidePage,buttonText:language==='en'?'Open Clear Outside in a new tab':'Clear Outside in neuem Tab öffnen',content,sourceName:'Clear Outside'});
+}
+function renderWindy(loc){
+  const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
+  return renderExternalSourceShell({title:'Windy',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Windy is opened directly at ${esc(place)} with cloud layer, ECMWF model and metric units.`:`Windy wird direkt am Standort ${esc(place)} mit Wolkenlayer, ECMWF-Modell und metrischen Einheiten geöffnet.`,embedId:'windyWrap',frameTitle:`Windy Wetterkarte für ${place}`,frameUrl:urls.windyEmbed,pageUrl:urls.windyPage,buttonText:language==='en'?'Open Windy in a new tab':'Windy in neuem Tab öffnen',sourceName:'Windy'});
+}
+function renderVentusky(loc){
+  const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
+  return renderExternalSourceShell({title:'Ventusky',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Ventusky is opened directly at ${esc(place)} with total cloud cover and a location marker. Units and language follow the browser settings.`:`Ventusky wird direkt am Standort ${esc(place)} mit Gesamtbewölkung und Standortmarker geöffnet. Einheiten und Sprache folgen den Browser-Einstellungen.`,embedId:'ventuskyWrap',frameTitle:`Ventusky Wetterkarte für ${place}`,frameUrl:urls.ventuskyEmbed,pageUrl:urls.ventuskyPage,buttonText:language==='en'?'Open Ventusky in a new tab':'Ventusky in neuem Tab öffnen',sourceName:'Ventusky'});
 }
 async function fetchFlightWeather(){
   const ids=selectedAviationStations(activeLocation()).map(st=>st.id).join(',');
@@ -2064,7 +2120,7 @@ function resetDraftSection(section){
     draft.central.windUnit=base.central.windUnit;draft.central.activeWindProfile=base.central.activeWindProfile;draft.central.windProfiles=deepClone(base.central.windProfiles);draft.central.dew=deepClone(base.central.dew);draft.central.jet=deepClone(base.central.jet);
   }
   if(section==='weatherModels')draft.central.weatherModels=deepClone(base.central.weatherModels);
-  if(section==='cloudMap'){draft.central.cloudMap=deepClone(base.central.cloudMap);draft.central.flightWeather=deepClone(base.central.flightWeather);}
+  if(section==='cloudMap'){draft.central.cloudMap=deepClone(base.central.cloudMap);draft.central.weatherSources=deepClone(base.central.weatherSources);}
   if(section==='weights')draft.central.weights=deepClone(base.central.weights);
   if(section==='display'){
     draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);draft.central.visibleSections=deepClone(base.central.visibleSections);
@@ -2157,7 +2213,7 @@ function renderCentral(){
       <label>Glättung der Wolkenfelder<select id="cloudMapSmoothing">${CLOUD_SMOOTHING_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.smoothing===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
     </div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>${language==='en'?'Aviation weather stations Germany':'Flugwetterstationen Deutschland'}</strong><div class="small muted">${language==='en'?'Choose the major airports shown in the aviation weather tab. The nearest station can be added automatically.':'Wähle die Hauptflughäfen, die im Tab Flugwetter angezeigt werden. Die nächstgelegene Station kann automatisch ergänzt werden.'}</div><div class="small muted" style="margin-top:6px">${language==='en'?'The fixed app proxy is stored internally. No proxy address needs to be entered in settings.':'Der feste App-Proxy ist intern hinterlegt. In den Einstellungen muss keine Proxy-Adresse eingetragen werden.'}</div><label class="chip" style="margin-top:8px"><input id="flightAutoNearest" type="checkbox" ${c.flightWeather?.autoNearest!==false?'checked':''}>${language==='en'?'Automatically show nearest station':'Nächstgelegene Station automatisch anzeigen'}</label><div class="grid four" style="margin-top:8px">${GERMAN_AVIATION_STATIONS.map(st=>`<label class="chip"><input data-flight-station="${st.id}" type="checkbox" ${((c.flightWeather?.selectedStations||['EDDS','EDDM','EDDF']).includes(st.id))?'checked':''}>${st.id} ${st.name}</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>${language==='en'?'External weather-source tabs':'Tabs für externe Wetterquellen'}</strong><div class="small muted">${language==='en'?'Selected external weather sources are shown as tabs in the planning view. They are loaded only when selected and are not automatically included in the astro score.':'Ausgewählte externe Wetterquellen werden in der Planung als Tabs angezeigt. Sie werden erst beim Anwählen geladen und fließen nicht automatisch in die Astro-Bewertung ein.'}</div><div class="grid two" style="margin-top:8px">${[['meteoblue','Meteoblue'],['clearoutside','Clear Outside'],['windy','Windy'],['ventusky','Ventusky']].map(([key,label])=>`<label class="chip"><input data-weather-source-enabled="${key}" type="checkbox" ${(c.weatherSources?.[key]!==false)?'checked':''}>${esc(label)}${key==='clearoutside'?(language==='en'?' shown by default':' initial sichtbar'):''}</label>`).join('')}</div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
   </div>
@@ -2194,7 +2250,7 @@ function renderCentral(){
     <div class="grid two" style="margin-top:12px"><div class="metric"><strong>Qualitätsampel</strong><div class="small muted">Rot 0 bis unter Gelb, Gelb bis unter Grün, Grün bis 100.</div><div class="grid two" style="margin-top:8px"><label>Gelb ab<input id="qualityYellow" type="number" min="1" max="98" step="1" value="${Number(c.qualityThresholds?.yellow??60)}"></label><label>Grün ab<input id="qualityGreen" type="number" min="2" max="99" step="1" value="${Number(c.qualityThresholds?.green??80)}"></label></div></div><div class="metric"><strong>Objektbeschriftungen in Aladin</strong><label class="chip" style="margin-top:8px"><input id="defaultAladinLabelsVisible" type="checkbox" ${c.aladinLabels?.visible!==false?'checked':''}>Objektnamen und Katalognummern anzeigen</label><label>Detailstufe<select id="defaultAladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label></div></div>
     <div class="display-config-selector static"><div class="section-title-row"><div><h3>Objektlisteninformationen konfigurieren</h3><div class="small muted">Sichtbarkeit, Reihenfolge und aktives Darstellungsprofil der Objektliste.</div></div><label>Objektliste Darstellungsprofil – aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div><div class="display-config-list">${Object.entries(c.listDisplay.profiles).map(([key,value])=>renderDisplayColumnConfigurator(key,value)).join('')}</div></div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label><label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label><label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label><label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label><label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label></div>
-    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['weatherSources','Zusätzliche Wetterquellen'],['meteoblue','Meteoblue (alt)'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${esc(label)} anzeigen</label>`).join('')}</div></div>
+    <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Wolkenkarte'],['weatherSources','Zusätzliche Wetterquellen'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${optionText(label)} ${language==='en'?'show':'anzeigen'}</label>`).join('')}</div></div>
     <details class="metric aladin-survey-settings" style="margin-top:16px"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin-Surveys</strong><span class="small muted">Weitere Surveys können manuell per HiPS-ID ergänzt werden. Monochrome Surveys werden nativ angezeigt.</span></summary><div class="section-title-row" style="margin-top:12px"><div><div class="small muted">Surveys in der Aladin-Auswahl aktivieren, umbenennen oder eigene HiPS-IDs ergänzen. Diese Expertenliste ist initial zugeklappt.</div></div><button id="addAladinSurvey" type="button">Survey hinzufügen</button></div>
       <div class="aladin-survey-list">${normalizeAladinSurveys(c.aladinSurveys).map(item=>`<div class="survey-config-row" data-survey-row="${esc(item.id)}"><label class="chip"><input data-aladin-survey="${esc(item.id)}" data-field="enabled" type="checkbox" ${item.enabled?'checked':''}>in Auswahl</label><label>Anzeigename<input data-aladin-survey="${esc(item.id)}" data-field="name" value="${esc(item.name)}"></label><label>HiPS-ID<input data-aladin-survey="${esc(item.id)}" data-field="hipsId" value="${esc(item.hipsId)}" ${item.builtin?'readonly':''}></label><label>Kategorie<input data-aladin-survey="${esc(item.id)}" data-field="category" value="${esc(item.category||'')}"></label>${item.builtin?'':`<button type="button" class="danger" data-delete-aladin-survey="${esc(item.id)}">Entfernen</button>`}</div>`).join('')}</div>
     </details>
@@ -2327,14 +2383,14 @@ function renderInfo(){
     ${renderSaveBar('backup','Sicherungseinstellungen speichern')}
   </div>
   <div class="card help-article subtab-panel ${currentInfoSubTab==='help'?'active':''}"><div class="section-title-row"><div><h2>${esc(tx('helpTitle'))}</h2><div class="small muted">${esc(tx('helpSub'))}</div><div class="help-language-note">${esc(tx('helpNote'))}</div></div><div class="data-actions"><button type="button" data-open-help-section="help-storage">${esc(language==='en'?'Open integrated help':'Integrierte Hilfe öffnen')}</button><a class="button primary" href="${docLink('pdf')}" target="_blank" rel="noopener">${esc(tx('helpPdf'))}</a></div></div>
-    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-weather-sources','Flugwetter/MOSMIX'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-browser-storage','Browserdaten-FAQ'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
+    <div class="help-toc">${[['help-storage','Datenspeicherung'],['help-first','Erste Schritte'],['help-plan','Planungsnacht'],['help-profiles','Planungsprofile'],['help-weather','Wetter'],['help-cloudmap','Wolkenkarte'],['help-meteoblue','Meteoblue'],['help-weather-sources','Zusätzliche Wetterquellen'],['help-filters','Objektfilter'],['help-objects','Objektliste'],['help-details','Objektdetails'],['help-framing','Rahmung'],['help-horizon','Horizont'],['help-equipment','Ausrüstung'],['help-settings','Einstellungen'],['help-backup','Sicherung'],['help-browser-storage','Browserdaten-FAQ'],['help-pwa','PWA'],['help-troubleshooting','Fehlerbehebung'],['help-values','Bewertungswerte']].map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')}</div>
     <section id="help-storage"><h3>Datenspeicherung, Cookies und Browsercache</h3><p>Alle persönlichen Daten werden im gerade verwendeten Browser und Browserprofil gespeichert. IndexedDB enthält die fachlichen Daten, Cache Storage die für den Offlinebetrieb benötigten App-Dateien. Cookies sind nicht der Hauptspeicher. Ein normaler Cache-Löschvorgang betrifft die Einstellungen meist nicht; das Löschen aller Websitedaten der Installationsadresse kann sie jedoch entfernen. Auch ein Wechsel der Domain oder des Browserprofils erzeugt einen getrennten Speicherbereich. Übertrage Daten deshalb mit einer externen Sicherung.</p></section>
     <section id="help-first"><h3>Erste Schritte</h3><p>Prüfe zuerst unter Ausrüstung Teleskop, Kamera und Montierung. Lege anschließend unter Standorte & Horizont deinen Aufnahmeort, mindestens ein Horizontprofil und den jeweiligen Standard fest. Wähle in der Planung Standort, Datum, Planungszeitraum, Teleskop, Kamera, Horizontprofil und Wetterdarstellung. Danach kannst du Objektfilter setzen und ein Objekt durch Klick auf die gesamte Tabellenzeile öffnen.</p></section>
     <section id="help-plan"><h3>Planungsnacht</h3><p>Die Standortauswahl links neben den Datumsfeldern gilt nur für die aktuelle Planung. Koordinaten und Höhe stehen direkt darunter. Sonnen-, Dämmerungs- und Mondzeiten werden für diesen Standort berechnet. Der Planungszeitraum begrenzt Bewertung, Sichtbarkeitsdauer, Wetterzusammenfassung und Höhenprofile.</p></section>
     <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Planungszeitraum, Aufnahmequalitätsprofil, Darstellungsprofil, Wetteransicht, Teleskop, Kamera und Horizontprofil können für die aktuelle Nacht temporär gewählt werden. Teleskop und Kamera wirken sofort auf Bildfeld, Framingbewertung und Aladin-Rahmung; das Horizontprofil auf die Horizontansicht. Keine dieser Auswahlen überschreibt einen gespeicherten Standard. Dauerhafte Standards werden ausschließlich in den Einstellungen festgelegt.</p></section>
     <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
     <section id="help-cloudmap"><h3>Animierte 24-Stunden-Wolkenkarte</h3><p>In der Planung kann temporär zwischen „Karte + Wolken“ und „Nur Wolken“ gewechselt werden. Die kombinierte Ansicht nutzt eine bewusst dunkle, reduzierte topografische Basiskarte. Straßen, Gebäude und POIs werden ausgeblendet; Gelände, Gewässer, Grenzen und wenige Ortsnamen bleiben dezent zur Orientierung. Wolken erscheinen bei allen Modellen einheitlich weiß: je höher der Wolkenanteil, desto deckender die Fläche. Der Modus „Nur Wolken“ zeigt dieselben Felder auf neutral dunklem Hintergrund. Der Modus Modellabweichung bleibt farbig und zeigt die Streuung der drei Modelle.</p><p>Die orangefarbenen Prozentangaben stehen an den tatsächlichen Prognosepunkten und können kompakt ein- oder ausgeblendet werden. Ihre Dichte passt sich an Raster und Bildschirmbreite an. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge. Die Glättung kann direkt in der Planung temporär als „Strukturiert“, „Ausgewogen“ oder „Weich“ gewählt werden, ohne zusätzliche Wetterdaten abzurufen. Das Zeitraster ist mit 15, 30 oder 60 Minuten wählbar; Standard sind 30 Minuten. Zwischenbilder werden aus den stündlichen Modellwerten interpoliert und erhöhen nicht die Prognosegenauigkeit. Bei geringer Sicherheit erscheint „Bewegungsrichtung unsicher“.</p></section>
-    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Flugwetter und MOSMIX</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Flugwetter zeigt ausgewählte deutsche METAR-/TAF-Stationen als Realitätsabgleich; diese Meldungen sind Stationsdaten und keine weitere Modellbewertung. Die Daten werden über einen fest hinterlegten App-Proxy geladen, damit keine manuelle Proxy-Adresse gepflegt werden muss. Die integrierte Stationskarte zeigt die ausgewählten Flughäfen ohne externe AWC-Karte als einfache Übersicht. MOSMIX ergänzt die Planung als standortnahe Punktprognose auf Basis von DWD-Daten.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p></section><section id="help-weather-sources"><h3>Zusätzliche Wetterquellen</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Meteoblue, Clear Outside, Windy und Ventusky nutzen den aktuell gewählten Planungsstandort und werden erst geladen, wenn der jeweilige Tab angewählt wird. Sie sind externe Kontrollquellen und fließen nicht automatisch in die Astro-Bewertung ein. Clear Outside wird als Prognosebild eingebunden und kann zusätzlich in einem separaten Browser-Tab geöffnet werden.</p></section>
     <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Die Suche innerhalb der aktiven Filter verfeinert diese Auswahl. Die Direktsuche rechts daneben sucht dagegen nach Katalognummer, Objektname oder Alias und ignoriert bewusst alle anderen gesetzten Filter. So findest du zum Beispiel SH 2-119 oder NGC 7000 auch dann, wenn ein Katalog, Objekttyp, Größenbereich oder eine Mindesthöhe sie gerade ausblenden würde.</p><p>Texteingaben werden nach 1,5 Sekunden übernommen, damit nicht nach jedem Zeichen neu gerechnet wird; Enter oder „Filter anwenden“ startet sofort. Aktive Suchfelder werden hervorgehoben. Änderungen setzen die Ergebnisliste auf Seite 1 zurück. „Basisfilter zurücksetzen“ stellt nur die Werte dieser Basisfilter-Rubrik auf Standard zurück; Kataloge, Aufnahmefilter, Objekttypen, Ausrüstung und Anzeigeprofile bleiben unverändert.</p><p>Der Katalogfilter LDN/LBN enthält in dieser Version benannte LDN-Dunkelnebel. LBN-Objekte sind noch nicht als eigener Katalog importiert. Größenwerte der LDN-Objekte werden aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet und dienen als praktische Filter- und Rahmungshilfe.</p></section>
     <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Im Darstellungsprofil können die Informationen über eine aufklappbare Auswahlliste ein- oder ausgeschaltet und per Drag-and-drop beziehungsweise Auf-/Ab-Schaltflächen sortiert werden. Der Objektname bleibt immer sichtbar.</p><p>„Beste Stunde“ ist die Stunde mit dem höchsten Qualitätswert innerhalb des nautischen Planungszeitraums, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Meridian und Kulmination bleiben getrennte Informationen. Das Mini-Höhenprofil verwendet den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
     <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt. In der Horizontansicht kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des gewählten Standorts ausgewählt werden.</p></section>
@@ -2971,15 +3027,7 @@ function setSectionDirty(section){
   for(const [tab,sections]of Object.entries(tabGroups))if(sections.includes(section))document.querySelector(`[data-settings-tab="${tab}"]`)?.classList.add('dirty-dot');
 }
 function markDirty(section){setSectionDirty(section)}
-function syncFlightWeatherSettingsFromInputs(target=draft){
-  const central=target.central=target.central||{};
-  const flight=central.flightWeather=central.flightWeather||{};
-  flight.proxyUrl=FLIGHT_WEATHER_PROXY_BASE;
-  const autoNearest=document.getElementById('flightAutoNearest');
-  if(autoNearest)flight.autoNearest=autoNearest.checked;
-  const stationInputs=[...document.querySelectorAll('[data-flight-station]')];
-  if(stationInputs.length)flight.selectedStations=stationInputs.filter(element=>element.checked).map(element=>element.dataset.flightStation).filter(Boolean);
-}
+function syncFlightWeatherSettingsFromInputs(target=draft){return target;}
 function bindEquipmentDraft(){
   const recalcAndMark=()=>{updateCalculatedEquipmentValues(draft.equipment);setSectionDirty('equipment')};
   document.querySelectorAll('[data-scope-row]').forEach(row=>row.querySelectorAll('[data-scope]').forEach(element=>element.onchange=()=>{const item=draft.equipment.telescopes.find(value=>value.id===row.dataset.scopeRow);if(!item)return;item[element.dataset.scope]=element.type==='number'?(element.value===''?null:Number(element.value)):element.value;recalcAndMark();render()}));
@@ -3048,8 +3096,7 @@ function bindCentralDraft(){
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
-  set('flightAutoNearest',element=>{draft.central.flightWeather=draft.central.flightWeather||{};draft.central.flightWeather.autoNearest=element.checked},'cloudMap');
-  document.querySelectorAll('[data-flight-station]').forEach(element=>element.onchange=()=>{draft.central.flightWeather=draft.central.flightWeather||{};const ids=new Set(draft.central.flightWeather.selectedStations||[]);if(element.checked)ids.add(element.dataset.flightStation);else ids.delete(element.dataset.flightStation);draft.central.flightWeather.selectedStations=[...ids];setSectionDirty('cloudMap')});
+  document.querySelectorAll('[data-weather-source-enabled]').forEach(element=>element.onchange=()=>{draft.central.weatherSources=draft.central.weatherSources||{};draft.central.weatherSources[element.dataset.weatherSourceEnabled]=element.checked;setSectionDirty('cloudMap')});
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
     setSectionDirty('weights');
@@ -3289,22 +3336,14 @@ async function saveDraftSection(section){
     profile.central.windUnit=draft.central.windUnit;profile.central.activeWindProfile=draft.central.activeWindProfile;profile.central.windProfiles=deepClone(draft.central.windProfiles);profile.central.dew=deepClone(draft.central.dew);profile.central.jet=deepClone(draft.central.jet);dirtySections.delete('centralWind');
   }
   if(section==='weatherModels'){
-    syncFlightWeatherSettingsFromInputs(draft);
     const total=Object.values(draft.central.weatherModels.weights).reduce((sum,value)=>sum+Number(value),0);
     if(total!==100){alert('Die Gewichtung der Wettermodelle muss exakt 100 % ergeben.');return}
     profile.central.weatherModels=deepClone(draft.central.weatherModels);
-    profile.central.flightWeather=deepClone(draft.central.flightWeather||{});
-    flightWeatherData=null;
-    flightWeatherError='';
-    profile.central.mosmix=deepClone(draft.central.mosmix||{});
     profile.planning.temporaryWeatherView=null;profile.planning.temporaryCloudMapView=null;dirtySections.delete('weatherModels');
   }
   if(section==='cloudMap'){
-    syncFlightWeatherSettingsFromInputs(draft);
     profile.central.cloudMap={...deepClone(draft.central.cloudMap)};
-    profile.central.flightWeather=deepClone(draft.central.flightWeather||{});
-    flightWeatherData=null;
-    flightWeatherError='';
+    profile.central.weatherSources=deepClone(draft.central.weatherSources||{meteoblue:true,clearoutside:true,windy:true,ventusky:true});
     profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
   }
   if(section==='weights'){

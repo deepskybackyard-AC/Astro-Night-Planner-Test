@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.17",
-  "release": "1.1.0-test.17",
+  "version": "1.1.0-test.18",
+  "release": "1.1.0-test.18",
   "environment": "test",
-  "builtAt": "2026-06-24T23:58:00+02:00",
-  "notes": "Testversion 1.1.0-test.17: Externe AWC-Flugwetterkarte durch integrierte Stationskarte ersetzt und MOSMIX-Punktprognose repariert.",
+  "builtAt": "2026-06-25T00:20:00+02:00",
+  "notes": "Testversion 1.1.0-test.18: Zusätzliche Wetterquellen als Tabs mit Meteoblue, Clear Outside, Windy und Ventusky; Flugwetter/MOSMIX entfernt.",
   "releaseNotes": {
     "de": [
-      "Der Flugwetter-Kartenbutton öffnet keine externe AWC-GFA-Karte mehr, sondern zeigt eine integrierte Stationskarte in der App.",
-      "Die Stationskarte markiert die ausgewählten Flugwetterstationen sowie den Planungsstandort und färbt Marker nach METAR-Flugkategorie.",
-      "Der MOSMIX-Tab enthält jetzt eine funktionierende Ladefunktion mit standortnaher Punktprognose und tabellarischer Übersicht.",
-      "Flugwetter- und MOSMIX-Texte wurden für DE/EN ergänzt."
+      "Flugwetter/METAR/TAF und MOSMIX wurden aus der normalen Oberfläche und aus den Einstellungen entfernt.",
+      "Zusätzliche Wetterquellen sind jetzt als Tabs für Meteoblue, Clear Outside, Windy und Ventusky umgesetzt.",
+      "Clear Outside ist initial sichtbar und zusätzlich in einem separaten Browser-Tab öffnbar.",
+      "Alle externen Wetterquellen erhalten den aktuellen Planungsstandort und werden erst beim Anwählen geladen."
     ],
     "en": [
-      "The aviation weather map button no longer opens the external AWC GFA map; it now shows an integrated station map inside the app.",
-      "The station map marks selected aviation weather stations and the planning location, with marker colors based on the METAR flight category.",
-      "The MOSMIX tab now includes a working load action with a local point forecast and tabular overview.",
-      "Aviation weather and MOSMIX texts have been completed for DE/EN."
+      "Aviation weather/METAR/TAF and MOSMIX have been removed from the normal interface and settings.",
+      "Additional weather sources are now implemented as tabs for Meteoblue, Clear Outside, Windy and Ventusky.",
+      "Clear Outside is visible by default and can also be opened in a separate browser tab.",
+      "All external weather sources receive the current planning location and load only when selected."
     ]
   }
 }
