@@ -1,21 +1,19 @@
 {
-  "version": "1.1.0-test.18",
-  "release": "1.1.0-test.18",
+  "version": "1.1.0-test.19",
+  "release": "1.1.0-test.19",
   "environment": "test",
-  "builtAt": "2026-06-25T00:20:00+02:00",
-  "notes": "Testversion 1.1.0-test.18: Zusätzliche Wetterquellen als Tabs mit Meteoblue, Clear Outside, Windy und Ventusky; Flugwetter/MOSMIX entfernt.",
+  "builtAt": "2026-06-26T18:35:00+02:00",
+  "notes": "Testversion 1.1.0-test.19: Clear Outside füllt den Anzeigebereich besser aus; Großansicht für Clear Outside entfernt; Hinweis zur nicht übersetzbaren Clear-Outside-Grafik ergänzt.",
   "releaseNotes": {
     "de": [
-      "Flugwetter/METAR/TAF und MOSMIX wurden aus der normalen Oberfläche und aus den Einstellungen entfernt.",
-      "Zusätzliche Wetterquellen sind jetzt als Tabs für Meteoblue, Clear Outside, Windy und Ventusky umgesetzt.",
-      "Clear Outside ist initial sichtbar und zusätzlich in einem separaten Browser-Tab öffnbar.",
-      "Alle externen Wetterquellen erhalten den aktuellen Planungsstandort und werden erst beim Anwählen geladen."
+      "Clear Outside nutzt nun die verfügbare Breite des Anzeigebereichs deutlich besser.",
+      "Der für Clear Outside wenig hilfreiche Button „Großansicht“ wurde entfernt.",
+      "Ein Hinweis erklärt, dass die Beschriftungen im Clear-Outside-Prognosebild Teil der extern gelieferten Grafik sind und nicht durch die App übersetzt werden können."
     ],
     "en": [
-      "Aviation weather/METAR/TAF and MOSMIX have been removed from the normal interface and settings.",
-      "Additional weather sources are now implemented as tabs for Meteoblue, Clear Outside, Windy and Ventusky.",
-      "Clear Outside is visible by default and can also be opened in a separate browser tab.",
-      "All external weather sources receive the current planning location and load only when selected."
+      "Clear Outside now uses the available display width much better.",
+      "The Clear Outside full-screen button has been removed because it did not add useful value.",
+      "A note explains that labels inside the Clear Outside forecast image are part of the externally provided graphic and cannot be translated by the app."
     ]
   }
 }

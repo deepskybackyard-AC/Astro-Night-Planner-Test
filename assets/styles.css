@@ -639,10 +639,12 @@ body{padding-bottom:0}
 .mosmix-table table{min-width:900px}.mosmix-table td,.mosmix-table th{font-size:.94rem}.flight-weather-actions #toggleFlightStationMap{max-width:320px}
 @media(max-width:720px){.flight-station-map{min-height:280px}.flight-station-marker{min-width:42px;height:28px;font-size:.78rem}.flight-station-map-header{display:block}.flight-station-map-header .small{display:block;margin-top:5px}}
 
-/* 1.1.0-test.18: zusätzliche externe Wetterquellen */
+/* 1.1.0-test.18/19: zusätzliche externe Wetterquellen */
 .external-weather-card .external-weather-embed{min-height:640px}
 .external-weather-frame{height:720px}
-.clearoutside-image-link{display:block;width:100%;overflow:auto;background:#07111c;text-align:center}
-.clearoutside-forecast-image{display:block;max-width:100%;height:auto;margin:0 auto;background:#fff;border:0}
+.clearoutside-card .external-weather-embed{min-height:auto;padding:0;background:#07111c}
+.clearoutside-image-link{display:flex;align-items:flex-start;justify-content:center;width:100%;overflow:auto;background:#07111c;text-align:center}
+.clearoutside-forecast-image{display:block;width:100%;max-width:none;height:auto;margin:0 auto;background:#fff;border:0}
+.clearoutside-language-note{padding:8px 10px;text-align:left;background:rgba(7,17,31,.72);border-top:1px solid rgba(121,184,255,.18)}
 .external-weather-actions{align-items:center}
 @media(max-width:720px){.external-weather-card .external-weather-embed{min-height:420px}.external-weather-frame{height:560px}}

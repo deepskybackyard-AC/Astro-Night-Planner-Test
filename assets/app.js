@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.18 – zusätzliche Wetterquellen als Tabs */
+/* Astro Night Planner 1.1.0-test.19 – Clear Outside Darstellung optimiert */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -8,14 +8,14 @@ const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Flugwetter/METAR/TAF und MOSMIX wurden aus der normalen Oberfläche entfernt.',
-    'Zusätzliche Wetterquellen werden jetzt als Tabs für Meteoblue, Clear Outside, Windy und Ventusky angezeigt.',
-    'Die externen Wetterquellen werden erst beim Anwählen des Tabs geladen und nutzen den aktuellen Planungsstandort.'
+    'Clear Outside nutzt nun die verfügbare Breite des Anzeigebereichs besser.',
+    'Der für Clear Outside wenig hilfreiche Button „Großansicht“ wurde entfernt.',
+    'Ein Hinweis erklärt, dass die Beschriftungen im Clear-Outside-Prognosebild Teil der extern gelieferten Grafik sind und nicht durch die App übersetzt werden können.'
   ],
   en: [
-    'Aviation weather/METAR/TAF and MOSMIX have been removed from the normal interface.',
-    'Additional weather sources are now shown as tabs for Meteoblue, Clear Outside, Windy and Ventusky.',
-    'External weather sources are loaded only when their tab is selected and use the current planning location.'
+    'Clear Outside now uses the available display width better.',
+    'The Clear Outside full-screen button has been removed because it did not add useful value.',
+    'A note explains that labels inside the Clear Outside forecast image are part of the externally provided graphic and cannot be translated by the app.'
   ]
 }
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
@@ -2019,11 +2019,11 @@ function renderWeatherSourcePanel(key,loc){
   if(key==='ventusky')return renderVentusky(loc);
   return '';
 }
-function renderExternalSourceShell({title,subtitle,notice,embedId,frameTitle,frameUrl,pageUrl,buttonText,content,sourceName}){
-  return `<section class="card external-weather-card"><details open class="weather-inner-details"><summary><strong>${esc(title)}</strong> · ${esc(subtitle)}</summary>
+function renderExternalSourceShell({title,subtitle,notice,embedId,frameTitle,frameUrl,pageUrl,buttonText,content,sourceName,hideFullscreen=false,extraClass=''}){
+  return `<section class="card external-weather-card ${esc(extraClass)}"><details open class="weather-inner-details"><summary><strong>${esc(title)}</strong> · ${esc(subtitle)}</summary>
     <div class="notice" style="margin-top:12px">${notice}</div>
     <div class="meteoblue-actions external-weather-actions" style="margin-top:10px">
-      <button type="button" data-meteoblue-fullscreen="${esc(embedId)}">⛶ ${language==='en'?'Full-screen view':'Großansicht'}</button>
+      ${hideFullscreen?'':`<button type="button" data-meteoblue-fullscreen="${esc(embedId)}">⛶ ${language==='en'?'Full-screen view':'Großansicht'}</button>`}
       <a class="button primary" href="${esc(pageUrl)}" target="_blank" rel="noopener noreferrer">${esc(buttonText)}</a>
     </div>
     <div class="meteoblue-embed external-weather-embed" id="${esc(embedId)}">${content||`<iframe class="meteoblue-frame external-weather-frame" title="${esc(frameTitle)}" src="${esc(frameUrl)}" loading="lazy" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe>`}</div>
@@ -2032,8 +2032,9 @@ function renderExternalSourceShell({title,subtitle,notice,embedId,frameTitle,fra
 }
 function renderClearOutside(loc){
   const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
-  const content=`<a class="clearoutside-image-link" href="${esc(urls.clearoutsidePage)}" target="_blank" rel="noopener noreferrer"><img class="clearoutside-forecast-image" src="${esc(urls.clearoutsideImage)}" alt="Clear Outside Forecast ${esc(place)}" loading="lazy"></a>`;
-  return renderExternalSourceShell({title:'Clear Outside',subtitle:language==='en'?'astronomy forecast image':'Astro-Prognosebild',notice:language==='en'?`Clear Outside is embedded as an automatically updated forecast image for ${esc(place)}. Open it in a separate browser tab for the full interactive forecast.`:`Clear Outside wird als automatisch aktualisiertes Prognosebild für ${esc(place)} eingebunden. Für die vollständige Ansicht kannst du die Quelle in einem separaten Browser-Tab öffnen.`,embedId:'clearOutsideWrap',pageUrl:urls.clearoutsidePage,buttonText:language==='en'?'Open Clear Outside in a new tab':'Clear Outside in neuem Tab öffnen',content,sourceName:'Clear Outside'});
+  const langNote=language==='en'?'The embedded forecast image is provided by Clear Outside. Its internal labels are part of the image and cannot be translated by the Astro Night Planner.':'Das eingebundene Prognosebild stammt direkt von Clear Outside. Die Beschriftungen innerhalb des Bildes sind Teil der Grafik und können vom Astro Night Planner nicht übersetzt werden.';
+  const content=`<a class="clearoutside-image-link" href="${esc(urls.clearoutsidePage)}" target="_blank" rel="noopener noreferrer" aria-label="${language==='en'?'Open Clear Outside forecast':'Clear-Outside-Prognose öffnen'}"><img class="clearoutside-forecast-image" src="${esc(urls.clearoutsideImage)}" alt="Clear Outside Forecast ${esc(place)}" loading="lazy"></a><div class="small muted clearoutside-language-note">${esc(langNote)}</div>`;
+  return renderExternalSourceShell({title:'Clear Outside',subtitle:language==='en'?'astronomy forecast image':'Astro-Prognosebild',notice:language==='en'?`Clear Outside is embedded as an automatically updated forecast image for ${esc(place)}. Open it in a separate browser tab for the full forecast.`:`Clear Outside wird als automatisch aktualisiertes Prognosebild für ${esc(place)} eingebunden. Für die vollständige Ansicht kannst du die Quelle in einem separaten Browser-Tab öffnen.`,embedId:'clearOutsideWrap',pageUrl:urls.clearoutsidePage,buttonText:language==='en'?'Open Clear Outside in a new tab':'Clear Outside in neuem Tab öffnen',content,sourceName:'Clear Outside',hideFullscreen:true,extraClass:'clearoutside-card'});
 }
 function renderWindy(loc){
   const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
