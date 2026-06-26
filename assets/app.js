@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.19 – Clear Outside Darstellung optimiert */
+/* Astro Night Planner 1.1.0-test.20 – Rahmeninitialisierung, Wetter- und Horizontkorrekturen */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -8,14 +8,20 @@ const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Clear Outside nutzt nun die verfügbare Breite des Anzeigebereichs besser.',
-    'Der für Clear Outside wenig hilfreiche Button „Großansicht“ wurde entfernt.',
-    'Ein Hinweis erklärt, dass die Beschriftungen im Clear-Outside-Prognosebild Teil der extern gelieferten Grafik sind und nicht durch die App übersetzt werden können.'
+    'Setup-Rahmen wird beim Objektwechsel wieder auf das ausgewählte Objekt gesetzt.',
+    'Aladin-Detailinfos erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Verschieben öffnet keine Popups mehr.',
+    'Wolkenkarte: geringe Glättung wirkt wolkiger und weniger milchig; Niederschlag, Regen und Schnee sind schaltbar.',
+    'Default-Modellgewichtung: DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 %.',
+    'Horizontansicht: Dämmerungsphasen werden zeitlich passend als dezente Grauschattierung angezeigt; Horizontprofile haben mehr Stützpunkte.',
+    'Stündlicher Wetterverlauf: Farben sind etwas kräftiger.'
   ],
   en: [
-    'Clear Outside now uses the available display width better.',
-    'The Clear Outside full-screen button has been removed because it did not add useful value.',
-    'A note explains that labels inside the Clear Outside forecast image are part of the externally provided graphic and cannot be translated by the app.'
+    'The setup frame is reset to the selected object when switching objects.',
+    'Aladin detail popups now require a real click on visibly labeled objects; panning no longer opens popups.',
+    'Cloud map: low smoothing is more cloud-like and less milky; precipitation, rain and snow are toggleable.',
+    'Default model weighting: DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.',
+    'Horizon view: twilight phases are shown as subtle time-matched grey shading; horizon profiles use more control points.',
+    'Hourly weather trend colours are slightly stronger.'
   ]
 }
 const RELEASE_NOTES = BUILD.releaseNotes || DEFAULT_RELEASE_NOTES;
@@ -101,6 +107,15 @@ Object.assign(EN_EXACT,{
   'Wind':'Wind',
   'Flugkategorie':'Flight category'
 });
+
+Object.assign(EN_EXACT,{
+  'Niederschlag standardmäßig anzeigen':'Show precipitation by default',
+  'Regen standardmäßig anzeigen':'Show rain by default',
+  'Schnee standardmäßig anzeigen':'Show snow by default',
+  'Dämmerungsphasen':'Twilight phases',
+  'astronomische Nacht':'astronomical night'
+});
+
 Object.assign(EN_EXACT,{
   'Zusätzliche Wetterquellen':'Additional weather sources',
   'Externe Wetterquellen':'External weather sources',
@@ -127,6 +142,15 @@ Object.assign(EN_EXACT,{
   'Clear Outside Astro-Prognosebild':'Clear Outside astronomy forecast image',
   'Interaktive Windy-Wetterkarte':'Interactive Windy weather map',
   'Interaktive Ventusky-Wetterkarte':'Interactive Ventusky weather map'
+});
+
+
+Object.assign(EN_EXACT,{
+  'Niederschlag standardmäßig anzeigen':'Show precipitation by default',
+  'Regen standardmäßig anzeigen':'Show rain by default',
+  'Schnee standardmäßig anzeigen':'Show snow by default',
+  'Dämmerungsphasen':'Twilight phases',
+  'astronomische Nacht':'astronomical night'
 });
 
 Object.assign(EN_EXACT,{
@@ -161,6 +185,34 @@ function setLanguage(next){if(next!=='de'&&next!=='en')return;language=next;try{
 
 const deepClone = value => JSON.parse(JSON.stringify(value));
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const HORIZON_POINT_COUNT = 145;
+const HORIZON_LAST_INDEX = HORIZON_POINT_COUNT - 1;
+const HORIZON_STEP_DEG = 360 / HORIZON_LAST_INDEX;
+function emptyHorizonProfile(){return Array(HORIZON_POINT_COUNT).fill(0)}
+function horizonAzForIndex(index){return Math.round(index * HORIZON_STEP_DEG * 1000) / 1000}
+function horizonIndexForAz(az){return clamp(Math.round((((Number(az)||0)%360+360)%360) / HORIZON_STEP_DEG),0,HORIZON_LAST_INDEX)}
+function horizonCardinalIndex(index){return clamp(Math.round((index*45)/HORIZON_STEP_DEG),0,HORIZON_LAST_INDEX)}
+function resampleHorizonProfile(values){
+  const arr=Array.isArray(values)?values.map(value=>clamp(Number(value)||0,0,90)):[];
+  if(arr.length===HORIZON_POINT_COUNT){arr[HORIZON_LAST_INDEX]=arr[0];return arr}
+  if(!arr.length)return emptyHorizonProfile();
+  const sourceLast=Math.max(1,arr.length-1),out=[];
+  for(let index=0;index<HORIZON_POINT_COUNT;index++){
+    const sourcePos=index/HORIZON_LAST_INDEX*sourceLast,lo=Math.floor(sourcePos),hi=Math.min(sourceLast,lo+1),f=sourcePos-lo;
+    const a=clamp(Number(arr[lo])||0,0,90),b=clamp(Number(arr[hi])||0,0,90);
+    out.push(a*(1-f)+b*f);
+  }
+  out[HORIZON_LAST_INDEX]=out[0];return out;
+}
+function horizonFromCardinals(values){
+  const card=Array.isArray(values)&&values.length===8?values.map(value=>clamp(Number(value)||0,0,90)):Array(8).fill(0);
+  const out=[];
+  for(let index=0;index<HORIZON_POINT_COUNT;index++){
+    const position=horizonAzForIndex(index)/45,lower=Math.floor(position)%8,upper=(lower+1)%8,fraction=position-Math.floor(position);
+    out.push(card[lower]*(1-fraction)+card[upper]*fraction);
+  }
+  out[HORIZON_LAST_INDEX]=out[0];return out;
+}
 const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const WIND_PROFILES = {
@@ -170,8 +222,8 @@ const WIND_PROFILES = {
 };
 const WEATHER_MODEL_CONFIG = Object.freeze({
   icon: { name:'DWD ICON', model:'icon_seamless', defaultWeight:40 },
-  ecmwf: { name:'ECMWF IFS', model:'ecmwf_ifs025', defaultWeight:40 },
-  gfs: { name:'NOAA GFS', model:'gfs_seamless', defaultWeight:20 },
+  ecmwf: { name:'ECMWF IFS', model:'ecmwf_ifs025', defaultWeight:20 },
+  gfs: { name:'NOAA GFS', model:'gfs_seamless', defaultWeight:40 },
 });
 const WEATHER_VIEW_OPTIONS = [
   ['consensus','Modellkonsens'],
@@ -378,8 +430,8 @@ function standardProfile(){
     central:{
       windUnit:'kmh', activeWindProfile:'normal', windProfiles:deepClone(WIND_PROFILES),
       dew:{green:5,yellow:2}, jet:{green:36,yellow:72},
-      weatherModels:{weights:{icon:40,ecmwf:40,gfs:20},defaultView:'consensus'},
-      cloudMap:{gridSize:7,radiusKm:120,defaultView:'consensus',defaultLayer:'cloud',defaultMode:'clouds',defaultBaseMode:'combined',showValues:true,animationMs:900,timeStepMinutes:30,smoothing:'balanced',collapsed:false,meteoblueMapCollapsed:true},
+      weatherModels:{weights:{icon:40,ecmwf:20,gfs:40},defaultView:'consensus'},
+      cloudMap:{gridSize:7,radiusKm:120,defaultView:'consensus',defaultLayer:'cloud',defaultMode:'clouds',defaultBaseMode:'combined',showValues:true,animationMs:900,timeStepMinutes:30,smoothing:'balanced',collapsed:false,meteoblueMapCollapsed:true,weatherOverlays:{precip:true,rain:true,snow:true}},
       weights:{clouds:30,transparency:15,seeing:10,wind:10,dew:10,moon:10,altitude:10,duration:5},
       qualityThresholds:{yellow:60,green:80},
       filterDefaults:{minScore:0,visibilityBasis:'nautical',showNoSurfaceBrightness:true,surfaceBrightnessMax:99,selectedFilters:DEFAULT_SELECTED_FILTERS.slice(),framingFilter:['good','near-edge','too-large','unknown']},
@@ -745,7 +797,8 @@ function normalizeProfile(p){
   out.central.jet={...base.central.jet,...(p.central?.jet||{})};
   out.central.framing={...base.central.framing,...(p.central?.framing||{})};
   out.central.weatherModels={...base.central.weatherModels,...(p.central?.weatherModels||{}),weights:{...base.central.weatherModels.weights,...(p.central?.weatherModels?.weights||{})}};
-  out.central.cloudMap={...base.central.cloudMap,...(p.central?.cloudMap||{})};
+  if(Number(out.central.weatherModels.weights?.icon)===40&&Number(out.central.weatherModels.weights?.ecmwf)===40&&Number(out.central.weatherModels.weights?.gfs)===20){out.central.weatherModels.weights={icon:40,ecmwf:20,gfs:40};}
+  out.central.cloudMap={...base.central.cloudMap,...(p.central?.cloudMap||{}),weatherOverlays:{...base.central.cloudMap.weatherOverlays,...(p.central?.cloudMap?.weatherOverlays||{})}};
   out.central.weights={...base.central.weights,...(p.central?.weights||{})};
   out.central.qualityThresholds={...base.central.qualityThresholds,...(p.central?.qualityThresholds||{})};
   out.central.aladinLabels={...base.central.aladinLabels,...(p.central?.aladinLabels||{})};
@@ -773,18 +826,15 @@ function normalizeProfile(p){
   out.central.collapsed={...base.central.collapsed,...(p.central?.collapsed||{})};
   out.central.visibleSections={...base.central.visibleSections,...(p.central?.visibleSections||{})};
   out.locations=(p.locations?.length?p.locations:base.locations).map((x,locationIndex)=>{
-    const horizon=Array.isArray(x.horizon)&&x.horizon.length===8?x.horizon.map(value=>clamp(Number(value)||0,0,90)):[0,0,0,0,0,0,0,0];
-    const legacyValues=Array.isArray(x.horizonProfile)&&x.horizonProfile.length===73?x.horizonProfile.map(value=>clamp(Number(value)||0,0,90)):Array.from({length:73},(_,index)=>{const position=index*5/45,lower=Math.floor(position)%8,upper=(lower+1)%8,fraction=position-Math.floor(position);return horizon[lower]*(1-fraction)+horizon[upper]*fraction});
-    legacyValues[72]=legacyValues[0];
+    const legacyValues=Array.isArray(x.horizonProfile)&&x.horizonProfile.length?resampleHorizonProfile(x.horizonProfile):horizonFromCardinals(x.horizon);
     let profiles=Array.isArray(x.horizonProfiles)&&x.horizonProfiles.length?x.horizonProfiles.map((entry,index)=>{
-      const values=Array.isArray(entry.horizonProfile)&&entry.horizonProfile.length===73?entry.horizonProfile.map(value=>clamp(Number(value)||0,0,90)):legacyValues.slice();
-      values[72]=values[0];
+      const values=Array.isArray(entry.horizonProfile)&&entry.horizonProfile.length?resampleHorizonProfile(entry.horizonProfile):legacyValues.slice();
       return{id:entry.id||`horizon-${locationIndex}-${index}`,name:String(entry.name||`Horizont ${index+1}`),horizonProfile:values,obstacles:(entry.obstacles||[]).map(item=>({...item}))};
     }):[{id:x.defaultHorizonProfileId||`horizon-${locationIndex}-standard`,name:'Standardhorizont',horizonProfile:legacyValues.slice(),obstacles:(x.obstacles||[]).map(item=>({...item}))}];
     const defaultId=profiles.some(item=>item.id===x.defaultHorizonProfileId)?x.defaultHorizonProfileId:profiles[0].id;
     const selectedId=profiles.some(item=>item.id===x.selectedHorizonProfileId)?x.selectedHorizonProfileId:defaultId;
     const selected=profiles.find(item=>item.id===selectedId)||profiles[0];
-    return{...x,horizonProfiles:profiles,defaultHorizonProfileId:defaultId,selectedHorizonProfileId:selectedId,horizonProfile:selected.horizonProfile.slice(),horizon:Array.from({length:8},(_,index)=>Number(selected.horizonProfile[index*9]||0)),obstacles:selected.obstacles.map(item=>({...item}))};
+    return{...x,horizonProfiles:profiles,defaultHorizonProfileId:defaultId,selectedHorizonProfileId:selectedId,horizonProfile:selected.horizonProfile.slice(),horizon:Array.from({length:8},(_,index)=>Number(selected.horizonProfile[horizonCardinalIndex(index)]||0)),obstacles:selected.obstacles.map(item=>({...item}))};
   });
   out.planning={...base.planning,...(p.planning||{})};
   if(!['meteoblue','clearoutside','windy','ventusky'].includes(out.planning.weatherSourceTab))out.planning.weatherSourceTab='meteoblue';
@@ -1098,8 +1148,8 @@ function angularSeparation(aRa,aDec,bRa,bDec){const a=toRad(aRa*15),b=toRad(bRa*
 function horizonProfilesFor(loc){
   if(!loc)return[];
   if(!Array.isArray(loc.horizonProfiles)||!loc.horizonProfiles.length){
-    const values=Array.isArray(loc.horizonProfile)&&loc.horizonProfile.length===73?loc.horizonProfile.slice():Array(73).fill(0);
-    values[72]=values[0];
+    const values=Array.isArray(loc.horizonProfile)&&loc.horizonProfile.length?resampleHorizonProfile(loc.horizonProfile):emptyHorizonProfile();
+    values[HORIZON_LAST_INDEX]=values[0];
     loc.horizonProfiles=[{id:uid('horizon'),name:'Standardhorizont',horizonProfile:values,obstacles:(loc.obstacles||[]).map(item=>({...item}))}];
     loc.defaultHorizonProfileId=loc.horizonProfiles[0].id;loc.selectedHorizonProfileId=loc.horizonProfiles[0].id;
   }
@@ -1110,10 +1160,10 @@ function horizonProfileFor(loc,preferredId=null){
   const id=preferredId||((loc===activeLocation())?profile.planning?.temporaryHorizonProfileId:null)||loc.selectedHorizonProfileId||loc.defaultHorizonProfileId;
   return profiles.find(item=>item.id===id)||profiles.find(item=>item.id===loc.defaultHorizonProfileId)||profiles[0];
 }
-function ensureHorizonProfile(loc,preferredId=null){const entry=horizonProfileFor(loc,preferredId);if(!entry)return Array(73).fill(0);if(!Array.isArray(entry.horizonProfile)||entry.horizonProfile.length!==73)entry.horizonProfile=Array(73).fill(0);entry.horizonProfile[72]=entry.horizonProfile[0];return entry.horizonProfile}
+function ensureHorizonProfile(loc,preferredId=null){const entry=horizonProfileFor(loc,preferredId);if(!entry)return emptyHorizonProfile();entry.horizonProfile=resampleHorizonProfile(entry.horizonProfile);entry.horizonProfile[HORIZON_LAST_INDEX]=entry.horizonProfile[0];return entry.horizonProfile}
 function horizonObstacles(loc,preferredId=null){return(horizonProfileFor(loc,preferredId)?.obstacles||[])}
-function horizonAt(loc,az,preferredId=null){const normalized=((az%360)+360)%360;const values=ensureHorizonProfile(loc,preferredId);const pos=normalized/5,i=Math.floor(pos),j=Math.min(72,i+1),f=pos-i;return Number(values[i]||0)*(1-f)+Number(values[j]||0)*f}
-function syncCardinalHorizon(loc,preferredId=null){const values=ensureHorizonProfile(loc,preferredId);values[72]=values[0];const entry=horizonProfileFor(loc,preferredId);loc.horizonProfile=values.slice();loc.horizon=Array.from({length:8},(_,index)=>Number(values[index*9]||0));loc.obstacles=(entry?.obstacles||[]).map(item=>({...item}))}
+function horizonAt(loc,az,preferredId=null){const normalized=((az%360)+360)%360;const values=ensureHorizonProfile(loc,preferredId);const pos=normalized/HORIZON_STEP_DEG,i=Math.floor(pos),j=Math.min(HORIZON_LAST_INDEX,i+1),f=pos-i;return Number(values[i]||0)*(1-f)+Number(values[j]||0)*f}
+function syncCardinalHorizon(loc,preferredId=null){const values=ensureHorizonProfile(loc,preferredId);values[HORIZON_LAST_INDEX]=values[0];const entry=horizonProfileFor(loc,preferredId);loc.horizonProfile=values.slice();loc.horizon=Array.from({length:8},(_,index)=>Number(values[horizonCardinalIndex(index)]||0));loc.obstacles=(entry?.obstacles||[]).map(item=>({...item}))}
 
 
 function objectStats(obj,window,loc,minAlt){const points=[];let max=-90,best=window.start,visibleMs=0;const count=49;for(let i=0;i<count;i++){const t=new Date(window.start.getTime()+(window.end-window.start)*i/(count-1));const alt=altitude(obj.raHours,obj.decDeg,t,loc.latitude,loc.longitude);const az=azimuth(obj.raHours,obj.decDeg,t,loc.latitude,loc.longitude);const effectiveMin=Math.max(minAlt,horizonAt(loc,az));points.push({t,alt,az});if(alt>max){max=alt;best=t}if(i&&alt>=effectiveMin)visibleMs+=(window.end-window.start)/(count-1)}const moon=moonCoords(best);const moonAlt=altitude(moon.raHours,moon.decDeg,best,loc.latitude,loc.longitude);return{points,maxAltitude:max,bestTime:best,visibleHours:visibleMs/3600000,meridian:best,moonDistance:angularSeparation(obj.raHours,obj.decDeg,moon.raHours,moon.decDeg),moonAltitude:moonAlt}}
@@ -1365,7 +1415,7 @@ function cloudMapValuesVisible(){
   return profile.planning.temporaryCloudMapShowValues==null?cloudMapSettings().showValues!==false:Boolean(profile.planning.temporaryCloudMapShowValues);
 }
 function cloudMapWeatherOverlays(){
-  return{precip:true,rain:true,snow:true,...(profile.planning.cloudMapWeatherOverlays||{})};
+  return{precip:true,rain:true,snow:true,...(cloudMapSettings().weatherOverlays||{}),...(profile.planning.cloudMapWeatherOverlays||{})};
 }
 function cloudMapRange(night){
   const rawStart=night.sunset.getTime()-4*3600000;
@@ -1849,7 +1899,7 @@ function renderObjectDetails(o,windowRange,loc,night){
   const fullNight={start:night.sunset,end:night.sunrise},horizonEntry=horizonProfileFor(loc);
   const fullStats=objectStats(o,fullNight,loc,profile.planning.minAltitude),selectedStats=objectStats(o,windowRange,loc,profile.planning.minAltitude);
   const altitudePoints=fullStats.points.map(point=>[point.t.getTime(),Number(point.alt.toFixed(3)),Number(point.az.toFixed(3)),Number(horizonAt(loc,point.az,horizonEntry?.id).toFixed(3))]);
-  const horizonPoints=Array.from({length:73},(_,index)=>[index*5,Number(horizonAt(loc,index*5,horizonEntry?.id).toFixed(3))]);
+  const horizonPoints=Array.from({length:HORIZON_POINT_COUNT},(_,index)=>{const az=horizonAzForIndex(index);return[az,Number(horizonAt(loc,az,horizonEntry?.id).toFixed(3))]});
   const obstacles=horizonObstacles(loc,horizonEntry?.id).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
   const detailTime=detailTimeState(o,night,loc),horizonOptions=horizonProfilesFor(loc).map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}${item.id===loc.defaultHorizonProfileId?' (Standard)':''}</option>`).join('');
   const isTarget=targetObjectIds().has(o.id);
@@ -1858,7 +1908,7 @@ function renderObjectDetails(o,windowRange,loc,night){
     <div class="grid four object-detail-metrics"><div class="metric"><div class="label">Maximalhöhe im Planungszeitraum</div><div class="value">${fmt(selectedStats.maxAltitude)}°</div></div><div class="metric"><div class="label">Beste Stunde im nautischen Zeitraum</div><div class="value">${(()=>{const best=bestObjectHour(o,night,loc,profile.planning.minAltitude);return best?`${fmtTime(best.time,loc.timezone)} · Q ${fmt(best.quality)}`:'Keine geeignete Stunde'})()}</div></div><div class="metric"><div class="label">Sichtbar über Grenzhöhe</div><div class="value">${fmt(selectedStats.visibleHours,1)} h</div></div><div class="metric"><div class="label">Mondabstand</div><div class="value">${fmt(selectedStats.moonDistance)}°</div></div></div>
     ${renderFraming(o,windowRange,loc)}
     <details class="object-chart-panel" ${profile.central.detailPanels?.altitudeCollapsed?'':'open'}><summary>Höhenkurve</summary><div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Schieberegler, Uhrzeitfeld, Kurvenklick und Horizontansicht verwenden dieselbe Aufnahmezeit.</div>${renderDetailTimeControls(o,night,loc,'altitude')}<canvas class="large-altitude-chart" width="1400" height="430" data-points="${encodeURIComponent(JSON.stringify(altitudePoints))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-current-time="${detailTime.time.getTime()}" data-min-alt="${profile.planning.minAltitude}" data-timezone="${esc(loc.timezone)}"></canvas>${renderTwilightLegend()}${renderHourlyAltitudeStrip(o,night,loc)}</details>
-    <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}><summary>Horizontansicht</summary><div class="chart-description horizon-detail-header"><span>Objektbahn und persönlicher Horizont. Die Aufnahmezeit ist mit der Höhenkurve synchronisiert.</span><label>Horizontprofil für diese Planung<select id="detailHorizonProfileSelect">${horizonOptions}</select></label></div>${renderDetailTimeControls(o,night,loc,'horizon')}<canvas class="large-horizon-chart" width="1400" height="430" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-current-time="${detailTime.time.getTime()}" data-show-ground="${profile.planning.showGroundHorizon!==false}" data-timezone="${esc(loc.timezone)}"></canvas></details>
+    <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}><summary>Horizontansicht</summary><div class="chart-description horizon-detail-header"><span>Objektbahn und persönlicher Horizont. Die Aufnahmezeit ist mit der Höhenkurve synchronisiert.</span><label>Horizontprofil für diese Planung<select id="detailHorizonProfileSelect">${horizonOptions}</select></label></div>${renderDetailTimeControls(o,night,loc,'horizon')}<canvas class="large-horizon-chart" width="1400" height="430" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-current-time="${detailTime.time.getTime()}" data-show-ground="${profile.planning.showGroundHorizon!==false}" data-timezone="${esc(loc.timezone)}"></canvas></details>
   </div>`;
 }
 
@@ -2213,7 +2263,7 @@ function renderCentral(){
       <label>Standard-Kartenansicht<select id="defaultCloudMapBaseMode">${CLOUD_MAP_BASE_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.defaultBaseMode===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
       <label>Glättung der Wolkenfelder<select id="cloudMapSmoothing">${CLOUD_SMOOTHING_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.cloudMap?.smoothing===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label>
     </div>
-    <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label></div>
+    <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Wolkenkarte initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label><label class="chip"><input data-default-cloud-overlay="precip" type="checkbox" ${c.cloudMap?.weatherOverlays?.precip!==false?'checked':''}>Niederschlag standardmäßig anzeigen</label><label class="chip"><input data-default-cloud-overlay="rain" type="checkbox" ${c.cloudMap?.weatherOverlays?.rain!==false?'checked':''}>Regen standardmäßig anzeigen</label><label class="chip"><input data-default-cloud-overlay="snow" type="checkbox" ${c.cloudMap?.weatherOverlays?.snow!==false?'checked':''}>Schnee standardmäßig anzeigen</label></div>
     <div class="metric" style="margin-top:12px"><strong>${language==='en'?'External weather-source tabs':'Tabs für externe Wetterquellen'}</strong><div class="small muted">${language==='en'?'Selected external weather sources are shown as tabs in the planning view. They are loaded only when selected and are not automatically included in the astro score.':'Ausgewählte externe Wetterquellen werden in der Planung als Tabs angezeigt. Sie werden erst beim Anwählen geladen und fließen nicht automatisch in die Astro-Bewertung ein.'}</div><div class="grid two" style="margin-top:8px">${[['meteoblue','Meteoblue'],['clearoutside','Clear Outside'],['windy','Windy'],['ventusky','Ventusky']].map(([key,label])=>`<label class="chip"><input data-weather-source-enabled="${key}" type="checkbox" ${(c.weatherSources?.[key]!==false)?'checked':''}>${esc(label)}${key==='clearoutside'?(language==='en'?' shown by default':' initial sichtbar'):''}</label>`).join('')}</div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
@@ -2259,7 +2309,7 @@ function renderCentral(){
   </div>`;
 }
 
-function createEmptyLocationDraft(){const id=uid('loc'),horizonId=uid('horizon');return {id,name:'Neuer Standort',latitude:null,longitude:null,elevation:0,timezone:'Europe/Berlin',horizonProfiles:[{id:horizonId,name:'Freier Horizont',horizonProfile:Array(73).fill(0),obstacles:[]}],defaultHorizonProfileId:horizonId,selectedHorizonProfileId:horizonId,horizonProfile:Array(73).fill(0),horizon:[0,0,0,0,0,0,0,0],obstacles:[]};}
+function createEmptyLocationDraft(){const id=uid('loc'),horizonId=uid('horizon');return {id,name:'Neuer Standort',latitude:null,longitude:null,elevation:0,timezone:'Europe/Berlin',horizonProfiles:[{id:horizonId,name:'Freier Horizont',horizonProfile:emptyHorizonProfile(),obstacles:[]}],defaultHorizonProfileId:horizonId,selectedHorizonProfileId:horizonId,horizonProfile:emptyHorizonProfile(),horizon:[0,0,0,0,0,0,0,0],obstacles:[]};}
 function renderLocations(){
   const locations=Array.isArray(draft.locations)?draft.locations:[];
   const loc=locations.find(item=>item.id===draft.selectedLocationId)||locations[0]||null;
@@ -2271,7 +2321,7 @@ function renderLocations(){
   if(noLocations){
     return`<div class="settings-tabs subtabs"><button data-locations-subtab="locations" class="${currentLocationsSubTab==='locations'?'active':''}">Standorte</button><button data-locations-subtab="horizon" class="${currentLocationsSubTab==='horizon'?'active':''}">Horizontprofile</button></div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}">${renderSaveBar('locations','Standort und Horizonte speichern','top')}<div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Lege zuerst einen Aufnahmeort an. Danach können Planung, Wetter und Horizontprofile berechnet werden.</div></div><button id="addLocation" type="button">Standort hinzufügen</button></div><div class="notice warn">Noch kein Standort vorhanden. Bitte einen Standort suchen oder Koordinaten manuell eintragen und speichern.</div>${addLocationMarkup}</div><div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}"><h2>Horizontprofile</h2><p class="muted">Horizontprofile stehen zur Verfügung, sobald ein Standort gespeichert wurde.</p></div>`;
   }
-  const profiles=horizonProfilesFor(loc),horizonEntry=horizonProfileFor(loc,loc.selectedHorizonProfileId),horizonPoints=ensureHorizonProfile(loc,horizonEntry?.id).map((altitude,index)=>[index*5,Number(altitude)||0]),obstacles=(horizonEntry?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
+  const profiles=horizonProfilesFor(loc),horizonEntry=horizonProfileFor(loc,loc.selectedHorizonProfileId),horizonPoints=ensureHorizonProfile(loc,horizonEntry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]),obstacles=(horizonEntry?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
   const profileOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}</option>`).join(''),defaultOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===loc.defaultHorizonProfileId?'selected':''}>${esc(item.name)}</option>`).join('');
   return`<div class="settings-tabs subtabs">${[['locations','Standorte'],['horizon','Horizontprofile']].map(([k,n])=>`<button data-locations-subtab="${k}" class="${currentLocationsSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}"><div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Der Standardstandort wird hier festgelegt. In der Planung kann vorübergehend ein anderer Ort gewählt werden.</div></div><button id="addLocation">Standort hinzufügen</button></div>
     ${addLocationMarkup}
@@ -2408,7 +2458,7 @@ function renderInfo(){
   </div>`;
 }
 
-async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId,wasOpen=Boolean(profile.planning.detailsOpen);profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(open&&object&&(changed||!wasOpen||profile.planning.objectRotationObjectId!==objectId)){profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=objectId}if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
+async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId,wasOpen=Boolean(profile.planning.detailsOpen);if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(open&&object&&(changed||!wasOpen||profile.planning.objectRotationObjectId!==objectId)){profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=objectId}if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
 
 
 function normalizeObjectToken(value){return String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
@@ -2782,7 +2832,7 @@ function downloadTextFile(name,text,type='text/plain;charset=utf-8'){
 }
 function ninaHorizonTextFromValues(values){
   const rows=['# Astro Night Planner N.I.N.A. horizon export','# Azimuth Altitude'];
-  (values||[]).forEach((altitude,index)=>{if(index>72)return;rows.push(`${index*5} ${Math.round(clamp(Number(altitude)||0,0,90)*10)/10}`)});
+  (values||[]).forEach((altitude,index)=>{if(index>72)return;rows.push(`${horizonAzForIndex(index)} ${Math.round(clamp(Number(altitude)||0,0,90)*10)/10}`)});
   return rows.join('\n')+'\n';
 }
 function parseNinaHorizonText(text){
@@ -2800,15 +2850,15 @@ function parseNinaHorizonText(text){
   pairs.sort((a,b)=>a.azimuth-b.azimuth);
   if(pairs[0].azimuth>0)pairs.unshift({azimuth:0,altitude:pairs[0].altitude});
   if(pairs[pairs.length-1].azimuth<360)pairs.push({azimuth:360,altitude:pairs[pairs.length-1].altitude});
-  const values=Array.from({length:73},(_,index)=>{
-    const az=index*5;
+  const values=Array.from({length:HORIZON_POINT_COUNT},(_,index)=>{
+    const az=horizonAzForIndex(index);
     let left=pairs[0],right=pairs[pairs.length-1];
     for(let i=0;i<pairs.length-1;i++){if(pairs[i].azimuth<=az&&pairs[i+1].azimuth>=az){left=pairs[i];right=pairs[i+1];break}}
     const span=Math.max(1e-6,right.azimuth-left.azimuth);
     const f=clamp((az-left.azimuth)/span,0,1);
     return left.altitude+(right.altitude-left.altitude)*f;
   });
-  values[72]=values[0];
+  values[HORIZON_LAST_INDEX]=values[0];
   return values;
 }
 function requestNinaHorizonImport(callback){
@@ -2849,7 +2899,7 @@ function exportNinaPlanForSelectedObject(){
 }
 
 function bindFraming(){
-  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
+  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);const changed=profile.planning.selectedObjectId!==objectSelect.value;if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
   const changeEquipment=async(type,value)=>{if(type==='scope')profile.planning.temporaryTelescopeId=value===profile.equipment.selectedTelescopeId?null:value;else profile.planning.temporaryCameraId=value===profile.equipment.selectedCameraId?null:value;const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(object&&framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render()};
   const scope=document.getElementById('framingTelescopeSelect'),camera=document.getElementById('framingCameraSelect');if(scope)scope.onchange=()=>changeEquipment('scope',scope.value);if(camera)camera.onchange=()=>changeEquipment('camera',camera.value);
   const frameVisible=document.getElementById('frameVisible');if(frameVisible)frameVisible.onchange=async()=>{profile.central.frameVisible=frameVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
@@ -3095,6 +3145,7 @@ function bindCentralDraft(){
   set('defaultCloudMapMode',element=>draft.central.cloudMap.defaultMode=element.value,'cloudMap');
   set('defaultCloudMapBaseMode',element=>draft.central.cloudMap.defaultBaseMode=element.value,'cloudMap');
   set('defaultCloudMapShowValues',element=>draft.central.cloudMap.showValues=element.checked,'cloudMap');
+  document.querySelectorAll('[data-default-cloud-overlay]').forEach(element=>element.onchange=()=>{draft.central.cloudMap.weatherOverlays=draft.central.cloudMap.weatherOverlays||{precip:true,rain:true,snow:true};draft.central.cloudMap.weatherOverlays[element.dataset.defaultCloudOverlay]=element.checked;setSectionDirty('cloudMap')});
   set('cloudMapCollapsedDefault',element=>draft.central.cloudMap.collapsed=element.checked,'cloudMap');
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
   document.querySelectorAll('[data-weather-source-enabled]').forEach(element=>element.onchange=()=>{draft.central.weatherSources=draft.central.weatherSources||{};draft.central.weatherSources[element.dataset.weatherSourceEnabled]=element.checked;setSectionDirty('cloudMap')});
@@ -3226,11 +3277,11 @@ function bindLocationDraft(){
   ['newLocName','newLocTimezone','newLocLat','newLocLon','newLocElevation'].forEach(id=>{const el=document.getElementById(id);if(el)el.onchange=()=>{if(!pendingLocationDraft)return;const field={newLocName:'name',newLocTimezone:'timezone',newLocLat:'latitude',newLocLon:'longitude',newLocElevation:'elevation'}[id];pendingLocationDraft[field]=el.type==='number'?Number(el.value):el.value;};});
   const profileSelect=document.getElementById('horizonProfileSelect');if(profileSelect)profileSelect.onchange=()=>{location().selectedHorizonProfileId=profileSelect.value;horizonUndoStack=[];render()};
   const defaultProfile=document.getElementById('defaultHorizonProfileSelect');if(defaultProfile)defaultProfile.onchange=()=>{location().defaultHorizonProfileId=defaultProfile.value;setSectionDirty('locations')};
-  document.getElementById('addHorizonProfile')?.addEventListener('click',()=>{const name=prompt('Name des neuen Horizontprofils:','Neues Horizontprofil');if(!name)return;const id=uid('horizon');horizonProfilesFor(location()).push({id,name:name.trim(),horizonProfile:Array(73).fill(0),obstacles:[]});location().selectedHorizonProfileId=id;setSectionDirty('locations');render()});
+  document.getElementById('addHorizonProfile')?.addEventListener('click',()=>{const name=prompt('Name des neuen Horizontprofils:','Neues Horizontprofil');if(!name)return;const id=uid('horizon');horizonProfilesFor(location()).push({id,name:name.trim(),horizonProfile:emptyHorizonProfile(),obstacles:[]});location().selectedHorizonProfileId=id;setSectionDirty('locations');render()});
   document.getElementById('duplicateHorizonProfile')?.addEventListener('click',()=>{const current=entry(),name=prompt('Name der Kopie:',`${current.name} – Kopie`);if(!name)return;const copy=deepClone(current);copy.id=uid('horizon');copy.name=name.trim();horizonProfilesFor(location()).push(copy);location().selectedHorizonProfileId=copy.id;setSectionDirty('locations');render()});
   document.getElementById('renameHorizonProfile')?.addEventListener('click',()=>{const current=entry(),name=prompt('Neuer Name:',current.name);if(!name)return;current.name=name.trim();setSectionDirty('locations');render()});
   document.getElementById('deleteHorizonProfile')?.addEventListener('click',()=>{const profiles=horizonProfilesFor(location()),current=entry();if(profiles.length<=1||!confirm(`Horizontprofil „${current.name}“ löschen?`))return;location().horizonProfiles=profiles.filter(item=>item.id!==current.id);if(location().defaultHorizonProfileId===current.id)location().defaultHorizonProfileId=location().horizonProfiles[0].id;location().selectedHorizonProfileId=location().defaultHorizonProfileId;setSectionDirty('locations');render()});
-  document.getElementById('resetHorizon')?.addEventListener('click',()=>{horizonUndoStack.push(ensureHorizonProfile(location(),entry()?.id).slice());horizonUndoStack=horizonUndoStack.slice(-20);entry().horizonProfile=Array(73).fill(0);mark();render()});
+  document.getElementById('resetHorizon')?.addEventListener('click',()=>{horizonUndoStack.push(ensureHorizonProfile(location(),entry()?.id).slice());horizonUndoStack=horizonUndoStack.slice(-20);entry().horizonProfile=emptyHorizonProfile();mark();render()});
   document.getElementById('undoHorizon')?.addEventListener('click',()=>{const previous=horizonUndoStack.pop();if(!previous)return;entry().horizonProfile=previous.slice();mark();render()});
   document.getElementById('importNinaHorizon')?.addEventListener('click',()=>requestNinaHorizonImport((values,name)=>{horizonUndoStack.push(ensureHorizonProfile(location(),entry()?.id).slice());entry().horizonProfile=values;entry().updatedAt=new Date().toISOString();mark();alert((language==='en'?'Horizon has been imported.':'Horizont wurde importiert.')+(name?` (${name})`:''));render()}));
   document.getElementById('exportNinaHorizon')?.addEventListener('click',()=>{const locNow=location(),profileNow=entry();const values=ensureHorizonProfile(locNow,profileNow?.id);downloadTextFile(`nina-horizon-${safeName(locNow.name)}-${safeName(profileNow?.name||'horizon')}.hrz`,ninaHorizonTextFromValues(values));alert(language==='en'?'Horizon has been exported.':'Horizont wurde exportiert.');});
@@ -3251,8 +3302,8 @@ function bindLocationDraft(){
     };
     const refreshCanvas=()=>{
       const values=currentValues();
-      values[72]=values[0];
-      canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[index*5,Number(altitude)||0])));
+      values[HORIZON_LAST_INDEX]=values[0];
+      canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0])));
       canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry()?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));
       drawHorizonChart(canvas,false);
       positionInputLayer();
@@ -3266,7 +3317,7 @@ function bindLocationDraft(){
       const plotW=(canvas.width-margin.left-margin.right)*cssScaleX,plotH=(canvas.height-margin.top-margin.bottom)*cssScaleY;
       const azimuth=clamp((px-left)/Math.max(1,plotW)*360,0,360);
       const altitude=clamp(90-(py-top)/Math.max(1,plotH)*90,0,90);
-      return{index:clamp(Math.round(azimuth/5),0,72),azimuth,altitude,clientX,clientY};
+      return{index:horizonIndexForAz(azimuth),azimuth,altitude,clientX,clientY};
     };
     const eventPoint=event=>{const source=event.touches?.[0]||event.changedTouches?.[0]||event;return pointFromClient(source.clientX,source.clientY)};
     const showTooltip=point=>{if(!tooltip)return;const rect=wrap?.getBoundingClientRect();tooltip.textContent=horizonTooltipText(point);tooltip.style.display='block';tooltip.style.left=`${Math.max(8,point.clientX-(rect?.left||0)+(wrap?.scrollLeft||0)+14)}px`;tooltip.style.top=`${Math.max(8,point.clientY-(rect?.top||0)+(wrap?.scrollTop||0)-34)}px`;};
@@ -3283,7 +3334,7 @@ function bindLocationDraft(){
           values[index]=start+(end-start)*fraction;
         }
       }
-      if(point.index===0||point.index===72){values[0]=altitude;values[72]=altitude}
+      if(point.index===0||point.index===HORIZON_LAST_INDEX){values[0]=altitude;values[HORIZON_LAST_INDEX]=altitude}
       lastIndex=point.index;lastAltitude=altitude;
       syncCardinalHorizon(location(),entry()?.id);
       setSectionDirty('locations');
@@ -3345,7 +3396,7 @@ async function saveDraftSection(section){
   if(section==='cloudMap'){
     profile.central.cloudMap={...deepClone(draft.central.cloudMap)};
     profile.central.weatherSources=deepClone(draft.central.weatherSources||{meteoblue:true,clearoutside:true,windy:true,ventusky:true});
-    profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
+    profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapWeatherOverlays=deepClone(profile.central.cloudMap.weatherOverlays||{precip:true,rain:true,snow:true});profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
   }
   if(section==='weights'){
     const total=Object.values(draft.central.weights).reduce((sum,value)=>sum+Number(value),0);
@@ -3359,7 +3410,7 @@ async function saveDraftSection(section){
     profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.framing=deepClone(draft.central.framing);profile.central.qualityThresholds=deepClone(draft.central.qualityThresholds);profile.central.aladinLabels=deepClone(draft.central.aladinLabels);profile.central.aladinSurveys=deepClone(draft.central.aladinSurveys);profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.central.collapsed=deepClone(draft.central.collapsed);profile.central.visibleSections=deepClone(draft.central.visibleSections||{});profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
   }
   if(section==='locations'){
-    draft.locations.forEach(item=>{horizonProfilesFor(item).forEach(entry=>{ensureHorizonProfile(item,entry.id);entry.horizonProfile[72]=entry.horizonProfile[0]});syncCardinalHorizon(item,item.selectedHorizonProfileId)});
+    draft.locations.forEach(item=>{horizonProfilesFor(item).forEach(entry=>{ensureHorizonProfile(item,entry.id);entry.horizonProfile[HORIZON_LAST_INDEX]=entry.horizonProfile[0]});syncCardinalHorizon(item,item.selectedHorizonProfileId)});
     profile.locations=deepClone(draft.locations);profile.selectedLocationId=draft.selectedLocationId;profile.central.defaultLocationId=draft.central.defaultLocationId;profile.central.gpsBehavior=draft.central.gpsBehavior;profile.central.locationSearchCountry=draft.central.locationSearchCountry;if(profile.planning.locationId&&!profile.locations.some(item=>item.id===profile.planning.locationId))profile.planning.locationId=null;const active=activeLocation();if(profile.planning.temporaryHorizonProfileId&&!horizonProfilesFor(active).some(item=>item.id===profile.planning.temporaryHorizonProfileId))profile.planning.temporaryHorizonProfileId=null;dirtySections.delete('locations');horizonUndoStack=[];
   }
   if(section==='backup'){
@@ -3485,6 +3536,22 @@ function cloudMapInterpolated(values,size,gx,gy){
   const top=safe(v00)*(1-fx)+safe(v10)*fx;
   const bottom=safe(v01)*(1-fx)+safe(v11)*fx;
   return top*(1-fy)+bottom*fy;
+}
+function cloudStructureNoise(x,y,seed=0){
+  const raw=Math.sin(x*12.9898+y*78.233+seed*37.719)*43758.5453;
+  return raw-Math.floor(raw);
+}
+function cloudFractalNoise(x,y){
+  return cloudStructureNoise(x,y,1)*.52+cloudStructureNoise(x*2.1+9,y*2.1-7,2)*.30+cloudStructureNoise(x*4.3-3,y*4.3+5,3)*.18;
+}
+function structuredCloudValue(value,gx,gy){
+  if(!Number.isFinite(value))return value;
+  const noise=cloudFractalNoise(gx,gy);
+  const band=Math.sin((gx*1.7+gy*.9)+noise*4.4)*8;
+  const adjusted=value+(noise-.5)*42+band;
+  const threshold=18+cloudStructureNoise(Math.floor(gx*3),Math.floor(gy*3),5)*22;
+  if(value<threshold&&noise<.62)return Math.max(0,adjusted*.26);
+  return clamp(adjusted,0,100);
 }
 function cloudMapColor(value,layer,mode){
   if(!Number.isFinite(value))return'rgba(0,0,0,0)';
@@ -3615,14 +3682,15 @@ function drawCloudMap(){
 
   const smoothing=currentCloudSmoothing();
   const offscreen=document.createElement('canvas');
-  const renderWidth=smoothing==='structured'?520:smoothing==='soft'?280:390;
+  const renderWidth=smoothing==='structured'?760:smoothing==='soft'?280:390;
   offscreen.width=renderWidth;offscreen.height=Math.max(180,Math.round(renderWidth*map.h/map.w));
   const offCtx=offscreen.getContext('2d');
   for(let py=0;py<offscreen.height;py++){
     const gy=(py/Math.max(1,offscreen.height-1))*(size-1);
     for(let px=0;px<offscreen.width;px++){
       const gx=(px/Math.max(1,offscreen.width-1))*(size-1);
-      const value=cloudMapInterpolated(drawValues,size,gx,gy);
+      let value=cloudMapInterpolated(drawValues,size,gx,gy);
+      if(smoothing==='structured'&&mode==='clouds')value=structuredCloudValue(value,gx,gy);
       offCtx.fillStyle=cloudMapColor(value,layer,mode);
       offCtx.fillRect(px,py,1,1);
     }
@@ -3858,6 +3926,23 @@ function drawHorizonChart(canvas,withTrack=false){
   context.clearRect(0,0,width,height);
   context.fillStyle=palette.background;
   context.fillRect(0,0,width,height);
+  if(withTrack&&track.length){
+    const twilightFillFor=time=>{
+      const t=Number(time),civilS=Number(canvas.dataset.civilStart),civilE=Number(canvas.dataset.civilEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd);
+      if(Number.isFinite(astroS)&&Number.isFinite(astroE)&&t>=astroS&&t<=astroE)return'rgba(210,220,232,.045)';
+      if(Number.isFinite(nautS)&&Number.isFinite(nautE)&&t>=nautS&&t<=nautE)return'rgba(210,220,232,.075)';
+      if(Number.isFinite(civilS)&&Number.isFinite(civilE)&&t>=civilS&&t<=civilE)return'rgba(210,220,232,.11)';
+      return'rgba(210,220,232,.16)';
+    };
+    for(let i=0;i<track.length-1;i++){
+      const a=track[i],b=track[i+1];
+      if(Math.abs(a[0]-b[0])>180)continue;
+      const left=Math.min(x(a[0]),x(b[0])),right=Math.max(x(a[0]),x(b[0]));
+      if(right-left<.2)continue;
+      context.fillStyle=twilightFillFor((Number(a[2])+Number(b[2]))/2);
+      context.fillRect(left,margin.top,right-left,plotH);
+    }
+  }
   context.font='15px system-ui, sans-serif';
   for(let altitudeValue=0;altitudeValue<=90;altitudeValue+=15){
     const py=y(altitudeValue);
@@ -3952,14 +4037,14 @@ function drawHorizonChart(canvas,withTrack=false){
   context.fillStyle=palette.text;
   context.textAlign='left';
   context.textBaseline='top';
-  context.fillText(withTrack?'Horizont (grün) · Objektbahn (blau) · Planungszeitraum (gelb)':'Persönlicher Horizont und Hindernisse',margin.left,2);
+  context.fillText(withTrack?'Horizont (grün) · Objektbahn (blau) · Planungszeitraum (gelb) · Dämmerungsphasen (grau)':'Persönlicher Horizont und Hindernisse',margin.left,2);
 }
 
 function drawSettingsHorizonCharts(){
   document.querySelectorAll('.settings-horizon-chart').forEach(canvas=>drawHorizonChart(canvas,false));
 }
 
-function syncSettingsHorizonCanvas(){const canvas=document.querySelector('.settings-horizon-chart');if(!canvas)return;const location=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0],entry=horizonProfileFor(location,location.selectedHorizonProfileId),points=ensureHorizonProfile(location,entry?.id).map((altitude,index)=>[index*5,Number(altitude)||0]);canvas.dataset.horizon=encodeURIComponent(JSON.stringify(points));canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));drawSettingsHorizonCharts()}
+function syncSettingsHorizonCanvas(){const canvas=document.querySelector('.settings-horizon-chart');if(!canvas)return;const location=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0],entry=horizonProfileFor(location,location.selectedHorizonProfileId),points=ensureHorizonProfile(location,entry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]);canvas.dataset.horizon=encodeURIComponent(JSON.stringify(points));canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry?.obstacles||[]).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}))));drawSettingsHorizonCharts()}
 
 function layoutFramingOverlays(){
   document.querySelectorAll('.framing-view').forEach(view=>{

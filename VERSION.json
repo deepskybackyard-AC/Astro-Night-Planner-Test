@@ -1,19 +1,27 @@
 {
-  "version": "1.1.0-test.19",
-  "release": "1.1.0-test.19",
+  "version": "1.1.0-test.20",
+  "release": "1.1.0-test.20",
   "environment": "test",
-  "builtAt": "2026-06-26T18:35:00+02:00",
-  "notes": "Testversion 1.1.0-test.19: Clear Outside füllt den Anzeigebereich besser aus; Großansicht für Clear Outside entfernt; Hinweis zur nicht übersetzbaren Clear-Outside-Grafik ergänzt.",
+  "builtAt": "2026-06-26T18:55:00+02:00",
+  "notes": "Testversion 1.1.0-test.20: Setup-Rahmen wird beim Objektwechsel wieder auf das ausgewählte Objekt gesetzt; Aladin-Detailinfos nur noch bei echtem Klick auf sichtbare Beschriftungen; Wolkenkarte mit wolkigerer geringer Glättung, Default-Niederschlagslayern, neuer Modellgewichtung und Dämmerungsphasen in der Horizontansicht.",
   "releaseNotes": {
     "de": [
-      "Clear Outside nutzt nun die verfügbare Breite des Anzeigebereichs deutlich besser.",
-      "Der für Clear Outside wenig hilfreiche Button „Großansicht“ wurde entfernt.",
-      "Ein Hinweis erklärt, dass die Beschriftungen im Clear-Outside-Prognosebild Teil der extern gelieferten Grafik sind und nicht durch die App übersetzt werden können."
+      "Setup-Rahmen: Beim Öffnen eines neuen Objekts wird der Rahmen wieder auf dieses Objekt gesetzt, wenn „Setup-Rahmen anzeigen“ aktiv ist.",
+      "Aladin: Detail-Popups erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Pannen/Draggen öffnet keine Objektinfos mehr.",
+      "Wolkenkarte: „Strukturiert“ erzeugt eine deutlich wolkigere, weniger milchige Darstellung.",
+      "Wolkenkarte: Niederschlag, Regen und Schnee sind ein-/ausschaltbar; die Standardanzeige wird in den Einstellungen gesetzt und ist initial aktiv.",
+      "Wettermodelle: Default-Gewichtung auf DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 % geändert.",
+      "Horizontansicht: Dämmerungsphasen werden zeitlich passend als dezente Grauschattierung hinterlegt; Horizontprofile verwenden mehr Stützpunkte.",
+      "Stündlicher Wetterverlauf: Farbhinterlegung etwas kräftiger dargestellt."
     ],
     "en": [
-      "Clear Outside now uses the available display width much better.",
-      "The Clear Outside full-screen button has been removed because it did not add useful value.",
-      "A note explains that labels inside the Clear Outside forecast image are part of the externally provided graphic and cannot be translated by the app."
+      "Setup frame: when opening a new object, the frame is reset to that object if “Show setup frame” is enabled.",
+      "Aladin: detail popups now appear only after a real click on visibly labeled objects; panning/dragging no longer opens object details.",
+      "Cloud map: “Structured” now renders a more cloud-like and less milky appearance.",
+      "Cloud map: precipitation, rain and snow can be toggled; defaults are configured in settings and enabled initially.",
+      "Weather models: default weights changed to DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.",
+      "Horizon view: twilight phases are shown as subtle grey shading matched to time; horizon profiles use more control points.",
+      "Hourly weather trend: colour backgrounds are slightly stronger."
     ]
   }
 }
