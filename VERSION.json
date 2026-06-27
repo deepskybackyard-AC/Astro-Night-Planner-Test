@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.25",
-  "release": "1.1.0-test.25",
+  "version": "1.1.0-test.26",
+  "release": "1.1.0-test.26",
   "environment": "test",
-  "builtAt": "2026-06-27T23:25:00+02:00",
-  "notes": "Testversion 1.1.0-test.25: Aladin-Bedienung als Tabs; Dämmerungslogik zeigt astronomische Nacht nur bei tatsächlichem Sonnenstand unter -18°; Übersetzungen nachgezogen.",
+  "builtAt": "2026-06-27T23:40:00+02:00",
+  "notes": "Testversion 1.1.0-test.26: Aladin-Tabs funktionsfähig; astronomische Nacht nur bei nutzbarer zusammenhängender Phase; Mindesthöhe in der Horizontansicht ergänzt.",
   "releaseNotes": {
     "de": [
-      "Aladin-Bedienung: Funktionen sind in die Tabs Himmelsbild, Rahmen, Objekte sowie Zeit & Mond gegliedert.",
-      "Dämmerungslogik: Astronomische Nacht wird nur angezeigt, wenn die Sonne am Standort tatsächlich unter −18° sinkt.",
-      "Horizontansicht: Legende und Dämmerungsfarben wurden korrigiert.",
-      "Weitere DE/EN-Übersetzungen für neue Labels, Listeninhalte und dynamische Aladin-Texte wurden ergänzt."
+      "Aladin-Bedienung: Die Tabs Himmelsbild, Rahmen, Objekte sowie Zeit & Mond schalten die Bediengruppen jetzt korrekt um.",
+      "Dämmerungslogik: Astronomische Nacht wird nur angezeigt, wenn eine zusammenhängende nutzbare Phase unter −18° vorliegt; kurze Grenzfälle werden als astronomische Dämmerung behandelt.",
+      "Horizontansicht: Mindesthöhe als gelb gestrichelte Linie ergänzt.",
+      "Horizontansicht: Dämmerungsdarstellung nutzt keine künstlichen Ersatzsegmente für astronomische Nacht."
     ],
     "en": [
-      "Aladin controls: functions are grouped into the tabs Sky image, Frame, Objects, and Time & Moon.",
-      "Twilight logic: astronomical night is shown only when the Sun actually drops below −18° at the location.",
-      "Horizon view: legend and twilight colours were corrected.",
-      "Additional DE/EN translations were added for new labels, list values and dynamic Aladin texts."
+      "Aladin controls: the Sky image, Frame, Objects, and Time & Moon tabs now switch the control groups correctly.",
+      "Twilight logic: astronomical night is only shown for a continuous usable period below −18°; short borderline cases are treated as astronomical twilight.",
+      "Horizon view: minimum altitude added as a yellow dashed line.",
+      "Horizon view: twilight rendering no longer creates artificial astronomical-night fallback segments."
     ]
   }
 }

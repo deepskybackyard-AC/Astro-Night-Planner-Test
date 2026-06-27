@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.25',
-  release: '1.1.0-test.25',
+  appVersion: '1.1.0-test.26',
+  release: '1.1.0-test.26',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.25',
+  documentTitle: 'Astro Night Planner 1.1.0-test.26',
   releaseNotes: {
     de: [
       'Aladin-Bedienung: Funktionen sind in Tabs für Himmelsbild, Rahmen, Objekte sowie Zeit & Mond gegliedert.',
