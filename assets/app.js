@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.26 – Aladin-Tabs und astronomische Nacht korrigiert */
+/* Astro Night Planner 1.1.0-test.27 – Aladin-Layout und Höhenkurve geprüft */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.26', release:'1.1.0-test.26', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.27', release:'1.1.0-test.27', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -12,7 +12,9 @@ const DEFAULT_RELEASE_NOTES = {
     'Aladin-Detailinfos erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Verschieben öffnet keine Popups mehr.',
     'Wolkenkarte: geringe Glättung wirkt wolkiger und weniger milchig; Niederschlag, Regen und Schnee sind schaltbar.',
     'Default-Modellgewichtung: DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 %.',
-    'Aladin-Bedienung: Tabs sind jetzt funktional und schalten die Bediengruppen um.',
+    'Aladin-Bedienung: Tabs sind funktional und nach Arbeitsreihenfolge angeordnet: Rahmen, Objekte, Himmelsbild, Zeit & Mond.',
+    'Himmelsbild in neuem Tab öffnen ist als dauerhafte Schnellaktion rechts neben den Tabs verfügbar.',
+    'Höhen- und Horizontkurven verwenden eine dichtere Objektbahnberechnung für glattere und präzisere Kurven.',
     'Dämmerungslogik: Astronomische Nacht wird erst bei einer zusammenhängenden, nutzbaren Phase unter -18° angezeigt.',
     'Horizontansicht: Mindesthöhe ergänzt und Dämmerungsdarstellung ohne künstliche Astro-Nacht.'
   ],
@@ -21,7 +23,9 @@ const DEFAULT_RELEASE_NOTES = {
     'Aladin detail popups now require a real click on visibly labeled objects; panning no longer opens popups.',
     'Cloud map: low smoothing is more cloud-like and less milky; precipitation, rain and snow are toggleable.',
     'Default model weighting: DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.',
-    'Aladin controls: tabs now switch the control groups correctly.',
+    'Aladin controls: tabs are functional and ordered by workflow: Frame, Objects, Sky image, Time & Moon.',
+    'Open sky image in a new tab is available as a permanent quick action to the right of the tabs.',
+    'Altitude and horizon curves use denser object-track sampling for smoother and more precise curves.',
     'Twilight logic: astronomical night is only shown for a continuous usable period below -18°.',
     'Horizon view: minimum altitude added and twilight rendering avoids artificial astronomical night.'
   ]
@@ -1876,6 +1880,22 @@ function detailTimeState(o,night,loc){
   const azimuthValue=azimuth(o.raHours,o.decDeg,time,loc.latitude,loc.longitude);
   return{fraction,time,altitude:altitudeValue,azimuth:azimuthValue};
 }
+function sampleObjectTrack(o,start,end,loc,horizonEntry=null,count=361){
+  const startMs=start instanceof Date?start.getTime():Number(start);
+  const endMs=end instanceof Date?end.getTime():Number(end);
+  if(!Number.isFinite(startMs)||!Number.isFinite(endMs)||endMs<=startMs)return[];
+  const duration=endMs-startMs;
+  const steps=Math.max(24,Math.min(720,Number(count)||361));
+  return Array.from({length:steps},(_,index)=>{
+    const time=startMs+duration*index/(steps-1);
+    const date=new Date(time);
+    const alt=altitude(o.raHours,o.decDeg,date,loc.latitude,loc.longitude);
+    const az=azimuth(o.raHours,o.decDeg,date,loc.latitude,loc.longitude);
+    const horizonAlt=horizonEntry?horizonAt(loc,az,horizonEntry.id):horizonAt(loc,az);
+    return[time,Number(alt.toFixed(3)),Number(az.toFixed(3)),Number(horizonAlt.toFixed(3))];
+  });
+}
+
 function hourlyObjectSamples(o,night,loc){
   const samples=[];
   let previousKey='';
@@ -1893,9 +1913,7 @@ function hourlyObjectSamples(o,night,loc){
 }
 function renderDetailTimeControls(o,night,loc,variant='altitude'){
   const state=detailTimeState(o,night,loc);
-  const points=objectStats(o,{start:night.sunset,end:night.sunrise},loc,profile.planning.minAltitude).points.map(point=>[
-    point.t.getTime(),Number(point.alt.toFixed(3)),Number(point.az.toFixed(3))
-  ]);
+  const points=sampleObjectTrack(o,night.sunset,night.sunrise,loc,null,361).map(point=>[point[0],point[1],point[2]]);
   return`<div class="detail-time-controller" data-detail-time-controller data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-timezone="${esc(loc.timezone)}" data-points="${encodeURIComponent(JSON.stringify(points))}">
     <div class="detail-time-head">
       <div><div class="eyebrow">Gewählte Aufnahmezeit</div><strong data-detail-time-label>${fmtDateTime(state.time,loc.timezone)}</strong><div class="small muted" data-detail-time-position>Höhe ${fmt(state.altitude)}° · Azimut ${fmt(state.azimuth)}° (${cardinal(state.azimuth)})</div></div>
@@ -1910,12 +1928,12 @@ function renderDetailTimeControls(o,night,loc,variant='altitude'){
     <div class="detail-time-limits"><span>${fmtTime(night.sunset,loc.timezone)}</span><span>${fmtTime(night.sunrise,loc.timezone)}</span></div>
   </div>`;
 }
-function renderTwilightLegend(){
+function renderTwilightLegend(hasAstronomicalNight=false){
   return`<div class="twilight-legend" aria-label="Legende der Dämmerungsphasen">
     <span><i class="legend-civil"></i>Bürgerliche Dämmerung</span>
     <span><i class="legend-nautical"></i>Nautische Dämmerung</span>
     <span><i class="legend-astronomical"></i>Astronomische Dämmerung</span>
-    <span><i class="legend-night"></i>Astronomische Nacht</span>
+    ${hasAstronomicalNight?'<span><i class="legend-night"></i>Astronomische Nacht</span>':''}
     <span><i class="legend-selected"></i>Gewählter Planungszeitraum</span>
     <span><i class="legend-current"></i>Gewählte Aufnahmezeit</span>
   </div>`;
@@ -1927,7 +1945,7 @@ function renderHourlyAltitudeStrip(o,night,loc){
 function renderObjectDetails(o,windowRange,loc,night){
   const fullNight={start:night.sunset,end:night.sunrise},horizonEntry=horizonProfileFor(loc);
   const fullStats=objectStats(o,fullNight,loc,profile.planning.minAltitude),selectedStats=objectStats(o,windowRange,loc,profile.planning.minAltitude);
-  const altitudePoints=fullStats.points.map(point=>[point.t.getTime(),Number(point.alt.toFixed(3)),Number(point.az.toFixed(3)),Number(horizonAt(loc,point.az,horizonEntry?.id).toFixed(3))]);
+  const altitudePoints=sampleObjectTrack(o,night.sunset,night.sunrise,loc,horizonEntry,361);
   const horizonPoints=Array.from({length:HORIZON_POINT_COUNT},(_,index)=>{const az=horizonAzForIndex(index);return[az,Number(horizonAt(loc,az,horizonEntry?.id).toFixed(3))]});
   const obstacles=horizonObstacles(loc,horizonEntry?.id).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:Array.isArray(item.points)?item.points:[],closed:Boolean(item.closed)}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0});
   const detailTime=detailTimeState(o,night,loc),horizonOptions=horizonProfilesFor(loc).map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}${item.id===loc.defaultHorizonProfileId?' (Standard)':''}</option>`).join('');
@@ -1936,7 +1954,7 @@ function renderObjectDetails(o,windowRange,loc,night){
     <div class="object-detail-header"><div><div class="eyebrow">Objektdetails</div><h2>${esc(o.id)} · ${esc(o.name)}</h2><div class="small muted">${esc(o.type)} · ${esc(o.constellation)} · Größe ${fmt(o.majorArcMin)}′ × ${fmt(o.minorArcMin)}′ · Filter ${esc((o.recommendedFilters||[]).join(', ')||'–')}</div></div><div class="data-actions"><button type="button" data-toggle-target="${esc(o.id)}" class="${isTarget?'active':''}">${isTarget?'Aus Meine Aufnahmeziele entfernen':'Zu Meine Aufnahmeziele hinzufügen'}</button><button type="button" data-wikipedia-object="${esc(o.id)}">Wikipedia</button><button type="button" class="close-detail-button" data-close-object-details aria-label="Detailansicht schließen">✕ Details schließen</button></div></div>
     <div class="grid four object-detail-metrics"><div class="metric"><div class="label">Maximalhöhe im Planungszeitraum</div><div class="value">${fmt(selectedStats.maxAltitude)}°</div></div><div class="metric"><div class="label">Beste Stunde im nautischen Zeitraum</div><div class="value">${(()=>{const best=bestObjectHour(o,night,loc,profile.planning.minAltitude);return best?`${fmtTime(best.time,loc.timezone)} · Q ${fmt(best.quality)}`:'Keine geeignete Stunde'})()}</div></div><div class="metric"><div class="label">Sichtbar über Grenzhöhe</div><div class="value">${fmt(selectedStats.visibleHours,1)} h</div></div><div class="metric"><div class="label">Mondabstand</div><div class="value">${fmt(selectedStats.moonDistance)}°</div></div></div>
     ${renderFraming(o,windowRange,loc)}
-    <details class="object-chart-panel" ${profile.central.detailPanels?.altitudeCollapsed?'':'open'}><summary>Höhenkurve</summary><div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Schieberegler, Uhrzeitfeld, Kurvenklick und Horizontansicht verwenden dieselbe Aufnahmezeit.</div>${renderDetailTimeControls(o,night,loc,'altitude')}<canvas class="large-altitude-chart" width="1400" height="430" data-points="${encodeURIComponent(JSON.stringify(altitudePoints))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${dateMs(night.astronomicalDusk)}" data-astro-end="${dateMs(night.astronomicalDawn)}" data-current-time="${detailTime.time.getTime()}" data-min-alt="${profile.planning.minAltitude}" data-timezone="${esc(loc.timezone)}"></canvas>${renderTwilightLegend()}${renderHourlyAltitudeStrip(o,night,loc)}</details>
+    <details class="object-chart-panel" ${profile.central.detailPanels?.altitudeCollapsed?'':'open'}><summary>Höhenkurve</summary><div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Schieberegler, Uhrzeitfeld, Kurvenklick und Horizontansicht verwenden dieselbe Aufnahmezeit.</div>${renderDetailTimeControls(o,night,loc,'altitude')}<canvas class="large-altitude-chart" width="1400" height="430" data-points="${encodeURIComponent(JSON.stringify(altitudePoints))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${dateMs(night.astronomicalDusk)}" data-astro-end="${dateMs(night.astronomicalDawn)}" data-current-time="${detailTime.time.getTime()}" data-min-alt="${profile.planning.minAltitude}" data-timezone="${esc(loc.timezone)}"></canvas>${renderTwilightLegend(night.hasAstronomicalNight)}${renderHourlyAltitudeStrip(o,night,loc)}</details>
     <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}><summary>Horizontansicht</summary><div class="chart-description horizon-detail-header"><span>Objektbahn und persönlicher Horizont. Die Aufnahmezeit ist mit der Höhenkurve synchronisiert.</span><label>Horizontprofil für diese Planung<select id="detailHorizonProfileSelect">${horizonOptions}</select></label></div>${renderDetailTimeControls(o,night,loc,'horizon')}<canvas class="large-horizon-chart" width="1400" height="430" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${dateMs(night.astronomicalDusk)}" data-astro-end="${dateMs(night.astronomicalDawn)}" data-current-time="${detailTime.time.getTime()}" data-min-alt="${profile.planning.minAltitude}" data-show-ground="${profile.planning.showGroundHorizon!==false}" data-timezone="${esc(loc.timezone)}"></canvas></details>
   </div>`;
 }
@@ -2047,15 +2065,15 @@ function renderFraming(o,windowRange,loc){
   const scopes=profile.equipment.telescopes.map(item=>`<option value="${esc(item.id)}" ${item.id===activeScope()?.id?'selected':''}>${esc(item.name)}</option>`).join(''),cameras=profile.equipment.cameras.map(item=>`<option value="${esc(item.id)}" ${item.id===activeCamera()?.id?'selected':''}>${esc(item.name)}</option>`).join('');
   const selectableObjects=[...new Map([...currentComputedObjects.map(entry=>entry.object),o].map(item=>[item.id,item])).values()].sort((a,b)=>a.id.localeCompare(b.id,'de',{numeric:true})),objectOptions=selectableObjects.map(x=>`<option value="${esc(x.id)}" ${x.id===o.id?'selected':''}>${esc(x.id)} · ${esc(x.name)}</option>`).join('');
   const analysis=framingAnalysis(o,{rotation:frameRotation,optimize:false});
-  const activeAladinTab=['sky','frame','objects','time'].includes(profile.planning.aladinControlTab)?profile.planning.aladinControlTab:'frame';
-  const tabButton=(key,label)=>`<button type="button" data-aladin-control-tab="${key}" class="${activeAladinTab===key?'active':''}">${label}</button>`;
+  const activeAladinTab=['frame','objects','sky','time'].includes(profile.planning.aladinControlTab)?profile.planning.aladinControlTab:'frame';
+  const tabButton=(key,label)=>`<button type="button" role="tab" data-aladin-control-tab="${key}" class="${activeAladinTab===key?'active':''}">${label}</button>`;
   const tabClass=key=>`framing-controls compact-framing-controls aladin-tab-panel ${activeAladinTab===key?'active':''}`;
   return`<section class="object-detail-section framing-section" id="framingCard">
     <div class="framing-header-grid"><div><div class="eyebrow">${ui('Interaktives Himmelsbild','Interactive sky image')}</div><h3>${ui('Rahmung','Framing')}: ${esc(o.id)} · ${esc(o.name)}</h3><div class="muted">${esc(o.type)} · ${fmt(o.majorArcMin)}′ × ${fmt(o.minorArcMin)}′ · ${language==='en'?esc(EN_EXACT[analysis.status]||analysis.status):esc(analysis.status)} · ${ui('Mindestrand','Minimum margin')} ${fmt(analysis.minMargin,1)} %</div></div><label>Objekt<select id="framingObjectSelect">${objectOptions}</select></label><label>Teleskop<select id="framingTelescopeSelect">${scopes}</select></label><label>Kamera<select id="framingCameraSelect">${cameras}</select></label></div>
     <div class="framing-view info-pos-${esc(profile.central.aladinInfo?.position||'right')}"><iframe id="aladinFrame" title="Aladin Lite – ${esc(o.id)}" src="aladin-frame.html?${query}" loading="eager"></iframe><div class="framing-info ${profile.central.aladinInfo?.visible===false?'hidden':''}"><div id="framingTimePosition"><strong id="framingTimeClock">${fmtTime(time,loc.timezone)}</strong><br>${ui('Höhe','Altitude')} ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)}</div><div id="framingTimeWeather">${setup?`Setup ${fmt(setup.width,2)}° × ${fmt(setup.height,2)}°<br>${fmt(setup.pixelScale,2)}″/px`:ui('Kein Setup gewählt','No setup selected')}</div><div id="framingMoonInfo" class="moon-note">${moonName}: ${ui('Abstand','distance')} ${fmt(moonSep)}° · ${ui('Höhe','altitude')} ${fmt(moonAlt)}° · ${ui('Beleuchtung','illumination')} ${fmt(moonPhase.illumination)} %</div></div></div>
     <div class="aladin-control-card">
-      <div class="aladin-control-tabs" role="tablist" aria-label="Aladin-Bediengruppen">${tabButton('sky','Himmelsbild')}${tabButton('frame','Rahmen')}${tabButton('objects','Objekte')}${tabButton('time','Zeit & Mond')}</div>
-      <div class="${tabClass('sky')}" data-aladin-tab-panel="sky"><label>Survey<select id="aladinSurveySelect">${availableSurveys.map(item=>`<option value="${esc(item.hipsId)}" ${survey===item.hipsId?'selected':''}>${optionText(item.name)}</option>`).join('')||`<option value="P/DSS2/color">DSS2 Farbe</option>`}</select></label><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><button type="button" id="openAladinExternal">Himmelsbild in neuem Tab öffnen</button><span class="small muted external-aladin-note">Mit Messwerkzeug und Umrisszeichnung</span></div>
+      <div class="aladin-control-tabs" role="tablist" aria-label="Aladin-Bediengruppen"><div class="aladin-tab-button-group">${tabButton('frame','Rahmen')}${tabButton('objects','Objekte')}${tabButton('sky','Himmelsbild')}${tabButton('time','Zeit & Mond')}</div><button type="button" id="openAladinExternal" class="aladin-external-action">Himmelsbild in neuem Tab öffnen</button></div>
+      <div class="${tabClass('sky')}" data-aladin-tab-panel="sky"><label>Survey<select id="aladinSurveySelect">${availableSurveys.map(item=>`<option value="${esc(item.hipsId)}" ${survey===item.hipsId?'selected':''}>${optionText(item.name)}</option>`).join('')||`<option value="P/DSS2/color">DSS2 Farbe</option>`}</select></label><button type="button" id="reloadAladinImage">Himmelsbild neu laden</button><span class="small muted external-aladin-note">Mit Messwerkzeug und Umrisszeichnung. Der externe Tab kann jederzeit über den Button rechts in der Tab-Zeile geöffnet werden.</span></div>
       <div class="${tabClass('frame')}" data-aladin-tab-panel="frame"><div class="comparison-frame-picker"><span>Vergleichsrahmen</span>${(profile.equipment.setups||[]).map(setup=>`<label class="chip"><input type="checkbox" data-compare-setup="${esc(setup.id)}" ${(profile.planning.comparisonSetupIds||[]).includes(setup.id)?'checked':''}>${esc(setup.name)}</label>`).join('')}</div><label class="chip"><input id="frameVisible" type="checkbox" ${profile.central.frameVisible?'checked':''}>Setup-Rahmen anzeigen</label><label>Kamerarotation <span id="frameRotationValue">${fmt(frameRotation)}°</span><input id="frameRotation" type="range" min="0" max="179" value="${frameRotation}"></label><button type="button" id="optimalFrameRotation">Optimale Rotation</button><button type="button" id="centerAladinFrame">Rahmen auf Objekt zurücksetzen</button><button type="button" id="toggleFrameMoveMode" class="${profile.planning.frameMoveMode?'active':''}">Rahmen verschieben</button><button type="button" id="exportNinaPlan" class="primary">${language==='en'?'Export for N.I.N.A.':'Für N.I.N.A. exportieren'}</button></div>
       <div class="${tabClass('objects')}" data-aladin-tab-panel="objects"><label class="chip"><input id="aladinLabelsVisible" type="checkbox" ${profile.central.aladinLabels?.visible!==false?'checked':''}>Objektnamen anzeigen</label><label>Beschriftungsumfang<select id="aladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${profile.central.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label><label class="chip outline-control"><input id="objectSizeVisible" type="checkbox" ${profile.central.objectSizeVisible?'checked':''}>Objektumriss anzeigen</label><label class="outline-control" title="Dreht die Objektellipse bzw. manuelle Umrisse, nicht den Kamerarahmen.">Objekt-/Umrissrotation <span id="objectRotationValue">${fmt(objectRotation)}°</span><input id="objectRotation" class="short-range" type="range" min="0" max="179" value="${objectRotation}"></label><button type="button" id="resetObjectRotation" class="outline-control" title="Objektellipse auf den Katalog-Positionswinkel ${fmt(catalogRotation)}° zurücksetzen">Objektausrichtung zurücksetzen</button><label class="chip"><input id="aladinInfoVisible" type="checkbox" ${profile.central.aladinInfo?.visible!==false?'checked':''}>Infofelder anzeigen</label><label>Infofelder-Position<select id="aladinInfoPosition">${[['right','rechts'],['left','links'],['top','oben'],['bottom','unten']].map(([key,label])=>`<option value="${key}" ${profile.central.aladinInfo?.position===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label></div>
       <div class="${tabClass('time')}" data-aladin-tab-panel="time"><label class="chip"><input id="showMoonInAladin" type="checkbox" ${profile.planning.showMoonInAladin?'checked':''}>Mond anzeigen</label><label class="framing-time-control">Zeit im Planungsfenster <span id="framingTimeValue">${fmtTime(time,loc.timezone)} · ${Math.round((profile.planning.timeFraction||0)*100)} %</span><input id="framingTime" type="range" min="0" max="100" value="${(profile.planning.timeFraction||0)*100}"><small>${ui('Ändert Planungswerte, nicht das Sternfeld.','Changes planning values, not the star field.')} ${moonName}: ${fmt(moonSep)}° ${ui('Abstand','distance')}, ${ui('Höhe','altitude')} ${fmt(moonAlt)}°, ${ui('Beleuchtung','illumination')} ${fmt(moonPhase.illumination)} %.</small></label></div>
@@ -2976,7 +2994,7 @@ function postAladinCenterFrameToSelectedObject({feedback=false}={}){
 function bindFraming(){
   document.querySelectorAll('[data-aladin-control-tab]').forEach(button=>button.addEventListener('click',async()=>{
     const tab=button.dataset.aladinControlTab;
-    if(!['sky','frame','objects','time'].includes(tab))return;
+    if(!['frame','objects','sky','time'].includes(tab))return;
     profile.planning.aladinControlTab=tab;
     await saveProfile();
     document.querySelectorAll('[data-aladin-control-tab]').forEach(item=>item.classList.toggle('active',item===button));
@@ -3007,7 +3025,20 @@ function bindFraming(){
 }
 
 function nearestDetailPoint(points,time){
-  return points.reduce((best,point)=>Math.abs(point[0]-time)<Math.abs(best[0]-time)?point:best,points[0]);
+  if(!Array.isArray(points)||!points.length)return null;
+  const t=Number(time);
+  const sorted=points.slice().sort((a,b)=>Number(a[0])-Number(b[0]));
+  if(!Number.isFinite(t))return sorted[0];
+  if(t<=Number(sorted[0][0]))return sorted[0];
+  if(t>=Number(sorted[sorted.length-1][0]))return sorted[sorted.length-1];
+  for(let index=1;index<sorted.length;index++){
+    const left=sorted[index-1],right=sorted[index],lt=Number(left[0]),rt=Number(right[0]);
+    if(t>=lt&&t<=rt){
+      const f=(t-lt)/Math.max(1,rt-lt);
+      return left.map((value,i)=>i===0?t:Number(value)+(Number(right[i])-Number(value))*f);
+    }
+  }
+  return sorted.reduce((best,point)=>Math.abs(Number(point[0])-t)<Math.abs(Number(best[0])-t)?point:best,sorted[0]);
 }
 function applyDetailTimeFraction(value,{persist=false}={}){
   const fraction=clamp(Number(value)||0,0,1);

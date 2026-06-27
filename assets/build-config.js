@@ -3,22 +3,22 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.26',
-  release: '1.1.0-test.26',
+  appVersion: '1.1.0-test.27',
+  release: '1.1.0-test.27',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.26',
+  documentTitle: 'Astro Night Planner 1.1.0-test.27',
   releaseNotes: {
     de: [
-      'Aladin-Bedienung: Funktionen sind in Tabs für Himmelsbild, Rahmen, Objekte sowie Zeit & Mond gegliedert.',
-      'Dämmerungslogik: Astronomische Nacht wird nur bei tatsächlichem Sonnenstand unter −18° angezeigt.',
-      'Horizontansicht: Legende und Dämmerungsfarben wurden korrigiert.',
-      'Weitere DE/EN-Übersetzungen für neue Labels und dynamische Texte wurden ergänzt.'
+      'Aladin-Bedienung: Tabs neu angeordnet in der Reihenfolge Rahmen, Objekte, Himmelsbild, Zeit & Mond.',
+      'Himmelsbild in neuem Tab öffnen ist jetzt als dauerhafte Schnellaktion rechts neben den Tabs verfügbar.',
+      'Höhen- und Horizontkurven verwenden eine dichtere Objektbahnberechnung für glattere und präzisere Kurven.',
+      'Legende der Höhenkurve blendet Astronomische Nacht aus, wenn sie in der Planungsnacht nicht vorkommt.'
     ],
     en: [
-      'Aladin controls are grouped into tabs for Sky image, Frame, Objects, and Time & Moon.',
-      'Twilight logic: astronomical night is shown only when the Sun actually drops below −18°.',
-      'Horizon view: legend and twilight colours were corrected.',
-      'Additional DE/EN translations for new labels and dynamic texts were added.'
+      'Aladin controls: tabs reordered to Frame, Objects, Sky image, Time & Moon.',
+      'Open sky image in a new tab is now a permanent quick action to the right of the tabs.',
+      'Altitude and horizon curves use denser object-track sampling for smoother and more precise curves.',
+      'The altitude-curve legend hides astronomical night when it does not occur in the planning night.'
     ]
   }});

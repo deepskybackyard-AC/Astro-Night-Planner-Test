@@ -651,11 +651,15 @@ body{padding-bottom:0}
 
 /* Test 25: Aladin control tabs */
 .aladin-control-card{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(7,17,29,.48);padding:14px}
-.aladin-control-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid rgba(121,184,255,.18);padding-bottom:10px}
+.aladin-control-tabs{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid rgba(121,184,255,.18);padding-bottom:10px}
+.aladin-tab-button-group{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .aladin-control-tabs button{border:1px solid var(--line);background:#0b1a2a;color:var(--muted);border-radius:12px;padding:10px 16px;font-weight:850;min-width:120px}
 .aladin-control-tabs button.active{background:#173756;color:#f0c75e;border-color:#4387c9;box-shadow:0 0 0 1px rgba(67,135,201,.25) inset}
+.aladin-control-tabs .aladin-external-action{margin-left:auto;min-width:250px;background:#132f4d;color:#dcecff;border-color:#365e85;box-shadow:none}
+.aladin-control-tabs .aladin-external-action:hover{border-color:#6fc9ff;color:#fff}
+.aladin-control-tabs .aladin-external-action.active{background:#132f4d;color:#dcecff;border-color:#365e85;box-shadow:none}
 .aladin-tab-panel{display:none;margin-top:0}
 .aladin-tab-panel.active{display:grid}
 .aladin-tab-panel .framing-time-control{grid-column:span 2}
 .aladin-tab-panel .external-aladin-note{align-self:center}
-@media(max-width:780px){.aladin-control-tabs{overflow-x:auto;flex-wrap:nowrap}.aladin-control-tabs button{min-width:max-content}.aladin-tab-panel .framing-time-control{grid-column:1/-1}}
+@media(max-width:780px){.aladin-control-tabs{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start}.aladin-tab-button-group{flex-wrap:nowrap}.aladin-control-tabs button{min-width:max-content}.aladin-control-tabs .aladin-external-action{margin-left:16px}.aladin-tab-panel .framing-time-control{grid-column:1/-1}}
