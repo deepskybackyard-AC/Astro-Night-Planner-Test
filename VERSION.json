@@ -1,21 +1,21 @@
 {
-  "version": "1.1.0-test.28",
-  "release": "1.1.0-test.28",
+  "version": "1.1.0-test.29",
+  "release": "1.1.0-test.29",
   "environment": "test",
-  "builtAt": "2026-06-27T23:55:00+02:00",
-  "notes": "Testversion 1.1.0-test.28: Übersetzungskorrekturen, Aladin-Tab-Zeile und Meteoblue-Startparameter.",
+  "builtAt": "2026-06-28T00:25:00+02:00",
+  "notes": "Testversion 1.1.0-test.29: Meteoblue-Widget-Konfiguration und weitere Übersetzungskorrekturen.",
   "releaseNotes": {
     "de": [
-      "Aladin-Bedienung: Tab-Reihenfolge Rahmen, Objekte, Himmelsbild, Zeit & Mond; externer Himmelsbild-Button bleibt rechts in der Tab-Zeile.",
-      "Meteoblue-Wetterkarten werden initial mit Wolken/Niederschlag und Windanimation angefragt, soweit der Embed diese Parameter übernimmt.",
-      "Viele noch gemischte deutsch/englische UI-Texte, Statusmeldungen, Dropdownwerte und Hilfetexte wurden nachübersetzt.",
-      "Hinweis zur Modellgewichtung und weitere Einstellungslabels wurden an die aktuellen Defaults angepasst."
+      "Meteoblue-Wetterkarten verwenden eine reduzierte öffentliche Widget-Konfiguration mit Wolken/Niederschlag und Windanimation statt geratenen Tiefenparametern.",
+      "Weitere gemischte deutsch/englische UI-Texte, dynamische Statusmeldungen, Diagrammtexte, Dropdownwerte und Hilfetexte wurden nachübersetzt.",
+      "Canvas-/Diagrammtexte und Himmelsrichtungen werden sprachabhängig ausgegeben.",
+      "Backup-, Ausrüstungs-, Standort-, Horizont- und Aufnahmezieltexte wurden erneut systematisch geprüft."
     ],
     "en": [
-      "Aladin controls: tab order Frame, Objects, Sky image, Time & Moon; the external sky-image button remains on the right side of the tab row.",
-      "Meteoblue weather maps are requested initially with clouds/precipitation and wind animation where the embed accepts these parameters.",
-      "Many mixed German/English UI strings, status messages, dropdown values and help texts have been translated.",
-      "The model-weighting note and further settings labels were aligned with the current defaults."
+      "Meteoblue weather maps now use a reduced public widget configuration with clouds/precipitation and wind animation instead of guessed deep-link parameters.",
+      "Further mixed German/English UI strings, dynamic status messages, chart labels, dropdown values and help texts have been translated.",
+      "Canvas/chart labels and cardinal directions are now language-aware.",
+      "Backup, equipment, location, horizon and imaging-target texts were checked again systematically."
     ]
   }
 }
