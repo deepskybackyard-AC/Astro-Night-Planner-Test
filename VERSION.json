@@ -1,23 +1,19 @@
 {
-  "version": "1.1.0-test.23",
-  "release": "1.1.0-test.23",
+  "version": "1.1.0-test.24",
+  "release": "1.1.0-test.24",
   "environment": "test",
-  "builtAt": "2026-06-27T21:10:00+02:00",
-  "notes": "Testversion 1.1.0-test.23: Aladin-Umrisszeichnung sichtbar als dünne Linie; freie Hindernisse zeichnen sichtbar; Horizontansicht wieder 360° mit Dämmerungsschattierung; Setup-Rahmen objektbezogen robuster.",
+  "builtAt": "2026-06-27T22:40:00+02:00",
+  "notes": "Testversion 1.1.0-test.24: Horizontansicht bleibt 360°-Azimutansicht; Dämmerungsphasen entsprechen farblich und in relativer Breite der Höhenkurve.",
   "releaseNotes": {
     "de": [
-      "Aladin extern: manuelle Umrisszeichnung wird wieder sichtbar als dünne Linie gezeichnet; Stützpunkte sind klein bzw. bei Freihand nicht dominant.",
-      "Aladin extern: Umrisse werden erst über die Buttons geschlossen/gespeichert; während der Zeichnung wird das Bild nicht verschoben.",
-      "Horizonteditor: freie Hindernisse zeichnen beim Ziehen eine sichtbare Linie/Kontur.",
-      "Horizontansicht: wieder 360°-Azimutansicht; Dämmerungsphasen sind nur dezente Zusatzschattierung analog zur Höhenkurve.",
-      "Setup-Rahmen: gespeicherte Rahmenzentren sind objektbezogen, damit beim Objektwechsel kein alter Rahmen übernommen wird."
+      "Horizontansicht: Dämmerungsphasen verwenden jetzt dieselben Farben wie die Höhenkurve.",
+      "Horizontansicht: Die relative Breite der Phasen folgt dem Sonnenuntergang-bis-Sonnenaufgang-Zeitfenster der Höhenkurve.",
+      "Keine weiteren Funktionsänderungen gegenüber test.23."
     ],
     "en": [
-      "External Aladin: manual outline drawing is visible again as a thin line; control points are small or unobtrusive in freehand mode.",
-      "External Aladin: outlines are only closed/saved by the respective buttons; the sky image does not pan while drawing.",
-      "Horizon editor: drawing free obstacles now shows a visible line/contour while dragging.",
-      "Horizon view: restored 360° azimuth view; twilight phases are a subtle background aid matching the altitude curve.",
-      "Setup frame: stored frame centres are object-specific so switching objects cannot reuse an old frame centre."
+      "Horizon view: twilight phases now use the same colours as the altitude curve.",
+      "Horizon view: phase widths follow the sunset-to-sunrise time window of the altitude curve.",
+      "No other functional changes compared with test.23."
     ]
   }
 }

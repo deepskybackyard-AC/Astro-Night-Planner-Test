@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.23 – Aladin-Umriss, Horizont und Hindernisse */
+/* Astro Night Planner 1.1.0-test.24 – Horizont-Dämmerung analog Höhenkurve */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -12,7 +12,7 @@ const DEFAULT_RELEASE_NOTES = {
     'Aladin-Detailinfos erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Verschieben öffnet keine Popups mehr.',
     'Wolkenkarte: geringe Glättung wirkt wolkiger und weniger milchig; Niederschlag, Regen und Schnee sind schaltbar.',
     'Default-Modellgewichtung: DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 %.',
-    'Horizontansicht: Dämmerungsphasen werden zeitlich passend als dezente Grauschattierung angezeigt; Horizontprofile haben mehr Stützpunkte.',
+    'Horizontansicht: Dämmerungsphasen werden farblich und in relativer Breite analog zur Höhenkurve angezeigt.',
     'Stündlicher Wetterverlauf: Farben sind etwas kräftiger.'
   ],
   en: [
@@ -20,7 +20,7 @@ const DEFAULT_RELEASE_NOTES = {
     'Aladin detail popups now require a real click on visibly labeled objects; panning no longer opens popups.',
     'Cloud map: low smoothing is more cloud-like and less milky; precipitation, rain and snow are toggleable.',
     'Default model weighting: DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.',
-    'Horizon view: twilight phases are shown as subtle time-matched grey shading; horizon profiles use more control points.',
+    'Horizon view: twilight phases now match the altitude curve colours and relative widths.',
     'Hourly weather trend colours are slightly stronger.'
   ]
 }
@@ -3981,29 +3981,40 @@ function drawHorizonChart(canvas,withTrack=false){
     const start=Number(canvas.dataset.start)||Math.min(...trackTimes),end=Number(canvas.dataset.end)||Math.max(...trackTimes);
     const selectedStart=Number(canvas.dataset.selectedStart),selectedEnd=Number(canvas.dataset.selectedEnd);
     const civilStart=Number(canvas.dataset.civilStart),civilEnd=Number(canvas.dataset.civilEnd),nautStart=Number(canvas.dataset.nautStart),nautEnd=Number(canvas.dataset.nautEnd),astroStart=Number(canvas.dataset.astroStart),astroEnd=Number(canvas.dataset.astroEnd);
-    const phaseFill=t=>{
-      if(Number.isFinite(astroStart)&&Number.isFinite(astroEnd)&&t>=astroStart&&t<=astroEnd)return 'rgba(45,55,70,.24)';
-      if(Number.isFinite(nautStart)&&Number.isFinite(nautEnd)&&t>=nautStart&&t<=nautEnd)return 'rgba(80,92,110,.18)';
-      if(Number.isFinite(civilStart)&&Number.isFinite(civilEnd)&&t>=civilStart&&t<=civilEnd)return 'rgba(120,132,150,.13)';
-      return 'rgba(170,180,195,.08)';
-    };
-    // Dämmerung als dezente Zusatzschattierung entlang der Objektbahn-Azimute, nicht als Zeitachse.
     const sorted=track.slice().sort((a,b)=>Number(a[2])-Number(b[2]));
-    for(let i=0;i<sorted.length-1;i++){
-      const a=sorted[i],b=sorted[i+1],azA=Number(a[0]),azB=Number(b[0]);
-      if(!Number.isFinite(azA)||!Number.isFinite(azB)||Math.abs(azB-azA)>120)continue;
-      const left=Math.min(x(azA),x(azB)),right=Math.max(x(azA),x(azB));
-      if(right-left<1)continue;
-      context.fillStyle=phaseFill((Number(a[2])+Number(b[2]))/2);
+    // Dämmerungsphasen in der Horizontansicht: 360°-Azimutansicht bleibt erhalten,
+    // die Phasen werden aber farblich und in relativer Breite wie in der Höhenkurve dargestellt.
+    // Dafür wird der zeitliche Sonnenuntergang-Sonnenaufgang-Verlauf auf die sichtbare Azimutspanne der Objektbahn gelegt.
+    const trackXs=sorted.map(point=>x(Number(point[0]))).filter(Number.isFinite);
+    const trackLeft=trackXs.length?Math.max(margin.left,Math.min(...trackXs)):margin.left;
+    const trackRight=trackXs.length?Math.min(margin.left+plotW,Math.max(...trackXs)):margin.left+plotW;
+    const twilightLeft=Math.min(trackLeft,trackRight),twilightRight=Math.max(trackLeft,trackRight);
+    const twilightWidth=Math.max(1,twilightRight-twilightLeft);
+    const twilightX=time=>twilightLeft+clamp((Number(time)-start)/Math.max(1,end-start),0,1)*twilightWidth;
+    const drawTimeBand=(bandStart,bandEnd,fill)=>{
+      const left=clamp(twilightX(bandStart),twilightLeft,twilightRight);
+      const right=clamp(twilightX(bandEnd),twilightLeft,twilightRight);
+      if(!Number.isFinite(left)||!Number.isFinite(right)||right<=left)return;
+      context.fillStyle=fill;
       context.fillRect(left,margin.top,right-left,plotH);
-    }
-    if(Number.isFinite(selectedStart)&&Number.isFinite(selectedEnd)){
-      const selectedSegments=sorted.filter(p=>Number(p[2])>=selectedStart&&Number(p[2])<=selectedEnd);
-      for(let i=0;i<selectedSegments.length-1;i++){
-        const a=selectedSegments[i],b=selectedSegments[i+1];if(Math.abs(Number(b[0])-Number(a[0]))>120)continue;
-        const left=Math.min(x(a[0]),x(b[0])),right=Math.max(x(a[0]),x(b[0]));
-        context.fillStyle='rgba(255,207,90,.07)';context.fillRect(left,margin.top,right-left,plotH);
-      }
+    };
+    if(twilightWidth>1){
+      context.fillStyle=palette.civil;
+      context.fillRect(twilightLeft,margin.top,twilightWidth,plotH);
+      drawTimeBand(civilStart,civilEnd,palette.nautical);
+      drawTimeBand(nautStart,nautEnd,palette.astronomical);
+      drawTimeBand(astroStart,astroEnd,palette.night);
+      drawTimeBand(selectedStart,selectedEnd,palette.selected);
+      context.save();
+      context.strokeStyle='rgba(170,190,210,.32)';
+      context.setLineDash([4,4]);
+      [civilStart,nautStart,astroStart,astroEnd,nautEnd,civilEnd].forEach(boundary=>{
+        if(!Number.isFinite(boundary))return;
+        const px=twilightX(boundary);
+        if(px<=twilightLeft+.5||px>=twilightRight-.5)return;
+        context.beginPath();context.moveTo(px,margin.top);context.lineTo(px,margin.top+plotH);context.stroke();
+      });
+      context.restore();
     }
     context.font='15px system-ui, sans-serif';
     for(let altitudeValue=0;altitudeValue<=90;altitudeValue+=15){const py=y(altitudeValue);context.strokeStyle=palette.grid;context.lineWidth=1;context.beginPath();context.moveTo(margin.left,py);context.lineTo(margin.left+plotW,py);context.stroke();context.fillStyle=palette.text;context.textAlign='right';context.textBaseline='middle';context.fillText(`${altitudeValue}°`,margin.left-10,py)}
