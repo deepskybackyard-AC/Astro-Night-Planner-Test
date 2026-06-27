@@ -1,27 +1,25 @@
 {
-  "version": "1.1.0-test.21",
-  "release": "1.1.0-test.21",
+  "version": "1.1.0-test.22",
+  "release": "1.1.0-test.22",
   "environment": "test",
-  "builtAt": "2026-06-27T19:45:00+02:00",
-  "notes": "Testversion 1.1.0-test.21: Setup-Rahmen beim Objektwechsel robuster; Dämmerungsphasen korrigiert; Aladin-Umrisszeichnung repariert; frei gezeichnete Hindernisse ergänzt; Einstellungsänderungen können verworfen werden.",
+  "builtAt": "2026-06-27T20:35:00+02:00",
+  "notes": "Testversion 1.1.0-test.22: Rahmen beim Objektwechsel automatisch zurücksetzen; Horizont-/Dämmerungsdarstellung zeitbasiert korrigiert; Aladin-Umrisszeichnung und freie Hindernisse nachgebessert; weiche Wolkenglättung verstärkt.",
   "releaseNotes": {
     "de": [
-      "Setup-Rahmen: Beim Objektwechsel wird der Rahmen robuster neu auf das gewählte Objekt gesetzt; alte Aladin-Rückmeldungen werden ignoriert.",
-      "Horizontansicht: Dämmerungsschattierungen werden zeitlich wie im Mini-Höhenprofil gezeichnet.",
-      "Horizonteditor: Neben Block-Hindernissen können freie Hindernis-Konturen mit Stützpunkten gezeichnet werden.",
-      "Aladin extern: Umriss schließen/speichern repariert; während der Umrisszeichnung wird die Karte nicht versehentlich verschoben.",
-      "Aladin extern: „Zu Meine Aufnahmeziele hinzufügen“ gibt ein sichtbares Erfolgsfeedback.",
-      "Wolkenkarte: Die weiche Glättung ist sichtbar stärker geglättet.",
-      "Einstellungen: Ungespeicherte Änderungen können je Rubrik mit „Änderungen verwerfen“ zurückgenommen werden."
+      "Setup-Rahmen: Beim Objektwechsel wird automatisch die Logik von „Rahmen auf Objekt zurücksetzen“ ausgeführt.",
+      "Horizontansicht: Kurve und Dämmerungsschattierungen werden zeitbasiert wie im Mini-Höhenprofil gezeichnet; astronomische Nacht ist die dunkelste Graustufe.",
+      "Horizonteditor: Freie Hindernisse werden als sichtbare Linien/Konturen mit Stützpunkten gezeichnet.",
+      "Aladin extern: Umrisszeichnen arbeitet wieder mit sichtbarer Toolbar, kleinen Stützpunkten, manuellem Schließen und manuellem Speichern.",
+      "Objektumriss: Fallback-Ellipse/Kreis wird am Objektzentrum gezeichnet und nicht mehr am Kamerarahmenzentrum.",
+      "Wolkenkarte: Weiche Glättung ist stärker geglättet."
     ],
     "en": [
-      "Setup frame: when switching objects, the frame is more robustly reset to the selected object; stale Aladin replies are ignored.",
-      "Horizon view: twilight shading is drawn by time, matching the mini altitude profile.",
-      "Horizon editor: free obstacle contours with control points can be drawn in addition to block obstacles.",
-      "External Aladin: close/save outline repaired; the sky image no longer pans accidentally while drawing outlines.",
-      "External Aladin: “Add to My imaging targets” gives visible success feedback.",
-      "Cloud map: soft smoothing is now visibly softer.",
-      "Settings: unsaved section changes can be reverted with “Discard changes”."
+      "Setup frame: switching objects automatically uses the reset-frame logic.",
+      "Horizon view: curve and twilight shading are drawn by time like the mini altitude profile; astronomical night is the darkest grey shade.",
+      "Horizon editor: free obstacles are drawn as visible lines/contours with control points.",
+      "External Aladin: outline drawing again uses a visible toolbar, small control points, manual close and manual save.",
+      "Object outline: fallback ellipse/circle is drawn at the object centre, not at the camera-frame centre.",
+      "Cloud map: soft smoothing is stronger."
     ]
   }
 }

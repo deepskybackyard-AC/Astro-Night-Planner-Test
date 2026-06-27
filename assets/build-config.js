@@ -3,14 +3,14 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.21',
-  release: '1.1.0-test.21',
+  appVersion: '1.1.0-test.22',
+  release: '1.1.0-test.22',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.21',
+  documentTitle: 'Astro Night Planner 1.1.0-test.22',
   releaseNotes: {
     de: [
-    'Setup-Rahmen wird beim Objektwechsel robuster neu gesetzt; alte Aladin-Rückmeldungen werden ignoriert.',
+    'Setup-Rahmen wird beim Objektwechsel automatisch wie über den Zurücksetzen-Button neu gesetzt.',
     'Horizontansicht: Dämmerungsschattierungen werden zeitlich wie im Mini-Höhenprofil gezeichnet.',
     'Horizonteditor: freie Hindernis-Konturen mit Stützpunkten ergänzt.',
     'Aladin extern: Umriss schließen/speichern repariert und Pannen während des Zeichnens verhindert.',
@@ -19,7 +19,7 @@ window.ANP_BUILD = Object.freeze({
     'Einstellungen: Ungespeicherte Änderungen können je Rubrik verworfen werden.'
   ],
   en: [
-    'The setup frame is more robustly reset when switching objects; stale Aladin replies are ignored.',
+    'The setup frame is automatically reset when switching objects.',
     'Horizon view: twilight shading is drawn by time, matching the mini altitude profile.',
     'Horizon editor: free obstacle contours with control points added.',
     'External Aladin: outline close/save repaired and panning while drawing prevented.',

@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.21 – Aladin-, Horizont- und Einstellungs-Korrekturen */
+/* Astro Night Planner 1.1.0-test.22 – Aladin- und Horizont-Korrekturen */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -8,7 +8,7 @@ const RELEASE = BUILD.release || '1.0';
 const DB_NAME = BUILD.databaseName || `astro-night-planner-${ENV}-v1`;
 const DEFAULT_RELEASE_NOTES = {
   de: [
-    'Setup-Rahmen wird beim Objektwechsel wieder auf das ausgewählte Objekt gesetzt.',
+    'Setup-Rahmen wird beim Objektwechsel automatisch wie „Rahmen auf Objekt zurücksetzen“ neu gesetzt.',
     'Aladin-Detailinfos erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Verschieben öffnet keine Popups mehr.',
     'Wolkenkarte: geringe Glättung wirkt wolkiger und weniger milchig; Niederschlag, Regen und Schnee sind schaltbar.',
     'Default-Modellgewichtung: DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 %.',
@@ -16,7 +16,7 @@ const DEFAULT_RELEASE_NOTES = {
     'Stündlicher Wetterverlauf: Farben sind etwas kräftiger.'
   ],
   en: [
-    'The setup frame is reset to the selected object when switching objects.',
+    'When switching objects, the setup frame is automatically reset like using the reset-frame button.',
     'Aladin detail popups now require a real click on visibly labeled objects; panning no longer opens popups.',
     'Cloud map: low smoothing is more cloud-like and less milky; precipitation, rain and snow are toggleable.',
     'Default model weighting: DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.',
@@ -1901,7 +1901,7 @@ function renderObjectDetails(o,windowRange,loc,night){
   const fullStats=objectStats(o,fullNight,loc,profile.planning.minAltitude),selectedStats=objectStats(o,windowRange,loc,profile.planning.minAltitude);
   const altitudePoints=fullStats.points.map(point=>[point.t.getTime(),Number(point.alt.toFixed(3)),Number(point.az.toFixed(3)),Number(horizonAt(loc,point.az,horizonEntry?.id).toFixed(3))]);
   const horizonPoints=Array.from({length:HORIZON_POINT_COUNT},(_,index)=>{const az=horizonAzForIndex(index);return[az,Number(horizonAt(loc,az,horizonEntry?.id).toFixed(3))]});
-  const obstacles=horizonObstacles(loc,horizonEntry?.id).map(item=>({name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0}));
+  const obstacles=horizonObstacles(loc,horizonEntry?.id).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:Array.isArray(item.points)?item.points:[],closed:Boolean(item.closed)}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0});
   const detailTime=detailTimeState(o,night,loc),horizonOptions=horizonProfilesFor(loc).map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}${item.id===loc.defaultHorizonProfileId?' (Standard)':''}</option>`).join('');
   const isTarget=targetObjectIds().has(o.id);
   return`<div class="object-detail-card" id="objectDetail-${esc(o.id)}">
@@ -1909,7 +1909,7 @@ function renderObjectDetails(o,windowRange,loc,night){
     <div class="grid four object-detail-metrics"><div class="metric"><div class="label">Maximalhöhe im Planungszeitraum</div><div class="value">${fmt(selectedStats.maxAltitude)}°</div></div><div class="metric"><div class="label">Beste Stunde im nautischen Zeitraum</div><div class="value">${(()=>{const best=bestObjectHour(o,night,loc,profile.planning.minAltitude);return best?`${fmtTime(best.time,loc.timezone)} · Q ${fmt(best.quality)}`:'Keine geeignete Stunde'})()}</div></div><div class="metric"><div class="label">Sichtbar über Grenzhöhe</div><div class="value">${fmt(selectedStats.visibleHours,1)} h</div></div><div class="metric"><div class="label">Mondabstand</div><div class="value">${fmt(selectedStats.moonDistance)}°</div></div></div>
     ${renderFraming(o,windowRange,loc)}
     <details class="object-chart-panel" ${profile.central.detailPanels?.altitudeCollapsed?'':'open'}><summary>Höhenkurve</summary><div class="chart-description">Sonnenuntergang bis Sonnenaufgang; der gewählte Planungszeitraum ist hervorgehoben. Schieberegler, Uhrzeitfeld, Kurvenklick und Horizontansicht verwenden dieselbe Aufnahmezeit.</div>${renderDetailTimeControls(o,night,loc,'altitude')}<canvas class="large-altitude-chart" width="1400" height="430" data-points="${encodeURIComponent(JSON.stringify(altitudePoints))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-current-time="${detailTime.time.getTime()}" data-min-alt="${profile.planning.minAltitude}" data-timezone="${esc(loc.timezone)}"></canvas>${renderTwilightLegend()}${renderHourlyAltitudeStrip(o,night,loc)}</details>
-    <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}><summary>Horizontansicht</summary><div class="chart-description horizon-detail-header"><span>Objektbahn und persönlicher Horizont. Die Aufnahmezeit ist mit der Höhenkurve synchronisiert.</span><label>Horizontprofil für diese Planung<select id="detailHorizonProfileSelect">${horizonOptions}</select></label></div>${renderDetailTimeControls(o,night,loc,'horizon')}<canvas class="large-horizon-chart" width="1400" height="430" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-current-time="${detailTime.time.getTime()}" data-show-ground="${profile.planning.showGroundHorizon!==false}" data-timezone="${esc(loc.timezone)}"></canvas></details>
+    <details class="object-chart-panel" ${profile.central.detailPanels?.horizonCollapsed?'':'open'}><summary>Horizontansicht</summary><div class="chart-description horizon-detail-header"><span>Objektbahn und persönlicher Horizont. Die Aufnahmezeit ist mit der Höhenkurve synchronisiert.</span><label>Horizontprofil für diese Planung<select id="detailHorizonProfileSelect">${horizonOptions}</select></label></div>${renderDetailTimeControls(o,night,loc,'horizon')}<canvas class="large-horizon-chart" width="1400" height="430" data-horizon="${encodeURIComponent(JSON.stringify(horizonPoints))}" data-track="${encodeURIComponent(JSON.stringify(altitudePoints.map(point=>[point[2],point[1],point[0]])))}" data-obstacles="${encodeURIComponent(JSON.stringify(obstacles))}" data-start="${night.sunset.getTime()}" data-end="${night.sunrise.getTime()}" data-selected-start="${windowRange.start.getTime()}" data-selected-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-astro-start="${night.astronomicalDusk.getTime()}" data-astro-end="${night.astronomicalDawn.getTime()}" data-current-time="${detailTime.time.getTime()}" data-show-ground="${profile.planning.showGroundHorizon!==false}" data-timezone="${esc(loc.timezone)}"></canvas></details>
   </div>`;
 }
 
@@ -2015,7 +2015,7 @@ function renderFraming(o,windowRange,loc){
   const moon=moonCoords(time),moonRaDeg=moon.raHours*15,moonDecDeg=moon.decDeg,moonSep=angularSeparation(o.raHours,o.decDeg,moon.raHours,moon.decDeg),moonAlt=altitude(moon.raHours,moon.decDeg,time,loc.latitude,loc.longitude),moonPhase=moonPhaseInfo(time),moonName=language==='en'?'Moon':'Mond';
   const outline=curatedOutlineForObject(o),availableSurveys=enabledAladinSurveys(profile);let survey=profile.planning.aladinSurvey||availableSurveys[0]?.hipsId||'P/DSS2/color';if(!availableSurveys.some(item=>item.hipsId===survey))survey=availableSurveys[0]?.hipsId||'P/DSS2/color';
   const comparisonFrames=(profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:frameRotation,color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]}));
-  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),frameRa:String(frameCenterRa),frameDec:String(frameCenterDec),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language,frameKey:`${o.id}-${Math.round(frameCenterRa*100000)}-${Math.round(frameCenterDec*100000)}-${profile.central.frameVisible?'1':'0'}`}).toString();
+  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),frameRa:String(frameCenterRa),frameDec:String(frameCenterDec),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),targetRa:String(o.raHours*15),targetDec:String(o.decDeg),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language,frameKey:`${o.id}-${Math.round(frameCenterRa*100000)}-${Math.round(frameCenterDec*100000)}-${profile.central.frameVisible?'1':'0'}`}).toString();
   const scopes=profile.equipment.telescopes.map(item=>`<option value="${esc(item.id)}" ${item.id===activeScope()?.id?'selected':''}>${esc(item.name)}</option>`).join(''),cameras=profile.equipment.cameras.map(item=>`<option value="${esc(item.id)}" ${item.id===activeCamera()?.id?'selected':''}>${esc(item.name)}</option>`).join('');
   const selectableObjects=[...new Map([...currentComputedObjects.map(entry=>entry.object),o].map(item=>[item.id,item])).values()].sort((a,b)=>a.id.localeCompare(b.id,'de',{numeric:true})),objectOptions=selectableObjects.map(x=>`<option value="${esc(x.id)}" ${x.id===o.id?'selected':''}>${esc(x.id)} · ${esc(x.name)}</option>`).join('');
   const analysis=framingAnalysis(o,{rotation:frameRotation,optimize:false});
@@ -2342,7 +2342,7 @@ function renderLocations(){
   if(noLocations){
     return`<div class="settings-tabs subtabs"><button data-locations-subtab="locations" class="${currentLocationsSubTab==='locations'?'active':''}">Standorte</button><button data-locations-subtab="horizon" class="${currentLocationsSubTab==='horizon'?'active':''}">Horizontprofile</button></div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}">${renderSaveBar('locations','Standort und Horizonte speichern','top')}<div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Lege zuerst einen Aufnahmeort an. Danach können Planung, Wetter und Horizontprofile berechnet werden.</div></div><button id="addLocation" type="button">Standort hinzufügen</button></div><div class="notice warn">Noch kein Standort vorhanden. Bitte einen Standort suchen oder Koordinaten manuell eintragen und speichern.</div>${addLocationMarkup}</div><div class="card subtab-panel ${currentLocationsSubTab==='horizon'?'active':''}"><h2>Horizontprofile</h2><p class="muted">Horizontprofile stehen zur Verfügung, sobald ein Standort gespeichert wurde.</p></div>`;
   }
-  const profiles=horizonProfilesFor(loc),horizonEntry=horizonProfileFor(loc,loc.selectedHorizonProfileId),horizonPoints=ensureHorizonProfile(loc,horizonEntry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]),obstacles=(horizonEntry?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[]}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0});
+  const profiles=horizonProfilesFor(loc),horizonEntry=horizonProfileFor(loc,loc.selectedHorizonProfileId),horizonPoints=ensureHorizonProfile(loc,horizonEntry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]),obstacles=(horizonEntry?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[],closed:Boolean(item.closed)}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0});
   const profileOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===horizonEntry?.id?'selected':''}>${esc(item.name)}</option>`).join(''),defaultOptions=profiles.map(item=>`<option value="${esc(item.id)}" ${item.id===loc.defaultHorizonProfileId?'selected':''}>${esc(item.name)}</option>`).join('');
   return`<div class="settings-tabs subtabs">${[['locations','Standorte'],['horizon','Horizontprofile']].map(([k,n])=>`<button data-locations-subtab="${k}" class="${currentLocationsSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card subtab-panel ${currentLocationsSubTab==='locations'?'active':''}"><div class="section-title-row"><div><h2>Gespeicherte Aufnahmeorte</h2><div class="small muted">Der Standardstandort wird hier festgelegt. In der Planung kann vorübergehend ein anderer Ort gewählt werden.</div></div><button id="addLocation">Standort hinzufügen</button></div>
     ${addLocationMarkup}
@@ -2818,7 +2818,7 @@ function sendAladinOverlayUpdate(){
   const frame=document.getElementById('aladinFrame');if(!frame?.contentWindow)return;
   const object=catalog.find(item=>item.id===profile.planning.selectedObjectId),setup=fov();if(!object)return;
   const loc=activeLocation(),win=planningWindow(nightData(selectedDateKey,loc),profile.planning.planningWindow),time=new Date(win.start.getTime()+(win.end-win.start)*clamp(Number(profile.planning.timeFraction)||0,0,1)),moon=moonCoords(time),sep=angularSeparation(object.raHours,object.decDeg,moon.raHours,moon.decDeg),malt=altitude(moon.raHours,moon.decDeg,time,loc.latitude,loc.longitude),moonPhase=moonPhaseInfo(time),moonName=language==='en'?'Moon':'Mond';
-  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),frameRa:frameCenterForObject(object).raDeg,frameDec:frameCenterForObject(object).decDeg,frameMoveMode:Boolean(profile.planning.frameMoveMode),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(profile.planning.objectRotationObjectId===object.id&&Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),catalogRot:normalizedAngle180(Number(object.positionAngleDeg)||0),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name,showMoon:Boolean(profile.planning.showMoonInAladin),moonRa:moon.raHours*15,moonDec:moon.decDeg,moonLabel:`${moonName} · ${fmt(sep)}° Abstand · Höhe ${fmt(malt)}°`,moonName,moonIllumination:moonPhase.illumination,moonAge:moonPhase.age,moonWaxing:moonPhase.waxing,outlinePolygons:curatedOutlineForObject(object)?JSON.stringify(curatedOutlineForObject(object).polygons):'',outlineSource:curatedOutlineForObject(object)?.source||'',comparisonFrames:JSON.stringify((profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:normalizedAngle180(profile.planning.frameRotation||0),color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]})))},location.origin);
+  frame.contentWindow.postMessage({type:'anp-overlay',frameW:setup?.width||0,frameH:setup?.height||0,frameRot:normalizedAngle180(profile.planning.frameRotation||0),frameRa:frameCenterForObject(object).raDeg,frameDec:frameCenterForObject(object).decDeg,frameMoveMode:Boolean(profile.planning.frameMoveMode),showFrame:Boolean(profile.central.frameVisible&&setup),objectW:Math.max(.02,(Number(object.majorArcMin)||1)/60),objectH:Math.max(.02,(Number(object.minorArcMin||object.majorArcMin)||1)/60),objectRot:normalizedAngle180(profile.planning.objectRotationObjectId===object.id&&Number.isFinite(Number(profile.planning.objectRotation))?Number(profile.planning.objectRotation):(Number(object.positionAngleDeg)||0)),catalogRot:normalizedAngle180(Number(object.positionAngleDeg)||0),showObject:Boolean(profile.central.objectSizeVisible),showLabels:profile.central.aladinLabels?.visible!==false,labelDetail:profile.central.aladinLabels?.detail||'auto',targetId:object.id,targetName:object.name,targetRa:object.raHours*15,targetDec:object.decDeg,showMoon:Boolean(profile.planning.showMoonInAladin),moonRa:moon.raHours*15,moonDec:moon.decDeg,moonLabel:`${moonName} · ${fmt(sep)}° Abstand · Höhe ${fmt(malt)}°`,moonName,moonIllumination:moonPhase.illumination,moonAge:moonPhase.age,moonWaxing:moonPhase.waxing,outlinePolygons:curatedOutlineForObject(object)?JSON.stringify(curatedOutlineForObject(object).polygons):'',outlineSource:curatedOutlineForObject(object)?.source||'',comparisonFrames:JSON.stringify((profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:normalizedAngle180(profile.planning.frameRotation||0),color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]})))},location.origin);
 }
 function nearestWeatherAt(time,range){
   const rows=weatherRowsForWindow(range,currentWeatherView());
@@ -2920,6 +2920,21 @@ function exportNinaPlanForSelectedObject(){
   alert(language==='en'?'Planning data for N.I.N.A. has been exported.':'Planungsdaten für N.I.N.A. wurden exportiert.');
 }
 
+function postAladinCenterFrameToSelectedObject({feedback=false}={}){
+  const frame=document.getElementById('aladinFrame'),button=document.getElementById('centerAladinFrame'),object=catalog.find(item=>item.id===profile.planning.selectedObjectId);
+  if(!frame?.contentWindow||!object)return false;
+  profile.planning.frameCenterRaDeg=null;
+  profile.planning.frameCenterDecDeg=null;
+  profile.planning.frameMoveMode=false;
+  saveProfile();
+  if(feedback&&button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}
+  const payload={type:'anp-center-frame',ra:object.raHours*15,dec:object.decDeg,objectId:object.id,silent:!feedback};
+  const send=()=>{try{frame.contentWindow?.postMessage(payload,location.origin)}catch{}};
+  send();window.setTimeout(send,120);window.setTimeout(send,360);window.setTimeout(send,900);
+  if(feedback)window.setTimeout(()=>{if(button?.disabled){button.textContent='Rahmen auf Objekt zurücksetzen';button.disabled=false}},1800);
+  return true;
+}
+
 function bindFraming(){
   const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);const changed=profile.planning.selectedObjectId!==objectSelect.value;if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
   const changeEquipment=async(type,value)=>{if(type==='scope')profile.planning.temporaryTelescopeId=value===profile.equipment.selectedTelescopeId?null:value;else profile.planning.temporaryCameraId=value===profile.equipment.selectedCameraId?null:value;const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(object&&framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render()};
@@ -2939,7 +2954,7 @@ function bindFraming(){
   const timeSlider=document.getElementById('framingTime');if(timeSlider){timeSlider.oninput=()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction)};timeSlider.onchange=async()=>{profile.planning.timeFraction=Number(timeSlider.value)/100;updateFramingTimeReadouts(profile.planning.timeFraction);await saveProfile()};updateFramingTimeReadouts(profile.planning.timeFraction)}
   document.getElementById('optimalFrameRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.frameRotation=optimalFrameRotation(object);const slider=document.getElementById('frameRotation'),label=document.getElementById('frameRotationValue');if(slider)slider.value=String(profile.planning.frameRotation);if(label)label.textContent=`${fmt(profile.planning.frameRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
   document.getElementById('resetObjectRotation')?.addEventListener('click',async()=>{const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!object)return;profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=object.id;const slider=document.getElementById('objectRotation'),label=document.getElementById('objectRotationValue');if(slider)slider.value=String(profile.planning.objectRotation);if(label)label.textContent=`${fmt(profile.planning.objectRotation)}°`;await saveProfile();sendAladinOverlayUpdate()});
-  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame'),button=document.getElementById('centerAladinFrame'),object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(!frame?.contentWindow||!object)return;profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;saveProfile();if(button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}const send=()=>frame.contentWindow?.postMessage({type:'anp-center-frame',ra:object.raHours*15,dec:object.decDeg},location.origin);send();window.setTimeout(send,160);window.setTimeout(()=>{if(button?.disabled){button.textContent='Rahmen auf Objekt zurücksetzen';button.disabled=false}},1800)});
+  document.getElementById('centerAladinFrame')?.addEventListener('click',()=>postAladinCenterFrameToSelectedObject({feedback:true}));
   document.getElementById('toggleFrameMoveMode')?.addEventListener('click',async()=>{profile.planning.frameMoveMode=!profile.planning.frameMoveMode;await saveProfile();const frame=document.getElementById('aladinFrame');frame?.contentWindow?.postMessage({type:'anp-frame-move-mode',enabled:profile.planning.frameMoveMode},location.origin);document.getElementById('toggleFrameMoveMode')?.classList.toggle('active',profile.planning.frameMoveMode)});
   document.getElementById('reloadAladinImage')?.addEventListener('click',()=>{const frame=document.getElementById('aladinFrame');if(!frame)return;try{frame.contentWindow.location.reload()}catch{const url=new URL(frame.src);url.searchParams.set('reload',String(Date.now()));frame.src=url.toString()}});
   document.getElementById('exportNinaPlan')?.addEventListener('click',exportNinaPlanForSelectedObject);
@@ -3327,7 +3342,7 @@ function bindLocationDraft(){
       const values=currentValues();
       values[HORIZON_LAST_INDEX]=values[0];
       canvas.dataset.horizon=encodeURIComponent(JSON.stringify(values.map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0])));
-      canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry()?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[]}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0})));
+      canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry()?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[],closed:Boolean(item.closed)}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0})));
       drawHorizonChart(canvas,false);
       positionInputLayer();
     };
@@ -3706,7 +3721,7 @@ function drawCloudMap(){
 
   const smoothing=currentCloudSmoothing();
   const offscreen=document.createElement('canvas');
-  const renderWidth=smoothing==='structured'?760:smoothing==='soft'?160:390;
+  const renderWidth=smoothing==='structured'?760:smoothing==='soft'?90:390;
   offscreen.width=renderWidth;offscreen.height=Math.max(180,Math.round(renderWidth*map.h/map.w));
   const offCtx=offscreen.getContext('2d');
   for(let py=0;py<offscreen.height;py++){
@@ -3721,8 +3736,8 @@ function drawCloudMap(){
   }
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.save();
-  ctx.filter=smoothing==='soft'?'blur(13px)':smoothing==='balanced'?'blur(2px)':'none';
-  const pad=smoothing==='soft'?24:smoothing==='balanced'?4:0;
+  ctx.filter=smoothing==='soft'?'blur(26px)':smoothing==='balanced'?'blur(2px)':'none';
+  const pad=smoothing==='soft'?56:smoothing==='balanced'?4:0;
   ctx.drawImage(offscreen,map.x-pad,map.y-pad,map.w+pad*2,map.h+pad*2);
   ctx.restore();
 
@@ -3947,22 +3962,55 @@ function drawHorizonChart(canvas,withTrack=false){
   const plotW=width-margin.left-margin.right,plotH=height-margin.top-margin.bottom;
   const x=azimuthValue=>margin.left+clamp(azimuthValue,0,360)/360*plotW;
   const y=altitudeValue=>margin.top+(90-clamp(altitudeValue,0,90))/90*plotH;
+  const horizonAltAtAz=azimuthValue=>{
+    if(!horizon.length)return 0;
+    const az=((Number(azimuthValue)||0)%360+360)%360;
+    const step=360/Math.max(1,horizon.length-1);
+    const pos=az/step,lo=Math.floor(pos),hi=Math.min(horizon.length-1,lo+1),f=pos-lo;
+    const a=Number(horizon[lo]?.[1])||0,b=Number(horizon[hi]?.[1])||0;
+    return a*(1-f)+b*f;
+  };
   context.clearRect(0,0,width,height);
   context.fillStyle=palette.background;
   context.fillRect(0,0,width,height);
+
   if(withTrack&&track.length){
-    const times=track.map(point=>Number(point[2])).filter(Number.isFinite);
-    const start=Math.min(...times),end=Math.max(...times);
-    const xTime=t=>margin.left+clamp((Number(t)-start)/Math.max(1,end-start),0,1)*plotW;
-    const band=(s,e,fill)=>{const left=clamp(xTime(s),margin.left,margin.left+plotW),right=clamp(xTime(e),margin.left,margin.left+plotW);if(right<=left)return;context.fillStyle=fill;context.fillRect(left,margin.top,right-left,plotH)};
-    const civilS=Number(canvas.dataset.civilStart),civilE=Number(canvas.dataset.civilEnd),nautS=Number(canvas.dataset.nautStart),nautE=Number(canvas.dataset.nautEnd),astroS=Number(canvas.dataset.astroStart),astroE=Number(canvas.dataset.astroEnd);
-    // Von außen nach innen schattieren: Dämmerung hell, astronomische Nacht am dunkelsten. Die Breite folgt der Zeitachse wie im Mini-Höhenprofil.
-    band(start,end,'rgba(210,220,232,.15)');
-    band(civilS,civilE,'rgba(210,220,232,.11)');
-    band(nautS,nautE,'rgba(210,220,232,.075)');
-    band(astroS,astroE,'rgba(210,220,232,.045)');
-    for(const t of [civilS,nautS,astroS,astroE,nautE,civilE])if(Number.isFinite(t)){context.strokeStyle='rgba(170,190,214,.28)';context.setLineDash([4,5]);context.beginPath();context.moveTo(xTime(t),margin.top);context.lineTo(xTime(t),margin.top+plotH);context.stroke();context.setLineDash([])}
+    const trackTimes=track.map(point=>Number(point[2])).filter(Number.isFinite);
+    const start=Number(canvas.dataset.start)||Math.min(...trackTimes),end=Number(canvas.dataset.end)||Math.max(...trackTimes);
+    const selectedStart=Number(canvas.dataset.selectedStart),selectedEnd=Number(canvas.dataset.selectedEnd);
+    const xTime=time=>margin.left+clamp((Number(time)-start)/Math.max(1,end-start),0,1)*plotW;
+    const band=(bandStart,bandEnd,fill)=>{const left=clamp(xTime(Number(bandStart)),margin.left,margin.left+plotW),right=clamp(xTime(Number(bandEnd)),margin.left,margin.left+plotW);if(right<=left)return;context.fillStyle=fill;context.fillRect(left,margin.top,right-left,plotH)};
+    // Graustufen wie im Mini-Höhenprofil: je dunkler die Nachtphase, desto dunkler die Schattierung.
+    band(start,end,'rgba(190,200,212,.09)');
+    band(canvas.dataset.civilStart,canvas.dataset.civilEnd,'rgba(160,170,184,.13)');
+    band(canvas.dataset.nautStart,canvas.dataset.nautEnd,'rgba(120,132,148,.18)');
+    band(canvas.dataset.astroStart,canvas.dataset.astroEnd,'rgba(70,82,98,.26)');
+    band(selectedStart,selectedEnd,'rgba(255,207,90,.08)');
+    for(const t of [canvas.dataset.civilStart,canvas.dataset.nautStart,canvas.dataset.astroStart,canvas.dataset.astroEnd,canvas.dataset.nautEnd,canvas.dataset.civilEnd])if(Number.isFinite(Number(t))){context.strokeStyle='rgba(190,205,225,.34)';context.setLineDash([4,5]);context.beginPath();context.moveTo(xTime(Number(t)),margin.top);context.lineTo(xTime(Number(t)),margin.top+plotH);context.stroke();context.setLineDash([])}
+    context.font='15px system-ui, sans-serif';
+    for(let altitudeValue=0;altitudeValue<=90;altitudeValue+=15){const py=y(altitudeValue);context.strokeStyle=palette.grid;context.lineWidth=1;context.beginPath();context.moveTo(margin.left,py);context.lineTo(margin.left+plotW,py);context.stroke();context.fillStyle=palette.text;context.textAlign='right';context.textBaseline='middle';context.fillText(`${altitudeValue}°`,margin.left-10,py)}
+    const labelCount=6;
+    for(let i=0;i<=labelCount;i++){const t=start+(end-start)*i/labelCount,px=xTime(t);context.strokeStyle=palette.grid;context.beginPath();context.moveTo(px,margin.top);context.lineTo(px,margin.top+plotH);context.stroke();context.fillStyle=palette.text;context.textAlign=i===0?'left':i===labelCount?'right':'center';context.textBaseline='top';context.fillText(fmtTime(new Date(t),canvas.dataset.timezone),px,margin.top+plotH+12)}
+    const showGround=canvas.dataset.showGround!=='false';
+    if(showGround&&horizon.length){
+      context.strokeStyle=palette.accent2;context.lineWidth=3;context.beginPath();
+      track.forEach((point,index)=>{const px=xTime(point[2]),py=y(horizonAltAtAz(point[0]));index?context.lineTo(px,py):context.moveTo(px,py)});
+      context.stroke();
+      context.fillStyle=palette.accent2;context.textAlign='left';context.textBaseline='top';context.fillText('Persönlicher Horizont entlang der Objektbahn',margin.left+110,2);
+    }
+    context.strokeStyle=palette.accent;context.lineWidth=3;context.beginPath();
+    track.forEach((point,index)=>{const px=xTime(point[2]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke();
+    const selected=track.filter(point=>point[2]>=selectedStart&&point[2]<=selectedEnd);
+    if(selected.length){context.strokeStyle=palette.warning;context.lineWidth=5;context.beginPath();selected.forEach((point,index)=>{const px=xTime(point[2]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke()}
+    const currentTime=clamp(Number(canvas.dataset.currentTime)||track[0][2],start,end),currentPoint=nearestDetailPoint(track.map(point=>[point[2],point[1],point[0]]),currentTime),currentAltitude=currentPoint[1],currentAzimuth=currentPoint[2];
+    context.strokeStyle='#d8ecff';context.lineWidth=2;context.beginPath();context.moveTo(xTime(currentTime)-12,y(currentAltitude));context.lineTo(xTime(currentTime)+12,y(currentAltitude));context.moveTo(xTime(currentTime),y(currentAltitude)-12);context.lineTo(xTime(currentTime),y(currentAltitude)+12);context.stroke();
+    context.fillStyle=palette.warning;context.beginPath();context.arc(xTime(currentTime),y(currentAltitude),7,0,Math.PI*2);context.fill();context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
+    context.fillStyle='#fff2bd';context.textAlign=xTime(currentTime)>margin.left+plotW*.72?'right':'left';context.textBaseline='bottom';context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)} (${fmt(currentAzimuth)}°)`,xTime(currentTime)+(xTime(currentTime)>margin.left+plotW*.72?-12:12),y(currentAltitude)-12);
+    context.strokeStyle='#38516d';context.lineWidth=1;context.strokeRect(margin.left,margin.top,plotW,plotH);
+    context.fillStyle=palette.text;context.textAlign='left';context.textBaseline='top';context.fillText('Objekthöhe (gelb) · persönlicher Horizont entlang der Objektbahn (grün) · Dämmerungsphasen (grau)',margin.left,2);
+    return;
   }
+
   context.font='15px system-ui, sans-serif';
   for(let altitudeValue=0;altitudeValue<=90;altitudeValue+=15){
     const py=y(altitudeValue);
@@ -3987,94 +4035,32 @@ function drawHorizonChart(canvas,withTrack=false){
     horizon.forEach(point=>context.lineTo(x(point[0]),y(point[1])));
     context.lineTo(x(horizon[horizon.length-1][0]),y(0));
     context.closePath();
-    context.fillStyle=palette.horizonFill;
-    context.fill();
-    context.strokeStyle=palette.accent2;
-    context.lineWidth=4;
-    context.beginPath();
-    horizon.forEach((point,index)=>index?context.lineTo(x(point[0]),y(point[1])):context.moveTo(x(point[0]),y(point[1])));
-    context.stroke();
-    if(canvas.dataset.editable==='true'){
-      horizon.forEach((point,index)=>{
-        if(index%3!==0&&index!==horizon.length-1)return;
-        context.fillStyle='#07111d';context.strokeStyle=palette.accent2;context.lineWidth=2;
-        context.beginPath();context.arc(x(point[0]),y(point[1]),5,0,Math.PI*2);context.fill();context.stroke();
-      });
-    }
+    context.fillStyle=palette.horizonFill;context.fill();
+    context.strokeStyle=palette.accent2;context.lineWidth=4;context.beginPath();
+    horizon.forEach((point,index)=>index?context.lineTo(x(point[0]),y(point[1])):context.moveTo(x(point[0]),y(point[1])));context.stroke();
+    if(canvas.dataset.editable==='true')horizon.forEach((point,index)=>{if(index%3!==0&&index!==horizon.length-1)return;context.fillStyle='#07111d';context.strokeStyle=palette.accent2;context.lineWidth=2;context.beginPath();context.arc(x(point[0]),y(point[1]),5,0,Math.PI*2);context.fill();context.stroke();});
   }
   if(showGround)obstacles.forEach(obstacle=>{
     if(obstacle.type==='free'&&Array.isArray(obstacle.points)&&obstacle.points.length>=2){
       const points=obstacle.points.map(p=>Array.isArray(p)?{az:Number(p[0]),alt:Number(p[1])}:p).filter(p=>Number.isFinite(p.az)&&Number.isFinite(p.alt));
-      if(points.length>=2){
-        context.fillStyle='rgba(241,112,112,.22)';context.strokeStyle=palette.danger;context.lineWidth=2;
-        context.beginPath();points.forEach((p,index)=>index?context.lineTo(x(p.az),y(p.alt)):context.moveTo(x(p.az),y(p.alt)));if(points.length>=3)context.closePath();if(points.length>=3)context.fill();context.stroke();
-        points.forEach(p=>{context.fillStyle='#07111d';context.strokeStyle=palette.danger;context.beginPath();context.arc(x(p.az),y(p.alt),4,0,Math.PI*2);context.fill();context.stroke();});
-        const mid=points[Math.floor(points.length/2)];context.fillStyle=palette.danger;context.textAlign='center';context.textBaseline='bottom';context.fillText(String(obstacle.name||'Freies Hindernis'),x(mid.az),y(mid.alt)-5);
-      }
+      if(points.length>=2){context.fillStyle='rgba(241,112,112,.18)';context.strokeStyle=palette.danger;context.lineWidth=2.5;context.beginPath();points.forEach((p,index)=>index?context.lineTo(x(p.az),y(p.alt)):context.moveTo(x(p.az),y(p.alt)));if(obstacle.closed&&points.length>=3){context.closePath();context.fill()}context.stroke();points.forEach(p=>{context.fillStyle='#07111d';context.strokeStyle=palette.danger;context.beginPath();context.arc(x(p.az),y(p.alt),4,0,Math.PI*2);context.fill();context.stroke();});const mid=points[Math.floor(points.length/2)];context.fillStyle=palette.danger;context.textAlign='center';context.textBaseline='bottom';context.fillText(String(obstacle.name||'Freies Hindernis'),x(mid.az),y(mid.alt)-5)}
       return;
     }
-    const center=((Number(obstacle.azimuth)%360)+360)%360;
-    const halfWidth=6;
-    const left=center-halfWidth,right=center+halfWidth;
+    const center=((Number(obstacle.azimuth)%360)+360)%360,halfWidth=6,left=center-halfWidth,right=center+halfWidth;
     context.fillStyle='rgba(241,112,112,.28)';
-    const drawBlock=(from,to)=>{
-      context.fillRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude));
-      context.strokeStyle=palette.danger;context.lineWidth=2;context.strokeRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude));
-    };
-    if(left<0){drawBlock(0,right);drawBlock(360+left,360)}
-    else if(right>360){drawBlock(left,360);drawBlock(0,right-360)}
-    else drawBlock(left,right);
+    const drawBlock=(from,to)=>{context.fillRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude));context.strokeStyle=palette.danger;context.lineWidth=2;context.strokeRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude))};
+    if(left<0){drawBlock(0,right);drawBlock(360+left,360)}else if(right>360){drawBlock(left,360);drawBlock(0,right-360)}else drawBlock(left,right);
     context.fillStyle=palette.danger;context.textAlign='center';context.textBaseline='bottom';context.fillText(String(obstacle.name||'Hindernis'),x(center),y(obstacle.altitude)-4);
   });
-  if(track.length){
-    const selectedStart=Number(canvas.dataset.selectedStart),selectedEnd=Number(canvas.dataset.selectedEnd);
-    context.strokeStyle=palette.accent;
-    context.lineWidth=3;
-    context.beginPath();
-    let previous=null;
-    track.forEach(point=>{
-      if(previous&&Math.abs(point[0]-previous[0])>180){context.stroke();context.beginPath();previous=null}
-      if(previous)context.lineTo(x(point[0]),y(point[1]));else context.moveTo(x(point[0]),y(point[1]));
-      previous=point;
-    });
-    context.stroke();
-    const selected=track.filter(point=>point[2]>=selectedStart&&point[2]<=selectedEnd);
-    if(selected.length){
-      context.strokeStyle=palette.warning;
-      context.lineWidth=5;
-      context.beginPath();
-      let previousSelected=null;
-      selected.forEach(point=>{
-        if(previousSelected&&Math.abs(point[0]-previousSelected[0])>180){context.stroke();context.beginPath();previousSelected=null}
-        if(previousSelected)context.lineTo(x(point[0]),y(point[1]));else context.moveTo(x(point[0]),y(point[1]));
-        previousSelected=point;
-      });
-      context.stroke();
-    }
-    const currentTime=clamp(Number(canvas.dataset.currentTime)||track[0][2],track[0][2],track[track.length-1][2]);
-    const currentPoint=nearestDetailPoint(track.map(point=>[point[2],point[1],point[0]]),currentTime);
-    const currentAzimuth=currentPoint[2],currentAltitude=currentPoint[1];
-    context.strokeStyle='#d8ecff';context.lineWidth=2;
-    context.beginPath();context.moveTo(x(currentAzimuth)-12,y(currentAltitude));context.lineTo(x(currentAzimuth)+12,y(currentAltitude));context.moveTo(x(currentAzimuth),y(currentAltitude)-12);context.lineTo(x(currentAzimuth),y(currentAltitude)+12);context.stroke();
-    context.fillStyle=palette.warning;context.beginPath();context.arc(x(currentAzimuth),y(currentAltitude),7,0,Math.PI*2);context.fill();
-    context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
-    context.fillStyle='#fff2bd';context.textAlign=currentAzimuth>280?'right':'left';context.textBaseline='bottom';
-    context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)} (${fmt(currentAzimuth)}°)`,x(currentAzimuth)+(currentAzimuth>280?-12:12),y(currentAltitude)-12);
-  }
-  context.strokeStyle='#38516d';
-  context.lineWidth=1;
-  context.strokeRect(margin.left,margin.top,plotW,plotH);
-  context.fillStyle=palette.text;
-  context.textAlign='left';
-  context.textBaseline='top';
-  context.fillText(withTrack?'Horizont (grün) · Objektbahn (blau) · Planungszeitraum (gelb) · Dämmerungsphasen (grau)':'Persönlicher Horizont und Hindernisse',margin.left,2);
+  context.strokeStyle='#38516d';context.lineWidth=1;context.strokeRect(margin.left,margin.top,plotW,plotH);
+  context.fillStyle=palette.text;context.textAlign='left';context.textBaseline='top';context.fillText('Persönlicher Horizont und Hindernisse',margin.left,2);
 }
 
 function drawSettingsHorizonCharts(){
   document.querySelectorAll('.settings-horizon-chart').forEach(canvas=>drawHorizonChart(canvas,false));
 }
 
-function syncSettingsHorizonCanvas(){const canvas=document.querySelector('.settings-horizon-chart');if(!canvas)return;const location=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0],entry=horizonProfileFor(location,location.selectedHorizonProfileId),points=ensureHorizonProfile(location,entry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]);canvas.dataset.horizon=encodeURIComponent(JSON.stringify(points));canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[]}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0})));drawSettingsHorizonCharts()}
+function syncSettingsHorizonCanvas(){const canvas=document.querySelector('.settings-horizon-chart');if(!canvas)return;const location=draft.locations.find(item=>item.id===draft.selectedLocationId)||draft.locations[0],entry=horizonProfileFor(location,location.selectedHorizonProfileId),points=ensureHorizonProfile(location,entry?.id).map((altitude,index)=>[horizonAzForIndex(index),Number(altitude)||0]);canvas.dataset.horizon=encodeURIComponent(JSON.stringify(points));canvas.dataset.obstacles=encodeURIComponent(JSON.stringify((entry?.obstacles||[]).map(item=>item.type==='free'?{type:'free',name:item.name||'Freies Hindernis',points:item.points||[],closed:Boolean(item.closed)}:{name:item.name||'Hindernis',azimuth:Number(item.azimuth)||0,altitude:Number(item.altitude)||0})));drawSettingsHorizonCharts()}
 
 function layoutFramingOverlays(){
   document.querySelectorAll('.framing-view').forEach(view=>{
@@ -4095,10 +4081,11 @@ window.addEventListener('beforeunload',event=>{if(dirtySections&&dirtySections.s
 
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin)return;
-  if(event.data?.type==='anp-aladin-ready'){sendAladinOverlayUpdate();return}
+  if(event.data?.type==='anp-aladin-ready'){sendAladinOverlayUpdate();postAladinCenterFrameToSelectedObject({feedback:false});return}
   if(event.data?.type==='anp-frame-centered'||event.data?.type==='anp-frame-moved'){
     if(event.data.objectId&&event.data.objectId!==profile.planning.selectedObjectId)return;
     if(Number.isFinite(Number(event.data.ra))&&Number.isFinite(Number(event.data.dec))){profile.planning.frameCenterRaDeg=Number(event.data.ra);profile.planning.frameCenterDecDeg=Number(event.data.dec);saveProfile();}
+    if(event.data.silent)return;
     const button=document.getElementById('centerAladinFrame');
     if(!button)return;
     button.textContent='Rahmen gesetzt ✓';button.disabled=true;
