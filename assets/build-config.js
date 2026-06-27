@@ -3,27 +3,29 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.20',
-  release: '1.1.0-test.20',
+  appVersion: '1.1.0-test.21',
+  release: '1.1.0-test.21',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.20',
+  documentTitle: 'Astro Night Planner 1.1.0-test.21',
   releaseNotes: {
     de: [
-    'Setup-Rahmen wird beim Objektwechsel wieder auf das ausgewählte Objekt gesetzt.',
-    'Aladin-Detailinfos erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Verschieben öffnet keine Popups mehr.',
-    'Wolkenkarte: geringe Glättung wirkt wolkiger und weniger milchig; Niederschlag, Regen und Schnee sind schaltbar.',
-    'Default-Modellgewichtung: DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 %.',
-    'Horizontansicht: Dämmerungsphasen werden zeitlich passend als dezente Grauschattierung angezeigt; Horizontprofile haben mehr Stützpunkte.',
-    'Stündlicher Wetterverlauf: Farben sind etwas kräftiger.'
+    'Setup-Rahmen wird beim Objektwechsel robuster neu gesetzt; alte Aladin-Rückmeldungen werden ignoriert.',
+    'Horizontansicht: Dämmerungsschattierungen werden zeitlich wie im Mini-Höhenprofil gezeichnet.',
+    'Horizonteditor: freie Hindernis-Konturen mit Stützpunkten ergänzt.',
+    'Aladin extern: Umriss schließen/speichern repariert und Pannen während des Zeichnens verhindert.',
+    'Aladin extern: Aufnahmeziel-Button zeigt ein Erfolgsfeedback.',
+    'Wolkenkarte: Weiche Glättung ist sichtbar stärker geglättet.',
+    'Einstellungen: Ungespeicherte Änderungen können je Rubrik verworfen werden.'
   ],
   en: [
-    'The setup frame is reset to the selected object when switching objects.',
-    'Aladin detail popups now require a real click on visibly labeled objects; panning no longer opens popups.',
-    'Cloud map: low smoothing is more cloud-like and less milky; precipitation, rain and snow are toggleable.',
-    'Default model weighting: DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.',
-    'Horizon view: twilight phases are shown as subtle time-matched grey shading; horizon profiles use more control points.',
-    'Hourly weather trend colours are slightly stronger.'
+    'The setup frame is more robustly reset when switching objects; stale Aladin replies are ignored.',
+    'Horizon view: twilight shading is drawn by time, matching the mini altitude profile.',
+    'Horizon editor: free obstacle contours with control points added.',
+    'External Aladin: outline close/save repaired and panning while drawing prevented.',
+    'External Aladin: imaging-target button shows success feedback.',
+    'Cloud map: soft smoothing is visibly stronger.',
+    'Settings: unsaved section changes can be discarded.'
   ]
   }
 });

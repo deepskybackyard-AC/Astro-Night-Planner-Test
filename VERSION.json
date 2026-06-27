@@ -1,27 +1,27 @@
 {
-  "version": "1.1.0-test.20",
-  "release": "1.1.0-test.20",
+  "version": "1.1.0-test.21",
+  "release": "1.1.0-test.21",
   "environment": "test",
-  "builtAt": "2026-06-26T18:55:00+02:00",
-  "notes": "Testversion 1.1.0-test.20: Setup-Rahmen wird beim Objektwechsel wieder auf das ausgewählte Objekt gesetzt; Aladin-Detailinfos nur noch bei echtem Klick auf sichtbare Beschriftungen; Wolkenkarte mit wolkigerer geringer Glättung, Default-Niederschlagslayern, neuer Modellgewichtung und Dämmerungsphasen in der Horizontansicht.",
+  "builtAt": "2026-06-27T19:45:00+02:00",
+  "notes": "Testversion 1.1.0-test.21: Setup-Rahmen beim Objektwechsel robuster; Dämmerungsphasen korrigiert; Aladin-Umrisszeichnung repariert; frei gezeichnete Hindernisse ergänzt; Einstellungsänderungen können verworfen werden.",
   "releaseNotes": {
     "de": [
-      "Setup-Rahmen: Beim Öffnen eines neuen Objekts wird der Rahmen wieder auf dieses Objekt gesetzt, wenn „Setup-Rahmen anzeigen“ aktiv ist.",
-      "Aladin: Detail-Popups erscheinen nur noch bei echtem Klick auf sichtbar beschriftete Objekte; Pannen/Draggen öffnet keine Objektinfos mehr.",
-      "Wolkenkarte: „Strukturiert“ erzeugt eine deutlich wolkigere, weniger milchige Darstellung.",
-      "Wolkenkarte: Niederschlag, Regen und Schnee sind ein-/ausschaltbar; die Standardanzeige wird in den Einstellungen gesetzt und ist initial aktiv.",
-      "Wettermodelle: Default-Gewichtung auf DWD ICON 40 %, ECMWF IFS 20 %, NOAA GFS 40 % geändert.",
-      "Horizontansicht: Dämmerungsphasen werden zeitlich passend als dezente Grauschattierung hinterlegt; Horizontprofile verwenden mehr Stützpunkte.",
-      "Stündlicher Wetterverlauf: Farbhinterlegung etwas kräftiger dargestellt."
+      "Setup-Rahmen: Beim Objektwechsel wird der Rahmen robuster neu auf das gewählte Objekt gesetzt; alte Aladin-Rückmeldungen werden ignoriert.",
+      "Horizontansicht: Dämmerungsschattierungen werden zeitlich wie im Mini-Höhenprofil gezeichnet.",
+      "Horizonteditor: Neben Block-Hindernissen können freie Hindernis-Konturen mit Stützpunkten gezeichnet werden.",
+      "Aladin extern: Umriss schließen/speichern repariert; während der Umrisszeichnung wird die Karte nicht versehentlich verschoben.",
+      "Aladin extern: „Zu Meine Aufnahmeziele hinzufügen“ gibt ein sichtbares Erfolgsfeedback.",
+      "Wolkenkarte: Die weiche Glättung ist sichtbar stärker geglättet.",
+      "Einstellungen: Ungespeicherte Änderungen können je Rubrik mit „Änderungen verwerfen“ zurückgenommen werden."
     ],
     "en": [
-      "Setup frame: when opening a new object, the frame is reset to that object if “Show setup frame” is enabled.",
-      "Aladin: detail popups now appear only after a real click on visibly labeled objects; panning/dragging no longer opens object details.",
-      "Cloud map: “Structured” now renders a more cloud-like and less milky appearance.",
-      "Cloud map: precipitation, rain and snow can be toggled; defaults are configured in settings and enabled initially.",
-      "Weather models: default weights changed to DWD ICON 40%, ECMWF IFS 20%, NOAA GFS 40%.",
-      "Horizon view: twilight phases are shown as subtle grey shading matched to time; horizon profiles use more control points.",
-      "Hourly weather trend: colour backgrounds are slightly stronger."
+      "Setup frame: when switching objects, the frame is more robustly reset to the selected object; stale Aladin replies are ignored.",
+      "Horizon view: twilight shading is drawn by time, matching the mini altitude profile.",
+      "Horizon editor: free obstacle contours with control points can be drawn in addition to block obstacles.",
+      "External Aladin: close/save outline repaired; the sky image no longer pans accidentally while drawing outlines.",
+      "External Aladin: “Add to My imaging targets” gives visible success feedback.",
+      "Cloud map: soft smoothing is now visibly softer.",
+      "Settings: unsaved section changes can be reverted with “Discard changes”."
     ]
   }
 }
