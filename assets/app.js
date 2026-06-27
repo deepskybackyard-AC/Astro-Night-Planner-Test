@@ -1,4 +1,4 @@
-/* Astro Night Planner 1.1.0-test.22 – Aladin- und Horizont-Korrekturen */
+/* Astro Night Planner 1.1.0-test.23 – Aladin-Umriss, Horizont und Hindernisse */
 'use strict';
 
 const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.9', release:'1.1.0-test.9', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.9'});
@@ -392,7 +392,8 @@ function updateCalculatedEquipmentValues(equipment){
 }
 function frameCenterForObject(object){
   const ra=Number(profile?.planning?.frameCenterRaDeg), dec=Number(profile?.planning?.frameCenterDecDeg);
-  if(Number.isFinite(ra)&&Number.isFinite(dec))return {raDeg:ra,decDeg:dec};
+  const owner=profile?.planning?.frameCenterObjectId;
+  if(object&&owner===object.id&&Number.isFinite(ra)&&Number.isFinite(dec))return {raDeg:ra,decDeg:dec};
   return {raDeg:(Number(object?.raHours)||0)*15,decDeg:Number(object?.decDeg)||0};
 }
 
@@ -454,7 +455,7 @@ function standardProfile(){
       temporaryCloudMapView:null,temporaryCloudMapBaseMode:null,temporaryCloudSmoothing:null,temporaryCloudMapShowValues:null,cloudMapLayer:'cloud',cloudMapMode:'clouds',cloudMapFrame:0,cloudMapWeatherOverlays:{precip:true,rain:true,snow:true},
       search:'',directSearch:'',catalogs:['Messier','NGC','IC','Sh2','Abell','Zusatzkatalog'],types:[],objectTypeProfileId:'types-all',objectTypeProfileCustom:false,maxMagnitude:16,minAltitude:25,minVisibleHours:1.5,visibilityBasis:'nautical',minMoonDistance:25,
       minSize:3,maxSize:240,sizeProfileId:'size-standard',excludeNoSize:false,minScore:0,selectedFilters:DEFAULT_SELECTED_FILTERS.slice(),framingFilter:['good','near-edge','too-large','unknown'],surfaceBrightnessMax:99,showNoSurfaceBrightness:true,onlyFits:false,page:1,pageSize:20,selectedObjectId:'M31',detailsOpen:false,objectRotation:35,objectRotationObjectId:null,frameRotation:0,timeFraction:.5,showMoonInAladin:false,
-      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[],frameMoveMode:false,frameCenterRaDeg:null,frameCenterDecDeg:null,weatherSourceTab:'meteoblue'},
+      detailTimeFraction:0,showGroundHorizon:true,comparisonSetupIds:[],frameMoveMode:false,frameCenterRaDeg:null,frameCenterDecDeg:null,frameCenterObjectId:null,weatherSourceTab:'meteoblue'},
     targets:[],
     targetFilters:{search:'',status:'all',priority:'all',type:'all',filter:'all',month:'all'},
     ui:{mainTab:'plan',settingsTab:'equipment',scroll:{plan:0,settings:0}}
@@ -2480,7 +2481,7 @@ function renderInfo(){
   </div>`;
 }
 
-async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId,wasOpen=Boolean(profile.planning.detailsOpen);if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(open&&object&&(changed||!wasOpen||profile.planning.objectRotationObjectId!==objectId)){profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=objectId}if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
+async function setObjectDetails(objectId,open=true,scroll=true){const changed=profile.planning.selectedObjectId!==objectId,wasOpen=Boolean(profile.planning.detailsOpen);if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameCenterObjectId=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectId;profile.planning.detailsOpen=open;const object=catalog.find(item=>item.id===objectId);if(open&&object&&(changed||!wasOpen||profile.planning.objectRotationObjectId!==objectId)){profile.planning.objectRotation=normalizedAngle180(Number(object.positionAngleDeg)||0);profile.planning.objectRotationObjectId=objectId}if(open&&(changed||!Number.isFinite(Number(profile.planning.frameRotation)))&&framingSettings().autoRotate&&object)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render();if(scroll)requestAnimationFrame(()=>{const row=[...document.querySelectorAll('[data-object-row]')].find(item=>item.dataset.objectRow===objectId);(open?row?.nextElementSibling:row)?.scrollIntoView({behavior:'smooth',block:open?'nearest':'center'})})}
 
 
 function normalizeObjectToken(value){return String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
@@ -2925,6 +2926,7 @@ function postAladinCenterFrameToSelectedObject({feedback=false}={}){
   if(!frame?.contentWindow||!object)return false;
   profile.planning.frameCenterRaDeg=null;
   profile.planning.frameCenterDecDeg=null;
+  profile.planning.frameCenterObjectId=object.id;
   profile.planning.frameMoveMode=false;
   saveProfile();
   if(feedback&&button){button.textContent='Rahmen wird gesetzt …';button.disabled=true}
@@ -2936,7 +2938,7 @@ function postAladinCenterFrameToSelectedObject({feedback=false}={}){
 }
 
 function bindFraming(){
-  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);const changed=profile.planning.selectedObjectId!==objectSelect.value;if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
+  const objectSelect=document.getElementById('framingObjectSelect');if(objectSelect)objectSelect.onchange=async()=>{const item=currentComputedObjects.find(entry=>entry.object.id===objectSelect.value)?.object||catalog.find(entry=>entry.id===objectSelect.value);const changed=profile.planning.selectedObjectId!==objectSelect.value;if(changed){profile.planning.frameCenterRaDeg=null;profile.planning.frameCenterDecDeg=null;profile.planning.frameCenterObjectId=null;profile.planning.frameMoveMode=false;}profile.planning.selectedObjectId=objectSelect.value;if(item){profile.planning.objectRotation=normalizedAngle180(Number(item.positionAngleDeg)||0);profile.planning.objectRotationObjectId=item.id;if(framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(item)}profile.planning.detailsOpen=true;await saveProfile();render();requestAnimationFrame(()=>document.getElementById(`objectDetail-${objectSelect.value}`)?.scrollIntoView({behavior:'smooth',block:'nearest'}))};
   const changeEquipment=async(type,value)=>{if(type==='scope')profile.planning.temporaryTelescopeId=value===profile.equipment.selectedTelescopeId?null:value;else profile.planning.temporaryCameraId=value===profile.equipment.selectedCameraId?null:value;const object=catalog.find(item=>item.id===profile.planning.selectedObjectId);if(object&&framingSettings().autoRotate)profile.planning.frameRotation=optimalFrameRotation(object);await saveProfile();render()};
   const scope=document.getElementById('framingTelescopeSelect'),camera=document.getElementById('framingCameraSelect');if(scope)scope.onchange=()=>changeEquipment('scope',scope.value);if(camera)camera.onchange=()=>changeEquipment('camera',camera.value);
   const frameVisible=document.getElementById('frameVisible');if(frameVisible)frameVisible.onchange=async()=>{profile.central.frameVisible=frameVisible.checked;await saveProfile();draft=deepClone(profile);sendAladinOverlayUpdate()};
@@ -3326,7 +3328,7 @@ function bindLocationDraft(){
   const canvas=document.querySelector('.settings-horizon-chart[data-editable="true"]');
   if(canvas){
     const wrap=canvas.closest('.horizon-editor-wrap');
-    let drawing=false,lastIndex=null,lastAltitude=null,tooltip=document.querySelector('.horizon-editor-tooltip');
+    let drawing=false,obstacleDrawing=false,lastIndex=null,lastAltitude=null,tooltip=document.querySelector('.horizon-editor-tooltip');
     if(!tooltip){tooltip=document.createElement('div');tooltip.className='horizon-editor-tooltip';wrap?.appendChild(tooltip)}
     let inputLayer=wrap?.querySelector('.horizon-input-layer');
     if(wrap&&!inputLayer){inputLayer=document.createElement('div');inputLayer.className='horizon-input-layer';inputLayer.setAttribute('aria-label',language==='en'?'Draw horizon':'Horizont zeichnen');canvas.insertAdjacentElement('afterend',inputLayer)}
@@ -3379,10 +3381,10 @@ function bindLocationDraft(){
       const undo=document.getElementById('undoHorizon');if(undo)undo.disabled=false;
       refreshCanvas();
     };
-    const begin=event=>{if(event.type==='mousedown'&&event.button!==0)return;if(event.type==='pointerdown'&&event.button!==undefined&&event.button!==0)return;event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);if(horizonObstacleDrawId){const obstacle=entry().obstacles.find(item=>item.id===horizonObstacleDrawId);if(obstacle){obstacle.points=Array.isArray(obstacle.points)?obstacle.points:[];obstacle.points.push([Math.round(point.azimuth*10)/10,Math.round(point.altitude*10)/10]);showTooltip(point);setSectionDirty('locations');refreshCanvas();}return}if(!drawing){horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);}drawing=true;lastIndex=null;lastAltitude=null;showTooltip(point);applyPoint(point);};
+    const begin=event=>{if(event.type==='mousedown'&&event.button!==0)return;if(event.type==='pointerdown'&&event.button!==undefined&&event.button!==0)return;event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);if(horizonObstacleDrawId){const obstacle=entry().obstacles.find(item=>item.id===horizonObstacleDrawId);if(obstacle){obstacle.points=Array.isArray(obstacle.points)?obstacle.points:[];if(!obstacle.points.length)horizonUndoStack.push(currentValues().slice());obstacleDrawing=true;const next=[Math.round(point.azimuth*10)/10,Math.round(point.altitude*10)/10];obstacle.points.push(next);showTooltip(point);setSectionDirty('locations');refreshCanvas();}return}if(!drawing){horizonUndoStack.push(currentValues().slice());horizonUndoStack=horizonUndoStack.slice(-20);}drawing=true;lastIndex=null;lastAltitude=null;showTooltip(point);applyPoint(point);};
     const hover=event=>{if(drawing)return;const point=eventPoint(event);showTooltip(point);};
-    const move=event=>{if(!drawing)return;event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);showTooltip(point);applyPoint(point);};
-    const endDrawing=event=>{if(!drawing)return;event?.preventDefault?.();event?.stopPropagation?.();drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();};
+    const move=event=>{if(obstacleDrawing&&horizonObstacleDrawId){event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);const obstacle=entry().obstacles.find(item=>item.id===horizonObstacleDrawId);if(obstacle){obstacle.points=Array.isArray(obstacle.points)?obstacle.points:[];const last=obstacle.points[obstacle.points.length-1];const az=Math.round(point.azimuth*10)/10,alt=Math.round(point.altitude*10)/10;if(!last||Math.hypot(az-Number(last[0]),alt-Number(last[1]))>.8){obstacle.points.push([az,alt]);setSectionDirty('locations');refreshCanvas();}showTooltip(point);}return}if(!drawing)return;event.preventDefault?.();event.stopPropagation?.();const point=eventPoint(event);showTooltip(point);applyPoint(point);};
+    const endDrawing=event=>{if(obstacleDrawing){event?.preventDefault?.();event?.stopPropagation?.();obstacleDrawing=false;hideTooltip();refreshCanvas();return}if(!drawing)return;event?.preventDefault?.();event?.stopPropagation?.();drawing=false;lastIndex=null;lastAltitude=null;hideTooltip();refreshCanvas();};
     const bindTarget=inputLayer||canvas;
     canvas.style.touchAction='none';canvas.style.cursor='crosshair';
     if(inputLayer){inputLayer.style.touchAction='none';inputLayer.style.cursor='crosshair';inputLayer.tabIndex=0}
@@ -3978,36 +3980,44 @@ function drawHorizonChart(canvas,withTrack=false){
     const trackTimes=track.map(point=>Number(point[2])).filter(Number.isFinite);
     const start=Number(canvas.dataset.start)||Math.min(...trackTimes),end=Number(canvas.dataset.end)||Math.max(...trackTimes);
     const selectedStart=Number(canvas.dataset.selectedStart),selectedEnd=Number(canvas.dataset.selectedEnd);
-    const xTime=time=>margin.left+clamp((Number(time)-start)/Math.max(1,end-start),0,1)*plotW;
-    const band=(bandStart,bandEnd,fill)=>{const left=clamp(xTime(Number(bandStart)),margin.left,margin.left+plotW),right=clamp(xTime(Number(bandEnd)),margin.left,margin.left+plotW);if(right<=left)return;context.fillStyle=fill;context.fillRect(left,margin.top,right-left,plotH)};
-    // Graustufen wie im Mini-Höhenprofil: je dunkler die Nachtphase, desto dunkler die Schattierung.
-    band(start,end,'rgba(190,200,212,.09)');
-    band(canvas.dataset.civilStart,canvas.dataset.civilEnd,'rgba(160,170,184,.13)');
-    band(canvas.dataset.nautStart,canvas.dataset.nautEnd,'rgba(120,132,148,.18)');
-    band(canvas.dataset.astroStart,canvas.dataset.astroEnd,'rgba(70,82,98,.26)');
-    band(selectedStart,selectedEnd,'rgba(255,207,90,.08)');
-    for(const t of [canvas.dataset.civilStart,canvas.dataset.nautStart,canvas.dataset.astroStart,canvas.dataset.astroEnd,canvas.dataset.nautEnd,canvas.dataset.civilEnd])if(Number.isFinite(Number(t))){context.strokeStyle='rgba(190,205,225,.34)';context.setLineDash([4,5]);context.beginPath();context.moveTo(xTime(Number(t)),margin.top);context.lineTo(xTime(Number(t)),margin.top+plotH);context.stroke();context.setLineDash([])}
+    const civilStart=Number(canvas.dataset.civilStart),civilEnd=Number(canvas.dataset.civilEnd),nautStart=Number(canvas.dataset.nautStart),nautEnd=Number(canvas.dataset.nautEnd),astroStart=Number(canvas.dataset.astroStart),astroEnd=Number(canvas.dataset.astroEnd);
+    const phaseFill=t=>{
+      if(Number.isFinite(astroStart)&&Number.isFinite(astroEnd)&&t>=astroStart&&t<=astroEnd)return 'rgba(45,55,70,.24)';
+      if(Number.isFinite(nautStart)&&Number.isFinite(nautEnd)&&t>=nautStart&&t<=nautEnd)return 'rgba(80,92,110,.18)';
+      if(Number.isFinite(civilStart)&&Number.isFinite(civilEnd)&&t>=civilStart&&t<=civilEnd)return 'rgba(120,132,150,.13)';
+      return 'rgba(170,180,195,.08)';
+    };
+    // Dämmerung als dezente Zusatzschattierung entlang der Objektbahn-Azimute, nicht als Zeitachse.
+    const sorted=track.slice().sort((a,b)=>Number(a[2])-Number(b[2]));
+    for(let i=0;i<sorted.length-1;i++){
+      const a=sorted[i],b=sorted[i+1],azA=Number(a[0]),azB=Number(b[0]);
+      if(!Number.isFinite(azA)||!Number.isFinite(azB)||Math.abs(azB-azA)>120)continue;
+      const left=Math.min(x(azA),x(azB)),right=Math.max(x(azA),x(azB));
+      if(right-left<1)continue;
+      context.fillStyle=phaseFill((Number(a[2])+Number(b[2]))/2);
+      context.fillRect(left,margin.top,right-left,plotH);
+    }
+    if(Number.isFinite(selectedStart)&&Number.isFinite(selectedEnd)){
+      const selectedSegments=sorted.filter(p=>Number(p[2])>=selectedStart&&Number(p[2])<=selectedEnd);
+      for(let i=0;i<selectedSegments.length-1;i++){
+        const a=selectedSegments[i],b=selectedSegments[i+1];if(Math.abs(Number(b[0])-Number(a[0]))>120)continue;
+        const left=Math.min(x(a[0]),x(b[0])),right=Math.max(x(a[0]),x(b[0]));
+        context.fillStyle='rgba(255,207,90,.07)';context.fillRect(left,margin.top,right-left,plotH);
+      }
+    }
     context.font='15px system-ui, sans-serif';
     for(let altitudeValue=0;altitudeValue<=90;altitudeValue+=15){const py=y(altitudeValue);context.strokeStyle=palette.grid;context.lineWidth=1;context.beginPath();context.moveTo(margin.left,py);context.lineTo(margin.left+plotW,py);context.stroke();context.fillStyle=palette.text;context.textAlign='right';context.textBaseline='middle';context.fillText(`${altitudeValue}°`,margin.left-10,py)}
-    const labelCount=6;
-    for(let i=0;i<=labelCount;i++){const t=start+(end-start)*i/labelCount,px=xTime(t);context.strokeStyle=palette.grid;context.beginPath();context.moveTo(px,margin.top);context.lineTo(px,margin.top+plotH);context.stroke();context.fillStyle=palette.text;context.textAlign=i===0?'left':i===labelCount?'right':'center';context.textBaseline='top';context.fillText(fmtTime(new Date(t),canvas.dataset.timezone),px,margin.top+plotH+12)}
+    const directions=['N','NO','O','SO','S','SW','W','NW','N'];
+    directions.forEach((direction,index)=>{const azimuthValue=index*45,px=x(azimuthValue);context.strokeStyle=palette.grid;context.beginPath();context.moveTo(px,margin.top);context.lineTo(px,margin.top+plotH);context.stroke();context.fillStyle='#d6e8fa';context.textAlign=index===0?'left':index===8?'right':'center';context.textBaseline='top';context.fillText(direction,px,margin.top+plotH+8);context.fillStyle=palette.text;context.fillText(`${azimuthValue}°`,px,margin.top+plotH+31)});
     const showGround=canvas.dataset.showGround!=='false';
-    if(showGround&&horizon.length){
-      context.strokeStyle=palette.accent2;context.lineWidth=3;context.beginPath();
-      track.forEach((point,index)=>{const px=xTime(point[2]),py=y(horizonAltAtAz(point[0]));index?context.lineTo(px,py):context.moveTo(px,py)});
-      context.stroke();
-      context.fillStyle=palette.accent2;context.textAlign='left';context.textBaseline='top';context.fillText('Persönlicher Horizont entlang der Objektbahn',margin.left+110,2);
-    }
-    context.strokeStyle=palette.accent;context.lineWidth=3;context.beginPath();
-    track.forEach((point,index)=>{const px=xTime(point[2]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke();
-    const selected=track.filter(point=>point[2]>=selectedStart&&point[2]<=selectedEnd);
-    if(selected.length){context.strokeStyle=palette.warning;context.lineWidth=5;context.beginPath();selected.forEach((point,index)=>{const px=xTime(point[2]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke()}
+    if(showGround&&horizon.length){context.beginPath();context.moveTo(x(horizon[0][0]),y(0));horizon.forEach(point=>context.lineTo(x(point[0]),y(point[1])));context.lineTo(x(horizon[horizon.length-1][0]),y(0));context.closePath();context.fillStyle=palette.horizonFill;context.fill();context.strokeStyle=palette.accent2;context.lineWidth=4;context.beginPath();horizon.forEach((point,index)=>index?context.lineTo(x(point[0]),y(point[1])):context.moveTo(x(point[0]),y(point[1])));context.stroke();}
+    if(showGround)obstacles.forEach(obstacle=>{if(obstacle.type==='free'&&Array.isArray(obstacle.points)&&obstacle.points.length>=2){const points=obstacle.points.map(p=>Array.isArray(p)?{az:Number(p[0]),alt:Number(p[1])}:p).filter(p=>Number.isFinite(p.az)&&Number.isFinite(p.alt));if(points.length>=2){context.fillStyle='rgba(241,112,112,.14)';context.strokeStyle=palette.danger;context.lineWidth=2.5;context.beginPath();points.forEach((p,index)=>index?context.lineTo(x(p.az),y(p.alt)):context.moveTo(x(p.az),y(p.alt)));if(obstacle.closed&&points.length>=3){context.closePath();context.fill()}context.stroke();const mid=points[Math.floor(points.length/2)];context.fillStyle=palette.danger;context.textAlign='center';context.textBaseline='bottom';context.fillText(String(obstacle.name||'Freies Hindernis'),x(mid.az),y(mid.alt)-5)}return;}const center=((Number(obstacle.azimuth)%360)+360)%360,halfWidth=6,left=center-halfWidth,right=center+halfWidth;context.fillStyle='rgba(241,112,112,.28)';const drawBlock=(from,to)=>{context.fillRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude));context.strokeStyle=palette.danger;context.lineWidth=2;context.strokeRect(x(from),y(obstacle.altitude),x(to)-x(from),y(0)-y(obstacle.altitude))};if(left<0){drawBlock(0,right);drawBlock(360+left,360)}else if(right>360){drawBlock(left,360);drawBlock(0,right-360)}else drawBlock(left,right);context.fillStyle=palette.danger;context.textAlign='center';context.textBaseline='bottom';context.fillText(String(obstacle.name||'Hindernis'),x(center),y(obstacle.altitude)-4);});
+    context.strokeStyle=palette.accent;context.lineWidth=3;context.beginPath();track.forEach((point,index)=>{const px=x(point[0]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke();
+    const selected=track.filter(point=>point[2]>=selectedStart&&point[2]<=selectedEnd);if(selected.length){context.strokeStyle=palette.warning;context.lineWidth=5;context.beginPath();selected.forEach((point,index)=>{const px=x(point[0]),py=y(point[1]);index?context.lineTo(px,py):context.moveTo(px,py)});context.stroke()}
     const currentTime=clamp(Number(canvas.dataset.currentTime)||track[0][2],start,end),currentPoint=nearestDetailPoint(track.map(point=>[point[2],point[1],point[0]]),currentTime),currentAltitude=currentPoint[1],currentAzimuth=currentPoint[2];
-    context.strokeStyle='#d8ecff';context.lineWidth=2;context.beginPath();context.moveTo(xTime(currentTime)-12,y(currentAltitude));context.lineTo(xTime(currentTime)+12,y(currentAltitude));context.moveTo(xTime(currentTime),y(currentAltitude)-12);context.lineTo(xTime(currentTime),y(currentAltitude)+12);context.stroke();
-    context.fillStyle=palette.warning;context.beginPath();context.arc(xTime(currentTime),y(currentAltitude),7,0,Math.PI*2);context.fill();context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
-    context.fillStyle='#fff2bd';context.textAlign=xTime(currentTime)>margin.left+plotW*.72?'right':'left';context.textBaseline='bottom';context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)} (${fmt(currentAzimuth)}°)`,xTime(currentTime)+(xTime(currentTime)>margin.left+plotW*.72?-12:12),y(currentAltitude)-12);
-    context.strokeStyle='#38516d';context.lineWidth=1;context.strokeRect(margin.left,margin.top,plotW,plotH);
-    context.fillStyle=palette.text;context.textAlign='left';context.textBaseline='top';context.fillText('Objekthöhe (gelb) · persönlicher Horizont entlang der Objektbahn (grün) · Dämmerungsphasen (grau)',margin.left,2);
+    context.strokeStyle='#d8ecff';context.lineWidth=2;context.beginPath();context.moveTo(x(currentAzimuth)-12,y(currentAltitude));context.lineTo(x(currentAzimuth)+12,y(currentAltitude));context.moveTo(x(currentAzimuth),y(currentAltitude)-12);context.lineTo(x(currentAzimuth),y(currentAltitude)+12);context.stroke();context.fillStyle=palette.warning;context.beginPath();context.arc(x(currentAzimuth),y(currentAltitude),7,0,Math.PI*2);context.fill();context.strokeStyle='#07111d';context.lineWidth=3;context.stroke();
+    context.fillStyle='#fff2bd';context.textAlign=x(currentAzimuth)>margin.left+plotW*.72?'right':'left';context.textBaseline='bottom';context.fillText(`${fmtTime(new Date(currentTime),canvas.dataset.timezone)} · ${fmt(currentAltitude)}° · ${cardinal(currentAzimuth)} (${fmt(currentAzimuth)}°)`,x(currentAzimuth)+(x(currentAzimuth)>margin.left+plotW*.72?-12:12),y(currentAltitude)-12);
+    context.strokeStyle='#38516d';context.lineWidth=1;context.strokeRect(margin.left,margin.top,plotW,plotH);context.fillStyle=palette.text;context.textAlign='left';context.textBaseline='top';context.fillText('Horizont (grün) · Objektbahn (blau) · Planungszeitraum (gelb) · Dämmerungsphasen (grau)',margin.left,2);
     return;
   }
 
@@ -4084,7 +4094,7 @@ window.addEventListener('message',event=>{
   if(event.data?.type==='anp-aladin-ready'){sendAladinOverlayUpdate();postAladinCenterFrameToSelectedObject({feedback:false});return}
   if(event.data?.type==='anp-frame-centered'||event.data?.type==='anp-frame-moved'){
     if(event.data.objectId&&event.data.objectId!==profile.planning.selectedObjectId)return;
-    if(Number.isFinite(Number(event.data.ra))&&Number.isFinite(Number(event.data.dec))){profile.planning.frameCenterRaDeg=Number(event.data.ra);profile.planning.frameCenterDecDeg=Number(event.data.dec);saveProfile();}
+    if(Number.isFinite(Number(event.data.ra))&&Number.isFinite(Number(event.data.dec))){profile.planning.frameCenterRaDeg=Number(event.data.ra);profile.planning.frameCenterDecDeg=Number(event.data.dec);profile.planning.frameCenterObjectId=event.data.objectId||profile.planning.selectedObjectId;saveProfile();}
     if(event.data.silent)return;
     const button=document.getElementById('centerAladinFrame');
     if(!button)return;

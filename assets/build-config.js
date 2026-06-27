@@ -3,29 +3,24 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.22',
-  release: '1.1.0-test.22',
+  appVersion: '1.1.0-test.23',
+  release: '1.1.0-test.23',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.22',
+  documentTitle: 'Astro Night Planner 1.1.0-test.23',
   releaseNotes: {
     de: [
-    'Setup-Rahmen wird beim Objektwechsel automatisch wie über den Zurücksetzen-Button neu gesetzt.',
-    'Horizontansicht: Dämmerungsschattierungen werden zeitlich wie im Mini-Höhenprofil gezeichnet.',
-    'Horizonteditor: freie Hindernis-Konturen mit Stützpunkten ergänzt.',
-    'Aladin extern: Umriss schließen/speichern repariert und Pannen während des Zeichnens verhindert.',
-    'Aladin extern: Aufnahmeziel-Button zeigt ein Erfolgsfeedback.',
-    'Wolkenkarte: Weiche Glättung ist sichtbar stärker geglättet.',
-    'Einstellungen: Ungespeicherte Änderungen können je Rubrik verworfen werden.'
-  ],
-  en: [
-    'The setup frame is automatically reset when switching objects.',
-    'Horizon view: twilight shading is drawn by time, matching the mini altitude profile.',
-    'Horizon editor: free obstacle contours with control points added.',
-    'External Aladin: outline close/save repaired and panning while drawing prevented.',
-    'External Aladin: imaging-target button shows success feedback.',
-    'Cloud map: soft smoothing is visibly stronger.',
-    'Settings: unsaved section changes can be discarded.'
-  ]
-  }
-});
+      'Aladin extern: Umrisszeichnung ist wieder als dünne Linie sichtbar; Freihandmodus zeigt keine dominanten Stützpunktkreise.',
+      'Aladin extern: Schließen und Speichern erfolgen nur über die Buttons; Pannen während des Zeichnens wird blockiert.',
+      'Horizonteditor: Freie Hindernisse zeichnen beim Ziehen sichtbar eine Linie/Kontur.',
+      'Horizontansicht: wieder 360°-Azimutansicht mit dezenter Dämmerungsschattierung analog zur Höhenkurve.',
+      'Setup-Rahmen: Rahmenzentren werden objektbezogen behandelt, damit beim Objektwechsel kein alter Rahmen übernommen wird.'
+    ],
+    en: [
+      'External Aladin: outline drawing is visible again as a thin line; freehand mode has no dominant control-point circles.',
+      'External Aladin: closing and saving only happen through the buttons; panning while drawing is blocked.',
+      'Horizon editor: free obstacles are visibly drawn as a line/contour while dragging.',
+      'Horizon view: restored 360° azimuth view with subtle twilight shading matching the altitude curve.',
+      'Setup frame: frame centres are object-specific so switching objects cannot reuse an old frame centre.'
+    ]
+  }});
