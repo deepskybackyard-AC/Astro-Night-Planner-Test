@@ -1,19 +1,21 @@
 {
-  "version": "1.1.0-test.24",
-  "release": "1.1.0-test.24",
+  "version": "1.1.0-test.25",
+  "release": "1.1.0-test.25",
   "environment": "test",
-  "builtAt": "2026-06-27T22:40:00+02:00",
-  "notes": "Testversion 1.1.0-test.24: Horizontansicht bleibt 360°-Azimutansicht; Dämmerungsphasen entsprechen farblich und in relativer Breite der Höhenkurve.",
+  "builtAt": "2026-06-27T23:25:00+02:00",
+  "notes": "Testversion 1.1.0-test.25: Aladin-Bedienung als Tabs; Dämmerungslogik zeigt astronomische Nacht nur bei tatsächlichem Sonnenstand unter -18°; Übersetzungen nachgezogen.",
   "releaseNotes": {
     "de": [
-      "Horizontansicht: Dämmerungsphasen verwenden jetzt dieselben Farben wie die Höhenkurve.",
-      "Horizontansicht: Die relative Breite der Phasen folgt dem Sonnenuntergang-bis-Sonnenaufgang-Zeitfenster der Höhenkurve.",
-      "Keine weiteren Funktionsänderungen gegenüber test.23."
+      "Aladin-Bedienung: Funktionen sind in die Tabs Himmelsbild, Rahmen, Objekte sowie Zeit & Mond gegliedert.",
+      "Dämmerungslogik: Astronomische Nacht wird nur angezeigt, wenn die Sonne am Standort tatsächlich unter −18° sinkt.",
+      "Horizontansicht: Legende und Dämmerungsfarben wurden korrigiert.",
+      "Weitere DE/EN-Übersetzungen für neue Labels, Listeninhalte und dynamische Aladin-Texte wurden ergänzt."
     ],
     "en": [
-      "Horizon view: twilight phases now use the same colours as the altitude curve.",
-      "Horizon view: phase widths follow the sunset-to-sunrise time window of the altitude curve.",
-      "No other functional changes compared with test.23."
+      "Aladin controls: functions are grouped into the tabs Sky image, Frame, Objects, and Time & Moon.",
+      "Twilight logic: astronomical night is shown only when the Sun actually drops below −18° at the location.",
+      "Horizon view: legend and twilight colours were corrected.",
+      "Additional DE/EN translations were added for new labels, list values and dynamic Aladin texts."
     ]
   }
 }

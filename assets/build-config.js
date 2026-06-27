@@ -3,20 +3,22 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.24',
-  release: '1.1.0-test.24',
+  appVersion: '1.1.0-test.25',
+  release: '1.1.0-test.25',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.24',
+  documentTitle: 'Astro Night Planner 1.1.0-test.25',
   releaseNotes: {
     de: [
-      'Horizontansicht: Dämmerungsphasen bleiben in der 360°-Azimutansicht und verwenden jetzt dieselben Farben wie die Höhenkurve.',
-      'Horizontansicht: Die relative Breite der Dämmerungsphasen wird aus dem Sonnenuntergang-bis-Sonnenaufgang-Zeitfenster der Höhenkurve übernommen.',
-      'Weitere Funktionen aus test.23 bleiben unverändert.'
+      'Aladin-Bedienung: Funktionen sind in Tabs für Himmelsbild, Rahmen, Objekte sowie Zeit & Mond gegliedert.',
+      'Dämmerungslogik: Astronomische Nacht wird nur bei tatsächlichem Sonnenstand unter −18° angezeigt.',
+      'Horizontansicht: Legende und Dämmerungsfarben wurden korrigiert.',
+      'Weitere DE/EN-Übersetzungen für neue Labels und dynamische Texte wurden ergänzt.'
     ],
     en: [
-      'Horizon view: twilight phases stay in the 360° azimuth view and now use the same colours as the altitude curve.',
-      'Horizon view: the relative width of the twilight phases is derived from the sunset-to-sunrise time window of the altitude curve.',
-      'Other functions from test.23 are unchanged.'
+      'Aladin controls are grouped into tabs for Sky image, Frame, Objects, and Time & Moon.',
+      'Twilight logic: astronomical night is shown only when the Sun actually drops below −18°.',
+      'Horizon view: legend and twilight colours were corrected.',
+      'Additional DE/EN translations for new labels and dynamic texts were added.'
     ]
   }});

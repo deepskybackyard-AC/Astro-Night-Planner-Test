@@ -648,3 +648,14 @@ body{padding-bottom:0}
 .clearoutside-language-note{padding:8px 10px;text-align:left;background:rgba(7,17,31,.72);border-top:1px solid rgba(121,184,255,.18)}
 .external-weather-actions{align-items:center}
 @media(max-width:720px){.external-weather-card .external-weather-embed{min-height:420px}.external-weather-frame{height:560px}}
+
+/* Test 25: Aladin control tabs */
+.aladin-control-card{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(7,17,29,.48);padding:14px}
+.aladin-control-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid rgba(121,184,255,.18);padding-bottom:10px}
+.aladin-control-tabs button{border:1px solid var(--line);background:#0b1a2a;color:var(--muted);border-radius:12px;padding:10px 16px;font-weight:850;min-width:120px}
+.aladin-control-tabs button.active{background:#173756;color:#f0c75e;border-color:#4387c9;box-shadow:0 0 0 1px rgba(67,135,201,.25) inset}
+.aladin-tab-panel{display:none;margin-top:0}
+.aladin-tab-panel.active{display:grid}
+.aladin-tab-panel .framing-time-control{grid-column:span 2}
+.aladin-tab-panel .external-aladin-note{align-self:center}
+@media(max-width:780px){.aladin-control-tabs{overflow-x:auto;flex-wrap:nowrap}.aladin-control-tabs button{min-width:max-content}.aladin-tab-panel .framing-time-control{grid-column:1/-1}}
