@@ -3,22 +3,22 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.27',
-  release: '1.1.0-test.27',
+  appVersion: '1.1.0-test.28',
+  release: '1.1.0-test.28',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.27',
+  documentTitle: 'Astro Night Planner 1.1.0-test.28',
   releaseNotes: {
     de: [
-      'Aladin-Bedienung: Tabs neu angeordnet in der Reihenfolge Rahmen, Objekte, Himmelsbild, Zeit & Mond.',
-      'Himmelsbild in neuem Tab öffnen ist jetzt als dauerhafte Schnellaktion rechts neben den Tabs verfügbar.',
-      'Höhen- und Horizontkurven verwenden eine dichtere Objektbahnberechnung für glattere und präzisere Kurven.',
-      'Legende der Höhenkurve blendet Astronomische Nacht aus, wenn sie in der Planungsnacht nicht vorkommt.'
+      'Aladin-Bedienung: Tab-Reihenfolge Rahmen, Objekte, Himmelsbild, Zeit & Mond; externer Himmelsbild-Button bleibt rechts in der Tab-Zeile.',
+      'Meteoblue-Wetterkarten werden initial mit Wolken/Niederschlag und Windanimation angefragt, soweit der Embed diese Parameter übernimmt.',
+      'Viele noch gemischte deutsch/englische UI-Texte, Statusmeldungen, Dropdownwerte und Hilfetexte wurden nachübersetzt.',
+      'Hinweis zur Modellgewichtung und weitere Einstellungslabels wurden an die aktuellen Defaults angepasst.'
     ],
     en: [
-      'Aladin controls: tabs reordered to Frame, Objects, Sky image, Time & Moon.',
-      'Open sky image in a new tab is now a permanent quick action to the right of the tabs.',
-      'Altitude and horizon curves use denser object-track sampling for smoother and more precise curves.',
-      'The altitude-curve legend hides astronomical night when it does not occur in the planning night.'
+      'Aladin controls: tab order Frame, Objects, Sky image, Time & Moon; the external sky-image button remains on the right side of the tab row.',
+      'Meteoblue weather maps are requested initially with clouds/precipitation and wind animation where the embed accepts these parameters.',
+      'Many mixed German/English UI strings, status messages, dropdown values and help texts have been translated.',
+      'The model-weighting note and further settings labels were aligned with the current defaults.'
     ]
   }});
