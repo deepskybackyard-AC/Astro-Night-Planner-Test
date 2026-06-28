@@ -1,21 +1,23 @@
 {
-  "version": "1.1.0-test.38",
-  "release": "1.1.0-test.38",
+  "version": "1.1.0-test.39",
+  "release": "1.1.0-test.39",
   "environment": "test",
   "builtAt": "2026-06-28T16:40:00+02:00",
-  "notes": "Testversion 1.1.0-test.38: kompakter Wettervergleich mit vollflächiger eigener Karte und zentraler Zeitsteuerung.",
+  "notes": "Testversion 1.1.0-test.39: finale Korrektur der 2x2-Wettervergleichskarte; Map+Wolken-Basiskarte sichtbar; Cloudflare-Worker nicht mehr im Paket.",
   "releaseNotes": {
     "de": [
       "Die eigene Astro-Wolkenkarte im 2×2-Wettervergleich nutzt die aktuellen Einstellungen aus der Planungsansicht inklusive Kartenansicht, Glättung, Prozentwerten und Overlays.",
       "Der zusätzliche Zeitregler in der eigenen Vergleichskarte wurde entfernt; die Steuerung erfolgt über die zentrale Vergleichszeit.",
       "Ortszeile, Himmelsrichtungen und schwarze Randbereiche wurden aus der kompakten eigenen Vergleichskarte entfernt. Bei „Karte + Wolken“ liegt die topografische Basiskarte jetzt vollflächig hinter der Wolkenebene.",
-      "Meteoblue bleibt als nicht zentral zeitsynchron gekennzeichnet; Windy und Ventusky werden weiterhin bestmöglich mit der Vergleichszeit neu geladen."
+      "Meteoblue bleibt als nicht zentral zeitsynchron gekennzeichnet; Windy und Ventusky werden weiterhin bestmöglich mit der Vergleichszeit neu geladen.",
+      "Der nicht mehr benötigte Cloudflare-Worker-Ordner ist nicht mehr Bestandteil des Testpakets."
     ],
     "en": [
       "The own astro cloud map in the 2x2 weather comparison uses the current planning-view settings including map view, smoothing, percentage labels and overlays.",
       "The extra time slider inside the own comparison map has been removed; time is controlled by the shared comparison time.",
       "The location header, compass labels and black outer margins were removed from the compact own comparison map. With “Map + clouds”, the topographic base map is now placed full-panel behind the cloud layer.",
-      "Meteoblue remains marked as not centrally time-synchronized; Windy and Ventusky continue to be reloaded with the comparison time on a best-effort basis."
+      "Meteoblue remains marked as not centrally time-synchronized; Windy and Ventusky continue to be reloaded with the comparison time on a best-effort basis.",
+      "The obsolete Cloudflare worker folder is no longer part of the test package."
     ]
   }
 }

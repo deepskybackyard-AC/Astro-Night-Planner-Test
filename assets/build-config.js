@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.38',
-  release: '1.1.0-test.38',
+  appVersion: '1.1.0-test.39',
+  release: '1.1.0-test.39',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.38',
+  documentTitle: 'Astro Night Planner 1.1.0-test.39',
   releaseNotes: {
     de: [
       'Die eigene Astro-Wolkenkarte in der 2×2-Ansicht nutzt die aktuellen Einstellungen aus der Planung inklusive Kartenansicht, Glättung, Prozentwerten und Overlays.',
