@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.29 – Meteoblue-Widget und Übersetzungen */
+/* Astro Night Planner 1.1.0-test.30 – Meteoblue-Startansicht Wolken/Niederschlag */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.29', release:'1.1.0-test.29', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.29'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.30', release:'1.1.0-test.30', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.30'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -2213,10 +2213,11 @@ function meteoblueLocationInfo(loc){
   const seeingPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/outdoorsports/seeing/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/outdoorsports/seeing`;
   const mapBase=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/widget/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/maps/widget`;
   const mapParams=new URLSearchParams();
-  // Use the public weather-maps widget configuration instead of guessed deep-link state.
-  // Keep the layer set deliberately small: clouds/precipitation as the main map plus wind animation overlay.
+  // Use the public weather-maps widget configuration instead of trying to force
+  // combined internal UI state. Clouds & precipitation is the main start layer;
+  // wind animation is no longer requested here because Meteoblue otherwise starts
+  // the widget in the wind map mode instead of the astro-relevant cloud map.
   mapParams.append('cloudsAndPrecipitation','1');
-  mapParams.append('windAnimation','1');
   mapParams.append('geoloc',fixed?'fixed':'detect');
   mapParams.append('tempunit','C');
   mapParams.append('windunit','km/h');
@@ -2224,8 +2225,12 @@ function meteoblueLocationInfo(loc){
   mapParams.append('zoom','6');
   mapParams.append('autowidth','auto');
   const mapWidget=`${mapBase}?${mapParams.toString()}`;
+  const windMapParams=new URLSearchParams(mapParams);
+  windMapParams.delete('cloudsAndPrecipitation');
+  windMapParams.append('windAnimation','1');
+  const windMapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}?${windMapParams.toString()}`:`https://www.meteoblue.com/${mbLang}/weather/maps?${windMapParams.toString()}`;
   const mapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/maps`;
-  return{fixed,seeingWidget,seeingPage,mapWidget,mapPage};
+  return{fixed,seeingWidget,seeingPage,mapWidget,mapPage,windMapPage};
 }
 
 function renderFraming(o,windowRange,loc){
@@ -2379,10 +2384,11 @@ function renderMeteoblue(loc){
   <section class="card meteoblue-card">
     <details ${mapCollapsed?'':'open'} id="meteoblueMapDetails">
       <summary><strong>${ui('Meteoblue Wetterkarten','Meteoblue weather maps')}</strong> · ${ui('zusätzliche Live-, Radar-, Satelliten- und Modellansicht','additional live, radar, satellite and model view')}</summary>
-      <div class="notice" style="margin-top:12px">${ui('Zusätzliche unabhängige Karte mit Windanimation, Böen, Satellit, Wolken und Niederschlag, Temperatur, Sonnenscheindauer und Extremprognose.','Additional independent map with wind animation, gusts, satellite, clouds and precipitation, temperature, sunshine duration and extreme forecast.')}</div>
+      <div class="notice" style="margin-top:12px">${ui('Die Karte startet mit Wolken und Niederschlag. Die Windanimation kann im Meteoblue-Menü oder über die separate Windkarte geöffnet werden.','The map starts with clouds and precipitation. Wind animation can be enabled in the Meteoblue menu or opened through the separate wind map.')}</div>
       <div class="meteoblue-actions" style="margin-top:10px">
         <button data-meteoblue-fullscreen="meteoblueMapWrap">⛶ ${ui('Großansicht','Large view')}</button>
         <a class="button primary" href="${urls.mapPage}" target="_blank" rel="noopener noreferrer">${ui('Wetterkarten bei Meteoblue öffnen','Open weather maps at Meteoblue')}</a>
+        <a class="button" href="${urls.windMapPage}" target="_blank" rel="noopener noreferrer">${ui('Windkarte bei Meteoblue öffnen','Open Meteoblue wind map')}</a>
       </div>
       <div class="meteoblue-embed meteoblue-map-embed" id="meteoblueMapWrap">
         <iframe class="meteoblue-frame map-frame" title="${ui('Meteoblue Wetterkarten für','Meteoblue weather maps for')} ${esc(loc.name)}" src="${urls.mapWidget}" loading="lazy"

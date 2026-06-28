@@ -1,18 +1,18 @@
 {
-  "version": "1.1.0-test.29",
-  "release": "1.1.0-test.29",
+  "version": "1.1.0-test.30",
+  "release": "1.1.0-test.30",
   "environment": "test",
   "builtAt": "2026-06-28T00:25:00+02:00",
-  "notes": "Testversion 1.1.0-test.29: Meteoblue-Widget-Konfiguration und weitere Übersetzungskorrekturen.",
+  "notes": "Testversion 1.1.0-test.30: Meteoblue-Startansicht auf Wolken/Niederschlag umgestellt; Windkarte separat erreichbar.",
   "releaseNotes": {
     "de": [
-      "Meteoblue-Wetterkarten verwenden eine reduzierte öffentliche Widget-Konfiguration mit Wolken/Niederschlag und Windanimation statt geratenen Tiefenparametern.",
+      "Meteoblue-Wetterkarten starten jetzt bewusst mit Wolken/Niederschlag; Windanimation wird nicht mehr als Startmodus erzwungen und ist separat erreichbar.",
       "Weitere gemischte deutsch/englische UI-Texte, dynamische Statusmeldungen, Diagrammtexte, Dropdownwerte und Hilfetexte wurden nachübersetzt.",
       "Canvas-/Diagrammtexte und Himmelsrichtungen werden sprachabhängig ausgegeben.",
       "Backup-, Ausrüstungs-, Standort-, Horizont- und Aufnahmezieltexte wurden erneut systematisch geprüft."
     ],
     "en": [
-      "Meteoblue weather maps now use a reduced public widget configuration with clouds/precipitation and wind animation instead of guessed deep-link parameters.",
+      "Meteoblue weather maps now start deliberately with clouds/precipitation; wind animation is no longer forced as the start mode and is available separately.",
       "Further mixed German/English UI strings, dynamic status messages, chart labels, dropdown values and help texts have been translated.",
       "Canvas/chart labels and cardinal directions are now language-aware.",
       "Backup, equipment, location, horizon and imaging-target texts were checked again systematically."
