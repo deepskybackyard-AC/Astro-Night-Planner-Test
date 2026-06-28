@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.36',
-  release: '1.1.0-test.36',
+  appVersion: '1.1.0-test.37',
+  release: '1.1.0-test.37',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.36',
+  documentTitle: 'Astro Night Planner 1.1.0-test.37',
   releaseNotes: {
     de: [
-      'Die 2×2-Wettervergleichsansicht lädt Meteoblue, Windy und Ventusky beim Anhalten der Vergleichszeit mit bestmöglichen Zeitparametern neu.',
-      'Die eigene Astro-Wolkenkarte reagiert weiterhin direkt auf die gemeinsame Vergleichszeit.',
-      'Die Vergleichsansicht zeigt Hinweise zur eingeschränkten Zeitsynchronisierung externer iFrames.'
+      'Die 2×2-Wettervergleichsansicht behandelt Meteoblue jetzt ehrlich als nicht zentral zeitsynchron und zeigt den Hinweis rot an.',
+      'Die eigene Astro-Wolkenkarte in der 2×2-Ansicht übernimmt Modell, Wolkenschicht, Auswertung, Kartenansicht, Glättung und Overlays aus der Planung.',
+      'Bei Karte + Wolken wird die eigene Karte im Wettervergleich mit topografischer Basiskarte und transparenter Wolkenebene dargestellt.'
     ],
     en: [
-      'The 2x2 weather comparison view reloads Meteoblue, Windy and Ventusky with best-effort time parameters when the comparison time stops changing.',
-      'The own astro cloud map still reacts directly to the shared comparison time.',
-      'The comparison view shows notes about limited time synchronization of external iframes.'
+      'The 2x2 weather comparison now treats Meteoblue honestly as not centrally time-synchronized and shows the warning in red.',
+      'The own astro cloud map in the 2x2 view uses model, cloud layer, evaluation, map view, smoothing and overlays from the planning view.',
+      'With map + clouds, the own comparison map is shown with a topographic base map and transparent cloud layer.'
     ]
   }});

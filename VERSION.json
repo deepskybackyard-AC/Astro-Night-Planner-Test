@@ -1,19 +1,19 @@
 {
-  "version": "1.1.0-test.36",
-  "release": "1.1.0-test.36",
+  "version": "1.1.0-test.37",
+  "release": "1.1.0-test.37",
   "environment": "test",
-  "builtAt": "2026-06-28T15:45:00+02:00",
-  "notes": "Testversion 1.1.0-test.36: 2x2-Wettervergleich mit bestmöglicher Zeit-Synchronisierung externer Karten.",
+  "builtAt": "2026-06-28T16:20:00+02:00",
+  "notes": "Testversion 1.1.0-test.37: finalisierter Wettervergleich mit Meteoblue-Hinweis und korrekter eigener Kartenansicht.",
   "releaseNotes": {
     "de": [
-      "Die 2×2-Wettervergleichsansicht lädt Meteoblue, Windy und Ventusky beim Anhalten der Vergleichszeit mit bestmöglichen Zeitparametern neu.",
-      "Die eigene Astro-Wolkenkarte reagiert weiterhin direkt und zuverlässig auf die gemeinsame Vergleichszeit.",
-      "Die Vergleichsansicht zeigt Hinweise zur eingeschränkten Zeitsynchronisierung externer iFrames."
+      "Die 2×2-Wettervergleichsansicht synchronisiert weiterhin die eigene Karte sowie Windy und Ventusky; Meteoblue wird nicht mehr scheinbar synchronisiert.",
+      "Der Meteoblue-Hinweis zur eigenen Zeitachse wird im Vergleich rot angezeigt.",
+      "Die eigene Astro-Wolkenkarte in der 2×2-Ansicht nutzt die aktuellen Einstellungen aus der Planungsansicht inklusive Kartenansicht, Glättung und Overlays."
     ],
     "en": [
-      "The 2x2 weather comparison view reloads Meteoblue, Windy and Ventusky with best-effort time parameters when the comparison time stops changing.",
-      "The own astro cloud map still reacts directly and reliably to the shared comparison time.",
-      "The comparison view shows notes about limited time synchronization of external iframes."
+      "The 2x2 weather comparison continues to synchronize the own map as well as Windy and Ventusky; Meteoblue is no longer presented as if it were synchronized.",
+      "The Meteoblue notice about using its own timeline is shown in red in the comparison view.",
+      "The own astro cloud map in the 2x2 view uses the current planning-view settings including map view, smoothing and overlays."
     ]
   }
 }
