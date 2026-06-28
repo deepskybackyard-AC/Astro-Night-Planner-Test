@@ -1,19 +1,23 @@
 {
-  "version": "1.1.0-test.31",
-  "release": "1.1.0-test.31",
+  "version": "1.1.0-test.32",
+  "release": "1.1.0-test.32",
   "environment": "test",
-  "builtAt": "2026-06-28T00:40:00+02:00",
-  "notes": "Testversion 1.1.0-test.31: Meteoblue-Widget mit Karten-Hash für Wolken/Niederschlag; weitere dynamische Übersetzungen.",
+  "builtAt": "2026-06-28T12:10:00+02:00",
+  "notes": "Testversion 1.1.0-test.32: Astro-Wolkenmodell als einklappbare Rubrik; Meteoblue-Links getrennt; Niederschlagslegende und Hilfe aktualisiert.",
   "releaseNotes": {
     "de": [
-      "Meteoblue-Wetterkarten verwenden zusätzlich einen Karten-Hash für Wolken/Niederschlag; Windkarte und Großansicht bleiben erhalten.",
-      "Dynamische Speichern-/Änderungsstatus-Texte wurden sprachabhängig korrigiert.",
-      "Weitere App-Defaultnamen, Objektnamen und Objektkategorien werden in der englischen Oberfläche übersetzt."
+      "Astro-Wolkenmodell als eigene ein-/ausklappbare Planungsrubrik umgesetzt.",
+      "Einstellungen ergänzt/umbenannt: Astro-Wolkenmodell anzeigen und initial eingeklappt.",
+      "Niederschlag in Niederschlag gesamt umbenannt und mit Regen/Schnee erklärt.",
+      "Meteoblue wieder konservativ eingebettet; externe Buttons für Windanimation und Wolken-/Niederschlagskarte ergänzt.",
+      "Hilfe/Handbuch um Praxisbeispiele zu Wolkenmodell, Niederschlag und Zusatzwetterquellen erweitert."
     ],
     "en": [
-      "Meteoblue weather maps now also use a map hash for clouds/precipitation; wind map and full-screen view remain available.",
-      "Dynamic save/dirty-state labels are now language-aware.",
-      "Further app default names, object names and object categories are translated in the English UI."
+      "Astro cloud model implemented as its own collapsible planning section.",
+      "Settings added/renamed: show astro cloud model and initially collapsed.",
+      "Precipitation renamed to total precipitation and explained together with rain/snow.",
+      "Meteoblue embedded more conservatively again; external buttons for wind animation and clouds/precipitation added.",
+      "Help/manual extended with practical examples for the cloud model, precipitation and additional weather sources."
     ]
   }
 }

@@ -3,22 +3,22 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.31',
-  release: '1.1.0-test.31',
+  appVersion: '1.1.0-test.32',
+  release: '1.1.0-test.32',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.31',
+  documentTitle: 'Astro Night Planner 1.1.0-test.32',
   releaseNotes: {
     de: [
-      'Aladin-Bedienung: Tab-Reihenfolge Rahmen, Objekte, Himmelsbild, Zeit & Mond; externer Himmelsbild-Button bleibt rechts in der Tab-Zeile.',
-      'Meteoblue-Wetterkarten verwenden nun zusätzlich einen Karten-Hash für Wolken/Niederschlag; die Windkarte bleibt separat erreichbar.',
-      'Weitere dynamische Speichern-/Änderungsstatus-Texte sowie Objekt-/Profilnamen wurden sprachabhängig nachgezogen.',
-      'Hinweis zur Modellgewichtung und weitere Einstellungslabels wurden an die aktuellen Defaults angepasst.'
+      'Astro-Wolkenmodell ist jetzt eine eigene einklappbare Planungsrubrik; der alte Unter-Schalter entfällt.',
+      'Meteoblue-Wetterkarten werden wieder konservativer eingebettet; externe Buttons öffnen getrennt Windanimation oder Wolken-/Niederschlagskarte.',
+      'Niederschlagslegende und Einstellungslabels wurden fachlich eindeutiger benannt und übersetzt.',
+      'Integrierte Hilfe und Handbuch wurden um Praxisbeispiele zu Wolkenmodell, Niederschlag und Meteoblue ergänzt.'
     ],
     en: [
-      'Aladin controls: tab order Frame, Objects, Sky image, Time & Moon; the external sky-image button remains on the right side of the tab row.',
-      'Meteoblue weather maps now also use a map hash for clouds/precipitation; the wind map remains available separately.',
-      'Additional dynamic save/dirty-state texts and object/profile names were made language-aware.',
-      'The model-weighting note and further settings labels were aligned with the current defaults.'
+      'The astro cloud model is now its own collapsible planning section; the old inner toggle is removed.',
+      'Meteoblue weather maps are embedded more conservatively again; external buttons separately open wind animation or clouds/precipitation.',
+      'Precipitation legend and settings labels were made clearer and translated.',
+      'Integrated help and manual were expanded with practical examples for the cloud model, precipitation and Meteoblue.'
     ]
   }});
