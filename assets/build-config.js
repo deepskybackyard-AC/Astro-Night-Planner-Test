@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.35',
-  release: '1.1.0-test.35',
+  appVersion: '1.1.0-test.36',
+  release: '1.1.0-test.36',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.35',
+  documentTitle: 'Astro Night Planner 1.1.0-test.36',
   releaseNotes: {
     de: [
-      'Die 2×2-Wettervergleichsansicht erhält oben eine gemeinsame Vergleichszeit.',
-      'Die eigene Astro-Wolkenkarte im Vergleich besitzt eine kompakte Zeitsteuerung.',
-      'Hilfe und Handbuch wurden um die Zeitsteuerung im Wettervergleich ergänzt.'
+      'Die 2×2-Wettervergleichsansicht lädt Meteoblue, Windy und Ventusky beim Anhalten der Vergleichszeit mit bestmöglichen Zeitparametern neu.',
+      'Die eigene Astro-Wolkenkarte reagiert weiterhin direkt auf die gemeinsame Vergleichszeit.',
+      'Die Vergleichsansicht zeigt Hinweise zur eingeschränkten Zeitsynchronisierung externer iFrames.'
     ],
     en: [
-      'The 2x2 weather comparison view now has a shared comparison time at the top.',
-      'The own astro cloud map in the comparison has a compact time control.',
-      'Help and manual were extended with the comparison time controls.'
+      'The 2x2 weather comparison view reloads Meteoblue, Windy and Ventusky with best-effort time parameters when the comparison time stops changing.',
+      'The own astro cloud map still reacts directly to the shared comparison time.',
+      'The comparison view shows notes about limited time synchronization of external iframes.'
     ]
   }});
