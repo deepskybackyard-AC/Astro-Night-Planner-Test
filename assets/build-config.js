@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.41',
-  release: '1.1.0-test.41',
+  appVersion: '1.1.0-test.42',
+  release: '1.1.0-test.42',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.41',
+  documentTitle: 'Astro Night Planner 1.1.0-test.42',
   releaseNotes: {
     de: [
-      'Die eigene Astro-Wolkenkarte wurde aus der Wettervergleichsansicht entfernt.',
-      'Die Vergleichsansicht zeigt jetzt links oben Windy, rechts oben Ventusky und links unten Meteoblue.',
-      'Die gemeinsame Vergleichszeit lädt Windy und Ventusky weiterhin mit bestmöglicher Zeitübergabe neu; Meteoblue bleibt bei der eigenen Zeitachse.'
+      'Die Vergleichszeit im Wettervergleich ist nicht mehr von geladenen Astro-Wolkenkartendaten abhängig.',
+      'Windy erhält jetzt den erwarteten calendar-/Forecast-Parameter und metrische Embed-Parameter statt freier ISO-Zeitparameter.',
+      'Die Wettervergleichsansicht bleibt: links oben Windy, rechts oben Ventusky, links unten Meteoblue; die eigene Astro-Wolkenkarte bleibt deaktiviert.'
     ],
     en: [
-      'The own astro cloud map has been removed from the weather comparison view.',
-      'The comparison view now shows Windy in the top-left, Ventusky in the top-right and Meteoblue in the bottom-left.',
-      'The shared comparison time continues to reload Windy and Ventusky with the best available time handoff; Meteoblue keeps its own timeline.'
+      'The comparison time in the weather comparison view no longer depends on loaded astro cloud-map data.',
+      'Windy now receives the expected calendar/forecast parameter and metric embed parameters instead of free ISO time parameters.',
+      'The weather comparison layout remains: Windy top-left, Ventusky top-right, Meteoblue bottom-left; the own astro cloud map remains disabled.'
     ]
   }});
