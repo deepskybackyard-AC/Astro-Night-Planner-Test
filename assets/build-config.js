@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.39',
-  release: '1.1.0-test.39',
+  appVersion: '1.1.0-test.40',
+  release: '1.1.0-test.40',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.39',
+  documentTitle: 'Astro Night Planner 1.1.0-test.40',
   releaseNotes: {
     de: [
-      'Die eigene Astro-Wolkenkarte in der 2×2-Ansicht nutzt die aktuellen Einstellungen aus der Planung inklusive Kartenansicht, Glättung, Prozentwerten und Overlays.',
-      'Der zusätzliche Zeitregler in der eigenen Vergleichskarte entfällt; die zentrale Vergleichszeit steuert diese Karte direkt.',
-      'Ortszeile, Himmelsrichtungen und schwarze Randbereiche wurden aus der kompakten eigenen Vergleichskarte entfernt. Bei Karte + Wolken liegt die Basiskarte vollflächig unter der Wolkenebene.'
+      'Die eigene Astro-Wolkenkarte im 2×2-Wettervergleich verwendet wieder den originalen Kartenrenderer der Planungsansicht statt der kompakten Vollflächenkarte.',
+      'Seitenverhältnis, Innenrand, Himmelsrichtungen, Standortzeile und Karten-Inset bleiben erhalten; Prozentwerte am Rand werden nicht mehr durch die Vergleichskachel abgeschnitten.',
+      'Bei Karte + Wolken liegt die MapLibre-Basiskarte im gleichen Kartenfenster wie in der Planungsansicht unter der Wolkenebene.'
     ],
     en: [
-      'The own astro cloud map in the 2x2 view uses the current planning settings including map view, smoothing, percentage labels and overlays.',
-      'The extra time slider inside the own comparison map is removed; the shared comparison time controls this map directly.',
-      'The location header, compass labels and black margins were removed from the compact own comparison map. With Map + clouds, the base map is full-panel below the cloud layer.'
+      'The own astro cloud map in the 2x2 weather comparison again uses the original planning-view map renderer instead of the compact full-panel map.',
+      'Aspect ratio, inner margin, compass labels, location header and map inset are retained; edge percentage labels are no longer clipped by the comparison tile.',
+      'With Map + clouds, the MapLibre base map is placed in the same map window as in the planning view below the cloud layer.'
     ]
   }});
