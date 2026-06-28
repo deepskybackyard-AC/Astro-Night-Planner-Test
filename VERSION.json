@@ -1,21 +1,19 @@
 {
-  "version": "1.1.0-test.30",
-  "release": "1.1.0-test.30",
+  "version": "1.1.0-test.31",
+  "release": "1.1.0-test.31",
   "environment": "test",
-  "builtAt": "2026-06-28T00:25:00+02:00",
-  "notes": "Testversion 1.1.0-test.30: Meteoblue-Startansicht auf Wolken/Niederschlag umgestellt; Windkarte separat erreichbar.",
+  "builtAt": "2026-06-28T00:40:00+02:00",
+  "notes": "Testversion 1.1.0-test.31: Meteoblue-Widget mit Karten-Hash für Wolken/Niederschlag; weitere dynamische Übersetzungen.",
   "releaseNotes": {
     "de": [
-      "Meteoblue-Wetterkarten starten jetzt bewusst mit Wolken/Niederschlag; Windanimation wird nicht mehr als Startmodus erzwungen und ist separat erreichbar.",
-      "Weitere gemischte deutsch/englische UI-Texte, dynamische Statusmeldungen, Diagrammtexte, Dropdownwerte und Hilfetexte wurden nachübersetzt.",
-      "Canvas-/Diagrammtexte und Himmelsrichtungen werden sprachabhängig ausgegeben.",
-      "Backup-, Ausrüstungs-, Standort-, Horizont- und Aufnahmezieltexte wurden erneut systematisch geprüft."
+      "Meteoblue-Wetterkarten verwenden zusätzlich einen Karten-Hash für Wolken/Niederschlag; Windkarte und Großansicht bleiben erhalten.",
+      "Dynamische Speichern-/Änderungsstatus-Texte wurden sprachabhängig korrigiert.",
+      "Weitere App-Defaultnamen, Objektnamen und Objektkategorien werden in der englischen Oberfläche übersetzt."
     ],
     "en": [
-      "Meteoblue weather maps now start deliberately with clouds/precipitation; wind animation is no longer forced as the start mode and is available separately.",
-      "Further mixed German/English UI strings, dynamic status messages, chart labels, dropdown values and help texts have been translated.",
-      "Canvas/chart labels and cardinal directions are now language-aware.",
-      "Backup, equipment, location, horizon and imaging-target texts were checked again systematically."
+      "Meteoblue weather maps now also use a map hash for clouds/precipitation; wind map and full-screen view remain available.",
+      "Dynamic save/dirty-state labels are now language-aware.",
+      "Further app default names, object names and object categories are translated in the English UI."
     ]
   }
 }

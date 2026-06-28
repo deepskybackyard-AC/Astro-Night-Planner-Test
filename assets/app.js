@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.30 – Meteoblue-Startansicht Wolken/Niederschlag */
+/* Astro Night Planner 1.1.0-test.31 – Meteoblue-Widget-Hash und Übersetzungsdetails */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.30', release:'1.1.0-test.30', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.30'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.31', release:'1.1.0-test.31', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.31'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -329,6 +329,38 @@ EN_PHRASE_REPLACEMENTS.push(
   [/Berechtigung:\s*([^\n]+)/g,'Permission: $1']
 );
 
+
+Object.assign(EN_EXACT,{
+  'Ungespeicherte Änderungen':'Unsaved changes',
+  'Gespeichert':'Saved',
+  'Gespeichert ✓':'Saved ✓',
+  'Erfolgreich gespeichert':'Saved successfully',
+  'Änderungen verwerfen':'Discard changes',
+  'Änderungen speichern':'Save changes',
+  'Anzeigeeinstellungen speichern':'Save display settings',
+  'Windwerte speichern':'Save wind values',
+  'Wettermodelle speichern':'Save weather models',
+  'Wolkenkarte speichern':'Save cloud map',
+  'Bewertung speichern':'Save score',
+  'Gewichtung speichern':'Save weights',
+  'Ausrüstung speichern':'Save equipment',
+  'Standort und Horizonte speichern':'Save location and horizons',
+  'Filterprofile speichern':'Save filter profiles',
+  'Sicherungseinstellungen speichern':'Save backup settings',
+  'Rubrik auf Standard zurücksetzen':'Reset section to defaults',
+  'Meteoblue-Wetterkarten':'Meteoblue weather maps',
+  'Die eingebettete Karte fordert Wolken und Niederschlag als Startansicht an. Falls Meteoblue den zuletzt verwendeten Kartenmodus wiederherstellt, öffne die Wetterkarten bei Meteoblue oder wähle rechts im Meteoblue-Menü „Wolken und Niederschlag“.':'The embedded map requests clouds and precipitation as its start view. If Meteoblue restores the last used map mode, open the weather maps at Meteoblue or choose “Clouds & Precipitation” in the Meteoblue menu on the right.',
+  'Die Windkarte wird separat geöffnet, damit die eingebettete Wolken-/Niederschlagskarte nicht versehentlich im Windmodus startet.':'The wind map opens separately so that the embedded clouds/precipitation map does not accidentally start in wind mode.'
+});
+const OBJECT_NAME_TRANSLATIONS_EN = Object.freeze({
+  'Andromedagalaxie':'Andromeda Galaxy','Dreiecksnebel':'Triangulum Galaxy','Orionnebel':'Orion Nebula','Plejaden':'Pleiades','Krebsnebel':'Crab Nebula','Herkuleshaufen':'Great Hercules Cluster','Kugelsternhaufen M92':'Globular Cluster M92','Whirlpool-Galaxie':'Whirlpool Galaxy','Bodes Galaxie':'Bode’s Galaxy','Zigarrengalaxie':'Cigar Galaxy','Feuerradgalaxie':'Pinwheel Galaxy','Sombrerogalaxie':'Sombrero Galaxy','Hantelnebel':'Dumbbell Nebula','Ringnebel':'Ring Nebula','Lagunenebel':'Lagoon Nebula','Adlernebel':'Eagle Nebula','Omeganebel':'Omega Nebula','Trifidnebel':'Trifid Nebula','Sonnenblumengalaxie':'Sunflower Galaxy','Schwarzes Auge':'Black Eye Galaxy','Eulennebel':'Owl Nebula','Nordamerikanebel':'North America Nebula','Pelikannebel':'Pelican Nebula','Westlicher Schleiernebel':'Western Veil Nebula','Hexenhandnebel':'Witch’s Broom Nebula','Östlicher Schleiernebel':'Eastern Veil Nebula','Herznebel':'Heart Nebula','Seelennebel':'Soul Nebula','Blasennebel':'Bubble Nebula','Kaliforniennebel':'California Nebula','Rosettennebel':'Rosette Nebula','Spaghettinebel':'Spaghetti Nebula','Medusanebel':'Medusa Nebula','Helixnebel':'Helix Nebula','Sichelnebel':'Crescent Nebula',
+  'Neues Setup':'New setup','Neues Teleskop':'New telescope','Neue Kamera':'New camera','Neuer Standort':'New location','Freier Horizont':'Clear horizon','Leichtes Reisesetup':'Light travel setup','Normales Setup':'Normal setup','Robuste Säule/Montierung':'Robust pier/mount','Alle Objekttypen ausgewählt':'All object types selected'
+});
+function escapeRegExp(value){return String(value).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+for(const [de,en] of Object.entries(OBJECT_NAME_TRANSLATIONS_EN)){
+  EN_EXACT[de]=en;
+  EN_PHRASE_REPLACEMENTS.push([new RegExp(escapeRegExp(de),'g'),en]);
+}
 function tx(key){return (UI_TEXT[language]||UI_TEXT.de)[key]||UI_TEXT.de[key]||key}
 function txFooter(key){return (UI_TEXT[language]||UI_TEXT.de).footer[key]||UI_TEXT.de.footer[key]||key}
 Object.assign(EN_EXACT,{
@@ -2213,23 +2245,26 @@ function meteoblueLocationInfo(loc){
   const seeingPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/outdoorsports/seeing/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/outdoorsports/seeing`;
   const mapBase=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/widget/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/maps/widget`;
   const mapParams=new URLSearchParams();
-  // Use the public weather-maps widget configuration instead of trying to force
-  // combined internal UI state. Clouds & precipitation is the main start layer;
-  // wind animation is no longer requested here because Meteoblue otherwise starts
-  // the widget in the wind map mode instead of the astro-relevant cloud map.
-  mapParams.append('cloudsAndPrecipitation','1');
+  // The public Meteoblue widget mainly reacts to its own hash state. Keep the
+  // embedded view cloud-focused and do not request wind animation in this iframe.
   mapParams.append('geoloc',fixed?'fixed':'detect');
   mapParams.append('tempunit','C');
   mapParams.append('windunit','km/h');
   mapParams.append('lengthunit','metric');
+  mapParams.append('precipunit','mm');
   mapParams.append('zoom','6');
   mapParams.append('autowidth','auto');
-  const mapWidget=`${mapBase}?${mapParams.toString()}`;
-  const windMapParams=new URLSearchParams(mapParams);
-  windMapParams.delete('cloudsAndPrecipitation');
-  windMapParams.append('windAnimation','1');
-  const windMapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}?${windMapParams.toString()}`:`https://www.meteoblue.com/${mbLang}/weather/maps?${windMapParams.toString()}`;
-  const mapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}`:`https://www.meteoblue.com/${mbLang}/weather/maps`;
+  mapParams.append('map','cloudsAndPrecipitation');
+  mapParams.append('maps','cloudsAndPrecipitation');
+  mapParams.append('layers','cloudsAndPrecipitation');
+  mapParams.append('windAnimation','0');
+  mapParams.append('embed_key',`anp-${RELEASE}`);
+  const coordsHash=`coords=6/${Number(loc.latitude).toFixed(4)}/${Number(loc.longitude).toFixed(4)}`;
+  const cloudMapHash=`#map=cloudsAndPrecipitation~auto~none&${coordsHash}`;
+  const windMapHash=`#map=windAnimation~rainbow~auto~10%20m%20above%20gnd~none&${coordsHash}`;
+  const mapWidget=`${mapBase}?${mapParams.toString()}${cloudMapHash}`;
+  const mapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}${cloudMapHash}`:`https://www.meteoblue.com/${mbLang}/weather/maps${cloudMapHash}`;
+  const windMapPage=fixed?`https://www.meteoblue.com/${mbLang}/weather/maps/${encodedPath}${windMapHash}`:`https://www.meteoblue.com/${mbLang}/weather/maps${windMapHash}`;
   return{fixed,seeingWidget,seeingPage,mapWidget,mapPage,windMapPage};
 }
 
@@ -2384,7 +2419,7 @@ function renderMeteoblue(loc){
   <section class="card meteoblue-card">
     <details ${mapCollapsed?'':'open'} id="meteoblueMapDetails">
       <summary><strong>${ui('Meteoblue Wetterkarten','Meteoblue weather maps')}</strong> · ${ui('zusätzliche Live-, Radar-, Satelliten- und Modellansicht','additional live, radar, satellite and model view')}</summary>
-      <div class="notice" style="margin-top:12px">${ui('Die Karte startet mit Wolken und Niederschlag. Die Windanimation kann im Meteoblue-Menü oder über die separate Windkarte geöffnet werden.','The map starts with clouds and precipitation. Wind animation can be enabled in the Meteoblue menu or opened through the separate wind map.')}</div>
+      <div class="notice" style="margin-top:12px">${ui('Die eingebettete Karte fordert Wolken und Niederschlag als Startansicht an. Falls Meteoblue den zuletzt verwendeten Kartenmodus wiederherstellt, öffne die Wetterkarten bei Meteoblue oder wähle rechts im Meteoblue-Menü „Wolken und Niederschlag“.','The embedded map requests clouds and precipitation as its start view. If Meteoblue restores the last used map mode, open the weather maps at Meteoblue or choose “Clouds & Precipitation” in the Meteoblue menu on the right.')}<br>${ui('Die Windkarte wird separat geöffnet, damit die eingebettete Wolken-/Niederschlagskarte nicht versehentlich im Windmodus startet.','The wind map opens separately so that the embedded clouds/precipitation map does not accidentally start in wind mode.')}</div>
       <div class="meteoblue-actions" style="margin-top:10px">
         <button data-meteoblue-fullscreen="meteoblueMapWrap">⛶ ${ui('Großansicht','Large view')}</button>
         <a class="button primary" href="${urls.mapPage}" target="_blank" rel="noopener noreferrer">${ui('Wetterkarten bei Meteoblue öffnen','Open weather maps at Meteoblue')}</a>
@@ -3355,12 +3390,12 @@ function bindTargetSettings(){
     const target=(profile.targets||[]).find(t=>t.id===row.dataset.targetRow);
     if(!target)return;
     row.querySelectorAll('[data-target-field]').forEach(element=>{
-      const markDirty=()=>{row.classList.add('is-dirty');const status=row.querySelector('[data-target-status]');if(status)status.textContent='Ungespeicherte Änderungen';};
+      const markDirty=()=>{row.classList.add('is-dirty');const status=row.querySelector('[data-target-status]');if(status)status.textContent=ui('Ungespeicherte Änderungen','Unsaved changes');};
       element.oninput=markDirty;
       element.onchange=()=>{const field=element.dataset.targetField;if(field==='referenceLinksText')target.referenceLinks=String(element.value||'').split(/\n+/).map(v=>v.trim()).filter(Boolean);else target[field]=element.value;markDirty();};
     });
   });
-  document.querySelectorAll('[data-save-target]').forEach(button=>button.onclick=async()=>{const row=button.closest('[data-target-row]');const target=(profile.targets||[]).find(t=>t.id===button.dataset.saveTarget);if(row&&target){row.querySelectorAll('[data-target-field]').forEach(element=>{const field=element.dataset.targetField;if(field==='referenceLinksText')target.referenceLinks=String(element.value||'').split(/\n+/).map(v=>v.trim()).filter(Boolean);else target[field]=element.value;});}await saveProfile();if(row){row.classList.remove('is-dirty');const status=row.querySelector('[data-target-status]');if(status)status.textContent='Gespeichert ✓';setTimeout(()=>{if(status)status.textContent='';},2200)}});
+  document.querySelectorAll('[data-save-target]').forEach(button=>button.onclick=async()=>{const row=button.closest('[data-target-row]');const target=(profile.targets||[]).find(t=>t.id===button.dataset.saveTarget);if(row&&target){row.querySelectorAll('[data-target-field]').forEach(element=>{const field=element.dataset.targetField;if(field==='referenceLinksText')target.referenceLinks=String(element.value||'').split(/\n+/).map(v=>v.trim()).filter(Boolean);else target[field]=element.value;});}await saveProfile();if(row){row.classList.remove('is-dirty');const status=row.querySelector('[data-target-status]');if(status)status.textContent=ui('Gespeichert ✓','Saved ✓');setTimeout(()=>{if(status)status.textContent='';},2200)}});
   document.querySelectorAll('[data-delete-target]').forEach(button=>button.onclick=async()=>{if(!confirm('Aufnahmeziel entfernen?'))return;profile.targets=(profile.targets||[]).filter(t=>t.id!==button.dataset.deleteTarget);await saveProfile();render()});
 }
 
@@ -3370,9 +3405,9 @@ function setSectionDirty(section){
   const bar=button?.closest('.save-bar');
   if(bar){
     bar.classList.add('is-dirty');bar.classList.remove('is-success');
-    const state=bar.querySelector('.save-state');if(state)state.textContent='Ungespeicherte Änderungen';
+    const state=bar.querySelector('.save-state');if(state)state.textContent=ui('Ungespeicherte Änderungen','Unsaved changes');
   }
-  if(button){button.disabled=false;button.classList.remove('save-success');button.textContent=button.dataset.defaultLabel||'Änderungen speichern'}
+  if(button){button.disabled=false;button.classList.remove('save-success');button.textContent=optionLabel(button.dataset.defaultLabel||'Änderungen speichern')}
   const tabGroups={equipment:['equipment'],central:['centralWind','weatherModels','cloudMap','weights','display','filterProfiles'],locations:['locations'],targets:['targets'],info:['backup']};
   for(const [tab,sections]of Object.entries(tabGroups))if(sections.includes(section))document.querySelector(`[data-settings-tab="${tab}"]`)?.classList.add('dirty-dot');
 }
