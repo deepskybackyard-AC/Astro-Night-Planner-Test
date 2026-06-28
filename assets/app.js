@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.1.0-test.33 – Meteoblue-Iframe wieder als Windanimation */
+/* Astro Night Planner 1.1.0-test.34 – Wettervergleich und Karten-Zoom */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.33', release:'1.1.0-test.33', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.33'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.1.0-test.34', release:'1.1.0-test.34', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.1.0-test.34'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -397,6 +397,16 @@ function tx(key){return (UI_TEXT[language]||UI_TEXT.de)[key]||UI_TEXT.de[key]||k
 function txFooter(key){return (UI_TEXT[language]||UI_TEXT.de).footer[key]||UI_TEXT.de.footer[key]||key}
 Object.assign(EN_EXACT,{
   'Himmelsbild':'Sky image','Rahmen':'Frame','Objekte':'Objects','Zeit & Mond':'Time & Moon','Interaktives Himmelsbild':'Interactive sky image','Rahmung:':'Framing:','Survey':'Survey','Himmelsbild neu laden':'Reload sky image','Himmelsbild in neuem Tab öffnen':'Open sky image in new tab','Mit Messwerkzeug und Umrisszeichnung':'With measuring tool and outline drawing','Vergleichsrahmen':'Comparison frames','Setup-Rahmen anzeigen':'Show setup frame','Kamerarotation':'Camera rotation','Optimale Rotation':'Optimal rotation','Rahmen auf Objekt zurücksetzen':'Reset frame to object','Rahmen verschieben':'Move frame','Infofelder anzeigen':'Show info boxes','Infofelder-Position':'Info-box position','rechts':'right','links':'left','oben':'top','unten':'bottom','Objektnamen anzeigen':'Show object names','Beschriftungsumfang':'Label detail','Automatisch nach Zoomstufe':'Automatic by zoom level','Nur Hauptobjekte':'Main objects only','Erweitert':'Extended','Mond anzeigen':'Show Moon','Zeit im Planungsfenster':'Time in planning window','Objektumriss anzeigen':'Show object outline','Objekt-/Umrissrotation':'Object/outline rotation','Objektausrichtung zurücksetzen':'Reset object orientation','Ändert Planungswerte, nicht das Sternfeld.':'Changes planning values, not the star field.','Astronomische Nacht':'Astronomical night','keine':'none','Keine astronomische Nacht – nautischer Zeitraum':'No astronomical night – nautical window','Horizont (grün) · Objektbahn (gelb) · Mindesthöhe (gelb gestrichelt) · Dämmerungsphasen (blau) · Planungszeitraum (hellblau)':'Horizon (green) · object path (yellow) · minimum altitude (yellow dashed) · twilight phases (blue) · planning window (light blue)'
+});
+
+Object.assign(EN_EXACT,{
+  'Die eingebetteten Karten starten näher am Planungsstandort, damit lokale Strukturen schneller erkennbar sind.':'The embedded maps start closer to the planning location so local structures are easier to see.',
+  'Wettervergleich in neuem Tab öffnen':'Open weather comparison in new tab',
+  'öffnest du am PC eine 2×2-Ansicht über die ganze Bildschirmbreite: links oben das eigene Astro-Wolkenmodell mit der aktuellen Auswahl, rechts oben Meteoblue, links unten Windy und rechts unten Ventusky. So erkennst du schnell, ob alle Quellen denselben Trend zeigen oder ob einzelne Modelle deutlich abweichen.':'opens a 2x2 full-width view on a PC: your own astro cloud model with the current selection in the top-left, Meteoblue in the top-right, Windy in the bottom-left and Ventusky in the bottom-right. This quickly shows whether all sources indicate the same trend or whether individual models differ clearly.',
+  'Eigenes Astro-Wolkenmodell':'Own astro cloud model',
+  'Aktuelle Auswahl aus der Planung':'Current selection from the planning view',
+  'Wettervergleich':'Weather comparison',
+  'Planungsstandort':'Planning location'
 });
 function optionLabel(label){return language==='en'?(EN_EXACT[label]||label):label}
 function optionText(label){return esc(optionLabel(label))}
@@ -2290,14 +2300,14 @@ function meteoblueLocationInfo(loc){
   mapParams.append('windunit','km/h');
   mapParams.append('lengthunit','metric');
   mapParams.append('precipunit','mm');
-  mapParams.append('zoom','6');
+  mapParams.append('zoom','8');
   mapParams.append('autowidth','auto');
   mapParams.append('map','windAnimation');
   mapParams.append('maps','windAnimation');
   mapParams.append('layers','windAnimation');
   mapParams.append('windAnimation','1');
   mapParams.append('embed_key',`anp-${RELEASE}`);
-  const coordsHash=`coords=6/${Number(loc.latitude).toFixed(4)}/${Number(loc.longitude).toFixed(4)}`;
+  const coordsHash=`coords=8/${Number(loc.latitude).toFixed(4)}/${Number(loc.longitude).toFixed(4)}`;
   const windMapHash=`#map=windAnimation~rainbow~auto~10%20m%20above%20gnd~none&${coordsHash}`;
   const cloudWindMapHash=`#map=cloudsAndPrecipitation~hourly~auto~sfc~windAnimationOverlay&${coordsHash}`;
   const mapWidget=`${mapBase}?${mapParams.toString()}${windMapHash}`;
@@ -2341,16 +2351,16 @@ function normalizedLocationNumber(value,digits=3){const n=Number(value);return N
 function externalWeatherUrls(loc){
   const lat=Number(loc?.latitude)||0, lon=Number(loc?.longitude)||0, name=String(loc?.name||'Planungsstandort').trim()||'Planungsstandort';
   const lat3=normalizedLocationNumber(lat,3), lon3=normalizedLocationNumber(lon,3), lat2=normalizedLocationNumber(lat,2), lon2=normalizedLocationNumber(lon,2);
-  const windyParams=new URLSearchParams({type:'map',location:'coordinates',metricRain:'mm',metricTemp:'°C',metricWind:'km/h',zoom:'8',overlay:'clouds',product:'ecmwf',level:'surface',lat:lat3,lon:lon3,marker:'true'});
-  const ventuskyParams=new URLSearchParams({p:`${lat3};${lon3};7`,l:'clouds-total',pin:`${lat3};${lon3};dot;${name}`});
+  const windyParams=new URLSearchParams({type:'map',location:'coordinates',metricRain:'mm',metricTemp:'°C',metricWind:'km/h',zoom:'10',overlay:'clouds',product:'ecmwf',level:'surface',lat:lat3,lon:lon3,marker:'true'});
+  const ventuskyParams=new URLSearchParams({p:`${lat3};${lon3};9`,l:'clouds-total',pin:`${lat3};${lon3};dot;${name}`});
   return {
     clearoutsidePage:`https://clearoutside.com/forecast/${lat2}/${lon2}`,
     clearoutsideImage:`https://clearoutside.com/forecast_image_large/${lat2}/${lon2}/forecast.png`,
     clearoutsideEmbed:`https://clearoutside.com/forecast_embed/${lat2}/${lon2}`,
     windyEmbed:`https://embed.windy.com/embed.html?${windyParams.toString()}`,
-    windyPage:`https://www.windy.com/?clouds,${lat3},${lon3},8`,
+    windyPage:`https://www.windy.com/?clouds,${lat3},${lon3},10`,
     ventuskyEmbed:`https://embed.ventusky.com/?${ventuskyParams.toString()}`,
-    ventuskyPage:`https://www.ventusky.com/?p=${lat3};${lon3};7&l=clouds-total`
+    ventuskyPage:`https://www.ventusky.com/?p=${lat3};${lon3};9&l=clouds-total`
   };
 }
 function enabledWeatherSourceKeys(){
@@ -2369,7 +2379,7 @@ function renderWeatherSourceTabs(loc,night,windowRange){
   const enabled=enabledWeatherSourceKeys();
   if(!enabled.length)return `<section class="card weather-source-tabs-card"><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="notice subtle">${language==='en'?'No external weather source tab is enabled in Settings.':'In den Einstellungen ist keine externe Wetterquelle als Tab aktiviert.'}</div></section>`;
   const active=ensureActiveWeatherSourceTab();
-  return `<section class="card weather-source-tabs-card"><div class="section-title-row"><div><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="small muted">${language==='en'?'External reference sources for the selected planning location. Loaded only when the tab is opened.':'Externe Kontrollquellen für den gewählten Planungsstandort. Geladen wird erst beim Öffnen des jeweiligen Tabs.'}</div></div></div>
+  return `<section class="card weather-source-tabs-card"><div class="section-title-row"><div><h2>${language==='en'?'Additional weather sources':'Zusätzliche Wetterquellen'}</h2><div class="small muted">${language==='en'?'External reference sources for the selected planning location. Loaded only when the tab is opened.':'Externe Kontrollquellen für den gewählten Planungsstandort. Geladen wird erst beim Öffnen des jeweiligen Tabs.'}</div></div><button type="button" id="openWeatherComparison" class="weather-compare-button">${ui('Wettervergleich in neuem Tab öffnen','Open weather comparison in new tab')}</button></div>
     <div class="settings-tabs weather-source-tabs" style="margin-top:12px">${enabled.map(key=>`<button type="button" data-weather-source-tab="${key}" class="${active===key?'active':''}">${esc(weatherSourceLabel(key))}</button>`).join('')}</div>
     <div class="weather-source-panel active">${renderWeatherSourcePanel(active,loc)}</div>
   </section>`;
@@ -2400,12 +2410,81 @@ function renderClearOutside(loc){
 }
 function renderWindy(loc){
   const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
-  return renderExternalSourceShell({title:'Windy',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Windy is opened directly at ${esc(place)} with cloud layer, ECMWF model and metric units.`:`Windy wird direkt am Standort ${esc(place)} mit Wolkenlayer, ECMWF-Modell und metrischen Einheiten geöffnet.`,embedId:'windyWrap',frameTitle:`Windy Wetterkarte für ${place}`,frameUrl:urls.windyEmbed,pageUrl:urls.windyPage,buttonText:language==='en'?'Open Windy in a new tab':'Windy in neuem Tab öffnen',sourceName:'Windy'});
+  return renderExternalSourceShell({title:'Windy',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Windy is opened directly at ${esc(place)} with cloud layer, ECMWF model, metric units and a closer zoom.`:`Windy wird direkt am Standort ${esc(place)} mit Wolkenlayer, ECMWF-Modell, metrischen Einheiten und näherem Zoom geöffnet.`,embedId:'windyWrap',frameTitle:`Windy Wetterkarte für ${place}`,frameUrl:urls.windyEmbed,pageUrl:urls.windyPage,buttonText:language==='en'?'Open Windy in a new tab':'Windy in neuem Tab öffnen',sourceName:'Windy'});
 }
 function renderVentusky(loc){
   const urls=externalWeatherUrls(loc), place=loc?.name||'Planungsstandort';
-  return renderExternalSourceShell({title:'Ventusky',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Ventusky is opened directly at ${esc(place)} with total cloud cover and a location marker. Units and language follow the browser settings.`:`Ventusky wird direkt am Standort ${esc(place)} mit Gesamtbewölkung und Standortmarker geöffnet. Einheiten und Sprache folgen den Browser-Einstellungen.`,embedId:'ventuskyWrap',frameTitle:`Ventusky Wetterkarte für ${place}`,frameUrl:urls.ventuskyEmbed,pageUrl:urls.ventuskyPage,buttonText:language==='en'?'Open Ventusky in a new tab':'Ventusky in neuem Tab öffnen',sourceName:'Ventusky'});
+  return renderExternalSourceShell({title:'Ventusky',subtitle:language==='en'?'interactive weather map':'interaktive Wetterkarte',notice:language==='en'?`Ventusky is opened directly at ${esc(place)} with total cloud cover, a location marker and a closer zoom. Units and language follow the browser settings.`:`Ventusky wird direkt am Standort ${esc(place)} mit Gesamtbewölkung, Standortmarker und näherem Zoom geöffnet. Einheiten und Sprache folgen den Browser-Einstellungen.`,embedId:'ventuskyWrap',frameTitle:`Ventusky Wetterkarte für ${place}`,frameUrl:urls.ventuskyEmbed,pageUrl:urls.ventuskyPage,buttonText:language==='en'?'Open Ventusky in a new tab':'Ventusky in neuem Tab öffnen',sourceName:'Ventusky'});
 }
+
+function cloudMapSnapshotDataUrl(){
+  const W=1400,H=720;
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const loc=activeLocation();
+  const gradient=ctx.createLinearGradient(0,0,0,H);gradient.addColorStop(0,'#071522');gradient.addColorStop(1,'#030b12');ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+  if(!cloudMapData){
+    ctx.fillStyle='#dcecff';ctx.font='800 34px system-ui';ctx.textAlign='center';ctx.fillText(ui('Astro-Wolkenmodell','Astro cloud model'),W/2,H/2-20);
+    ctx.font='500 22px system-ui';ctx.fillStyle='#9fbad2';ctx.fillText(ui('Noch keine Wolkenkarte geladen. Bitte in der Planung zuerst aktualisieren.','No cloud map has been loaded yet. Please refresh it in the planning view first.'),W/2,H/2+24);
+    return canvas.toDataURL('image/png');
+  }
+  const settings=cloudMapSettings(),view=currentCloudMapView(),layer=profile.planning.cloudMapLayer||settings.defaultLayer,mode=profile.planning.cloudMapMode||settings.defaultMode;
+  const frameIndex=clamp(Number(profile.planning.cloudMapFrame)||0,0,cloudDisplayTimes().length-1),rawPosition=cloudRawPosition(frameIndex);
+  const frame=cloudFrameValues(view,layer,rawPosition),drawValues=mode==='uncertainty'?frame.spread:frame.values;
+  const size=cloudMapData.gridSize,map={x:88,y:54,w:W-176,h:H-126};
+  ctx.save();ctx.beginPath();ctx.roundRect(map.x,map.y,map.w,map.h,18);ctx.clip();
+  const base=ctx.createLinearGradient(map.x,map.y,map.x,map.y+map.h);base.addColorStop(0,'#152a22');base.addColorStop(1,'#07111d');ctx.fillStyle=base;ctx.fillRect(map.x,map.y,map.w,map.h);
+  const smoothing=currentCloudSmoothing(),offscreen=document.createElement('canvas'),renderWidth=smoothing==='structured'?760:smoothing==='soft'?90:390;
+  offscreen.width=renderWidth;offscreen.height=Math.max(180,Math.round(renderWidth*map.h/map.w));
+  const offCtx=offscreen.getContext('2d');
+  for(let py=0;py<offscreen.height;py++){
+    const gy=(py/Math.max(1,offscreen.height-1))*(size-1);
+    for(let px=0;px<offscreen.width;px++){
+      const gx=(px/Math.max(1,offscreen.width-1))*(size-1);
+      let value=cloudMapInterpolated(drawValues,size,gx,gy);
+      if(smoothing==='structured'&&mode==='clouds')value=structuredCloudValue(value,gx,gy);
+      offCtx.fillStyle=cloudMapColor(value,layer,mode);offCtx.fillRect(px,py,1,1);
+    }
+  }
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.save();ctx.filter=smoothing==='soft'?'blur(26px)':smoothing==='balanced'?'blur(2px)':'none';const pad=smoothing==='soft'?56:smoothing==='balanced'?4:0;ctx.drawImage(offscreen,map.x-pad,map.y-pad,map.w+pad*2,map.h+pad*2);ctx.restore();
+  const weatherOverlays=cloudMapWeatherOverlays(),precip=cloudFrameValues(view,'precip',rawPosition).values,rain=cloudFrameValues(view,'rain',rawPosition).values,snow=cloudFrameValues(view,'snow',rawPosition).values;
+  if(mode==='clouds'){
+    if(weatherOverlays.precip){for(let py=0;py<map.h;py+=18){const gy=(py/map.h)*(size-1);for(let px=0;px<map.w;px+=18){const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(precip,size,gx,gy);if(value>.03){ctx.strokeStyle=`rgba(83,190,255,${clamp(.35+value/2,.35,.95)})`;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(map.x+px+4,map.y+py-4);ctx.lineTo(map.x+px-5,map.y+py+10);ctx.stroke()}}}}
+    if(weatherOverlays.rain){for(let py=4;py<map.h;py+=24){const gy=(py/map.h)*(size-1);for(let px=6;px<map.w;px+=24){const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(rain,size,gx,gy);if(value>.02){ctx.strokeStyle=`rgba(32,139,255,${clamp(.38+value/2,.38,.95)})`;ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(map.x+px,map.y+py);ctx.lineTo(map.x+px-3,map.y+py+9);ctx.stroke()}}}}
+    if(weatherOverlays.snow){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px system-ui';for(let py=10;py<map.h;py+=30){const gy=(py/map.h)*(size-1);for(let px=10;px<map.w;px+=30){const gx=(px/map.w)*(size-1),value=cloudMapInterpolated(snow,size,gx,gy);if(value>.01){ctx.fillStyle=`rgba(188,112,255,${clamp(.42+value/2,.42,.98)})`;ctx.fillText('✦',map.x+px,map.y+py)}}}}
+  }
+  ctx.strokeStyle='rgba(135,190,225,.20)';ctx.lineWidth=1.2;for(let i=1;i<4;i++){ctx.beginPath();ctx.ellipse(map.x+map.w/2,map.y+map.h/2,map.w*i/8,map.h*i/8,0,0,Math.PI*2);ctx.stroke()}
+  ctx.restore();ctx.strokeStyle='rgba(95,190,240,.72)';ctx.lineWidth=2;ctx.strokeRect(map.x,map.y,map.w,map.h);
+  if(cloudMapValuesVisible()){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`800 ${size>=9?18:20}px system-ui`;const labelStep=size>=9?2:1;for(let row=0;row<size;row++)for(let col=0;col<size;col++){if(row!==Math.floor(size/2)||col!==Math.floor(size/2))if(row%labelStep||col%labelStep)continue;const index=row*size+col;const value=Number(frame.values[index]);if(!Number.isFinite(value))continue;const x=map.x+col/Math.max(1,size-1)*map.w,y=map.y+row/Math.max(1,size-1)*map.h,text=`${Math.round(value)}%`;ctx.lineWidth=6;ctx.strokeStyle='rgba(2,7,12,.92)';ctx.strokeText(text,x,y);ctx.fillStyle='#f2ad55';ctx.fillText(text,x,y)}}
+  const cx=map.x+map.w/2,cy=map.y+map.h/2;ctx.fillStyle='#ffd66b';ctx.strokeStyle='#06111b';ctx.lineWidth=5;ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle='#ffd66b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-22,cy);ctx.lineTo(cx+22,cy);ctx.moveTo(cx,cy-22);ctx.lineTo(cx,cy+22);ctx.stroke();
+  const movement=estimateCloudMovement(view,layer,frameIndex);if(movement?.reliable&&Number.isFinite(movement.azimuth)&&movement.distance>=1){const length=clamp(60+movement.distance*2,70,170),angle=toRad(movement.azimuth),dx=Math.sin(angle)*length,dy=-Math.cos(angle)*length;ctx.strokeStyle='#ffcf5b';ctx.fillStyle='#ffcf5b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx,cy+dy);ctx.stroke();const head=14,headAngle=Math.atan2(dy,dx);ctx.beginPath();ctx.moveTo(cx+dx,cy+dy);ctx.lineTo(cx+dx-head*Math.cos(headAngle-.55),cy+dy-head*Math.sin(headAngle-.55));ctx.lineTo(cx+dx-head*Math.cos(headAngle+.55),cy+dy-head*Math.sin(headAngle+.55));ctx.closePath();ctx.fill()}
+  ctx.fillStyle='#dcecff';ctx.font='700 26px system-ui';ctx.textAlign='center';ctx.fillText('N',W/2,34);ctx.fillText('S',W/2,H-16);ctx.textAlign='left';ctx.fillText('W',30,H/2);ctx.textAlign='right';ctx.fillText(language==='en'?'E':'O',W-30,H/2);
+  ctx.textAlign='left';ctx.font='600 20px system-ui';ctx.fillStyle='#b9d3e8';ctx.fillText(`${cloudMapData.locationName} · Radius ${cloudMapData.radiusKm} km`,map.x,map.y-16);ctx.textAlign='right';ctx.fillText(`${weatherViewLabel(view)} · ${optionLabel(CLOUD_MAP_LAYER_OPTIONS.find(item=>item[0]===layer)?.[1]||layer)}`,map.x+map.w,map.y-16);
+  ctx.textAlign='center';ctx.font='700 22px system-ui';ctx.fillStyle='#ffe08a';ctx.fillText(cloudMapData.locationName,cx,cy+44);
+  return canvas.toDataURL('image/png');
+}
+function openWeatherComparisonWindow(){
+  const loc=activeLocation();
+  const mb=meteoblueLocationInfo(loc),urls=externalWeatherUrls(loc);
+  const snapshot=cloudMapSnapshotDataUrl();
+  const place=loc?.name||ui('Planungsstandort','Planning location');
+  const title=ui('Wettervergleich','Weather comparison');
+  const cloudTitle=ui('Eigenes Astro-Wolkenmodell','Own astro cloud model');
+  const subtitle=ui('Aktuelle Auswahl aus der Planung','Current selection from the planning view');
+  const mbTitle=ui('Meteoblue Windanimation','Meteoblue wind animation');
+  const windyTitle='Windy';
+  const ventuskyTitle='Ventusky';
+  const popup=window.open('','_blank');
+  if(!popup){alert(ui('Der Browser hat das neue Fenster blockiert. Bitte Pop-ups für diese Seite erlauben.','The browser blocked the new window. Please allow pop-ups for this site.'));return}
+  const safe=(value)=>String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html><html lang="${language==='en'?'en':'de'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(title)} - ${safe(place)}</title><style>
+    :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#07111d;color:#ecf6ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 18px;background:#0d1d2d;border-bottom:1px solid #27445f}h1{font-size:22px;margin:0 0 4px}p{margin:0;color:#aecaeb}.grid{width:100vw;height:calc(100vh - 74px);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;padding:8px}.panel{min-width:0;min-height:0;border:1px solid #27445f;border-radius:14px;overflow:hidden;background:#0b1826;display:flex;flex-direction:column}.panel h2{font-size:17px;line-height:1.2;margin:0;padding:10px 12px;background:#10263c;border-bottom:1px solid #27445f}.panel .note{font-size:13px;color:#9fbad2;font-weight:500}.panel iframe,.panel img{width:100%;height:100%;border:0;display:block;object-fit:contain;background:#06111c}.panel iframe{object-fit:initial}.source-link{color:#9fd0ff;text-decoration:none}.source-link:hover{text-decoration:underline}@media(max-width:900px){.grid{height:auto;grid-template-columns:1fr;grid-template-rows:none}.panel{height:70vh}header{position:sticky;top:0;z-index:2}}
+  </style></head><body><header><div><h1>${safe(title)} - ${safe(place)}</h1><p>${safe(ui('Vier Kontrollkarten für den aktuellen Planungsstandort. Für die parallele Ansicht ist ein PC oder großer Bildschirm sinnvoll.','Four reference maps for the current planning location. A PC or large screen is recommended for the parallel view.'))}</p></div><a class="source-link" href="${safe(mb.mapPage)}" target="_blank" rel="noopener noreferrer">meteoblue</a></header><main class="grid"><section class="panel"><h2>${safe(cloudTitle)} <span class="note">· ${safe(subtitle)}</span></h2><img src="${snapshot}" alt="${safe(cloudTitle)}"></section><section class="panel"><h2>${safe(mbTitle)}</h2><iframe title="${safe(mbTitle)}" src="${safe(mb.mapWidget)}" loading="eager" allow="geolocation" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe></section><section class="panel"><h2>${safe(windyTitle)}</h2><iframe title="Windy" src="${safe(urls.windyEmbed)}" loading="eager" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe></section><section class="panel"><h2>${safe(ventuskyTitle)}</h2><iframe title="Ventusky" src="${safe(urls.ventuskyEmbed)}" loading="eager" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms" referrerpolicy="strict-origin-when-cross-origin"></iframe></section></main></body></html>`);
+  popup.document.close();
+  try{popup.opener=null}catch{}
+}
+
 async function fetchFlightWeather(){
   const ids=selectedAviationStations(activeLocation()).map(st=>st.id).join(',');
   if(!ids){flightWeatherError=language==='en'?'No aviation weather station selected.':'Keine Flugwetterstation ausgewählt.';render();return}
@@ -2775,7 +2854,7 @@ function renderInfo(){
     <section id="help-profiles"><h3>Profile für diese Planung</h3><p>Planungszeitraum, Aufnahmequalitätsprofil, Darstellungsprofil, Wetteransicht, Teleskop, Kamera und Horizontprofil können für die aktuelle Nacht temporär gewählt werden. Teleskop und Kamera wirken sofort auf Bildfeld, Framingbewertung und Aladin-Rahmung; das Horizontprofil auf die Horizontansicht. Keine dieser Auswahlen überschreibt einen gespeicherten Standard. Dauerhafte Standards werden ausschließlich in den Einstellungen festgelegt.</p></section>
     <section id="help-weather"><h3>Wetter und Modellkonsens</h3><p>Der Modellkonsens kombiniert DWD ICON, ECMWF IFS und NOAA GFS mit den gespeicherten Prozentgewichten. Einzelmodelle sind zur Kontrolle auswählbar. Die farbigen Felder bewerten die erwartete Aufnahmequalität. Die effektive Transparenz berücksichtigt die Bewölkung; der ergänzende atmosphärische Wert beschreibt die Klarheit ohne Wolkeneinfluss.</p></section>
     <section id="help-cloudmap"><h3>Astro-Wolkenmodell</h3><p>Das Astro-Wolkenmodell ist eine eigene Planungsrubrik und kann wie der stündliche Wetterverlauf ein- oder ausgeklappt werden. In der Planung kann temporär zwischen „Karte + Wolken“ und „Nur Wolken“ gewechselt werden. Die kombinierte Ansicht nutzt eine bewusst dunkle, reduzierte topografische Basiskarte. Wolken erscheinen bei allen Modellen einheitlich weiß: je höher der Wolkenanteil, desto deckender die Fläche. Der Modus Modellabweichung bleibt farbig und zeigt die Streuung der drei Modelle.</p><p>Die Prozentangaben stehen an den tatsächlichen Prognosepunkten. 25, 49 oder 81 Prognosepunkte bestimmen die Datenmenge. Die Glättung verändert nur die Darstellung, nicht die Wetterdaten. Zwischenbilder werden aus stündlichen Modellwerten interpoliert und erhöhen nicht die Prognosegenauigkeit.</p><p><strong>Praxisbeispiel:</strong> Ein Standortwert von 15 % Bewölkung sieht gut aus. Liegt aber westlich eine 80-%-Wolkenkante und die Verlagerung zeigt auf den Standort, ist die Nacht riskanter als die Einzelzahl vermuten lässt. Umgekehrt kann ein mäßiger Kartenmittelwert akzeptabel sein, wenn der Standort dauerhaft in einer klaren Lücke bleibt.</p><p><strong>Niederschlag:</strong> „Niederschlag gesamt“ enthält Regen, Schauer und Schnee. Die Ebenen „Regen“ und „Schnee“ zeigen die Einzelanteile und helfen zu erkennen, welche Art von Niederschlag gemeint ist.</p></section>
-    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden.</p><p><strong>Praxisbeispiel:</strong> Vor einer längeren Fahrt prüfst du zuerst das Astro-Wolkenmodell und öffnest danach die Meteoblue-Wolken-/Niederschlagskarte als externen Tab. Die eingebettete Meteoblue-Karte dient als schnelle Windanimationsansicht; Wolken und Niederschlag öffnest du gezielt über den separaten externen Meteoblue-Button.</p></section><section id="help-weather-sources"><h3>Zusätzliche Wetterquellen</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Meteoblue, Clear Outside, Windy und Ventusky nutzen den aktuell gewählten Planungsstandort und werden erst geladen, wenn der jeweilige Tab angewählt wird. Sie sind externe Kontrollquellen und fließen nicht automatisch in die Astro-Bewertung ein. Clear Outside wird als Prognosebild eingebunden und kann zusätzlich in einem separaten Browser-Tab geöffnet werden.</p></section>
+    <section id="help-meteoblue"><h3>Meteoblue-Kontrollquellen</h3><p>Astronomy Seeing und Wetterkarten sind unabhängige Zusatzquellen und fließen nicht in den automatischen Konsens ein. Nutze sie zum Vergleich mit der eigenen Modellberechnung. Über Großansicht können die eingebetteten Karten bildschirmfüllend geöffnet werden. Die eingebetteten Karten starten näher am Planungsstandort, damit lokale Strukturen schneller erkennbar sind.</p><p><strong>Praxisbeispiel:</strong> Vor einer längeren Fahrt prüfst du zuerst das Astro-Wolkenmodell und öffnest danach die Meteoblue-Wolken-/Niederschlagskarte als externen Tab. Die eingebettete Meteoblue-Karte dient als schnelle Windanimationsansicht; Wolken und Niederschlag öffnest du gezielt über den separaten externen Meteoblue-Button.</p></section><section id="help-weather-sources"><h3>Zusätzliche Wetterquellen</h3><p>Die zusätzlichen Wetterquellen sind als Tabs organisiert. Meteoblue, Clear Outside, Windy und Ventusky nutzen den aktuell gewählten Planungsstandort und werden erst geladen, wenn der jeweilige Tab angewählt wird. Sie sind externe Kontrollquellen und fließen nicht automatisch in die Astro-Bewertung ein. Clear Outside wird als Prognosebild eingebunden und kann zusätzlich in einem separaten Browser-Tab geöffnet werden.</p><p><strong>Praxisbeispiel:</strong> Mit <em>Wettervergleich in neuem Tab öffnen</em> öffnest du am PC eine 2×2-Ansicht über die ganze Bildschirmbreite: links oben das eigene Astro-Wolkenmodell mit der aktuellen Auswahl, rechts oben Meteoblue, links unten Windy und rechts unten Ventusky. So erkennst du schnell, ob alle Quellen denselben Trend zeigen oder ob einzelne Modelle deutlich abweichen.</p></section>
     <section id="help-filters"><h3>Objektfilter</h3><p>Filtere nach Katalog, Objekttyp, Magnitude, Mindesthöhe, Sichtbarkeitsdauer, Mondabstand und Objektgröße. Die Suche innerhalb der aktiven Filter verfeinert diese Auswahl. Die Direktsuche rechts daneben sucht dagegen nach Katalognummer, Objektname oder Alias und ignoriert bewusst alle anderen gesetzten Filter. So findest du zum Beispiel SH 2-119 oder NGC 7000 auch dann, wenn ein Katalog, Objekttyp, Größenbereich oder eine Mindesthöhe sie gerade ausblenden würde.</p><p>Texteingaben werden nach 1,5 Sekunden übernommen, damit nicht nach jedem Zeichen neu gerechnet wird; Enter oder „Filter anwenden“ startet sofort. Aktive Suchfelder werden hervorgehoben. Änderungen setzen die Ergebnisliste auf Seite 1 zurück. „Basisfilter zurücksetzen“ stellt nur die Werte dieser Basisfilter-Rubrik auf Standard zurück; Kataloge, Aufnahmefilter, Objekttypen, Ausrüstung und Anzeigeprofile bleiben unverändert.</p><p>Der Katalogfilter LDN/LBN enthält in dieser Version benannte LDN-Dunkelnebel. LBN-Objekte sind noch nicht als eigener Katalog importiert. Größenwerte der LDN-Objekte werden aus der katalogisierten Fläche als äquivalenter Kreis-Durchmesser berechnet und dienen als praktische Filter- und Rahmungshilfe.</p></section>
     <section id="help-objects"><h3>Objektliste und Mini-Höhenprofile</h3><p>Die Liste ist paginiert. Im Darstellungsprofil können die Informationen über eine aufklappbare Auswahlliste ein- oder ausgeschaltet und per Drag-and-drop beziehungsweise Auf-/Ab-Schaltflächen sortiert werden. Der Objektname bleibt immer sichtbar.</p><p>„Beste Stunde“ ist die Stunde mit dem höchsten Qualitätswert innerhalb des nautischen Planungszeitraums, sofern das Objekt über Mindesthöhe und persönlichem Horizont liegt. Meridian und Kulmination bleiben getrennte Informationen. Das Mini-Höhenprofil verwendet den gewählten Planungszeitraum und zeigt Dämmerungsbereiche, Mindesthöhe und Maximum.</p></section>
     <section id="help-details"><h3>Objektdetails, Höhenkurve und Horizontansicht</h3><p>Ein Klick auf eine freie Stelle der Objektzeile öffnet die Details direkt darunter. Ein erneuter Klick oder „Details schließen“ schließt sie. Höhenkurve und Horizontansicht sind getrennt aufklappbar und besitzen synchronisierte Zeitregler. Himmelsrichtungen werden zusammen mit Gradwerten angezeigt. In der Horizontansicht kann für die aktuelle Detailprüfung vorübergehend ein anderes Horizontprofil des gewählten Standorts ausgewählt werden.</p></section>
@@ -2865,6 +2944,7 @@ function bindRendered(){
   });
   document.getElementById('weatherRefresh')?.addEventListener('click',fetchWeather);
   document.querySelectorAll('[data-weather-source-tab]').forEach(button=>button.addEventListener('click',async()=>{profile.planning.weatherSourceTab=button.dataset.weatherSourceTab;await saveProfile();render();}));
+  document.getElementById('openWeatherComparison')?.addEventListener('click',openWeatherComparisonWindow);
   document.getElementById('loadFlightWeather')?.addEventListener('click',fetchFlightWeather);
   document.getElementById('toggleFlightStationMap')?.addEventListener('click',()=>{flightStationMapOpen=!flightStationMapOpen;render();});
   document.getElementById('loadMosmix')?.addEventListener('click',fetchMosmix);

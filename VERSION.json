@@ -1,17 +1,19 @@
 {
-  "version": "1.1.0-test.33",
-  "release": "1.1.0-test.33",
+  "version": "1.1.0-test.34",
+  "release": "1.1.0-test.34",
   "environment": "test",
-  "builtAt": "2026-06-28T13:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.33: eingebettete Meteoblue-Karte startet wieder als Windanimationskarte; externe Meteoblue-Buttons bleiben getrennt.",
+  "builtAt": "2026-06-28T14:00:00+02:00",
+  "notes": "Testversion 1.1.0-test.34: Karten-Zoom für externe Wetterquellen und 2x2-Wettervergleich im neuen Tab.",
   "releaseNotes": {
     "de": [
-      "Eingebettete Meteoblue-Wetterkarte wieder auf Windanimationskarte gesetzt.",
-      "Externe Buttons für Windanimation und Wolken-/Niederschlagskarte bleiben getrennt erhalten."
+      "Eingebettete Meteoblue-, Windy- und Ventusky-Karten starten näher am Planungsstandort.",
+      "Neuer Button öffnet einen 2×2-Wettervergleich im neuen Tab mit eigenem Astro-Wolkenmodell, Meteoblue, Windy und Ventusky.",
+      "Hilfe und Handbuch wurden um den Wettervergleich und die nähere Kartenansicht ergänzt."
     ],
     "en": [
-      "Embedded Meteoblue weather map set back to wind-animation map.",
-      "External buttons for wind animation and clouds/precipitation remain separate."
+      "Embedded Meteoblue, Windy and Ventusky maps start closer to the planning location.",
+      "A new button opens a 2x2 weather comparison in a new tab with the own astro cloud model, Meteoblue, Windy and Ventusky.",
+      "Help and manual were extended with the weather comparison and closer map view."
     ]
   }
 }
