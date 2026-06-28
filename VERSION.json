@@ -1,23 +1,19 @@
 {
-  "version": "1.1.0-test.40",
-  "release": "1.1.0-test.40",
+  "version": "1.1.0-test.41",
+  "release": "1.1.0-test.41",
   "environment": "test",
-  "builtAt": "2026-06-28T18:20:00+02:00",
-  "notes": "Testversion 1.1.0-test.40: eigene Astro-Wolkenkarte im Wettervergleich wieder originalgetreu mit Planungsansicht-Seitenverhältnis, Karten-Inset und ohne kompakte Streckung.",
+  "builtAt": "2026-06-28T18:45:00+02:00",
+  "notes": "Testversion 1.1.0-test.41: eigene Astro-Wolkenkarte aus dem Wettervergleich entfernt; Vergleich zeigt Windy links oben, Ventusky rechts oben und Meteoblue links unten.",
   "releaseNotes": {
     "de": [
-      "Die eigene Astro-Wolkenkarte im 2×2-Wettervergleich verwendet wieder den originalen Kartenrenderer der Planungsansicht statt der kompakten Vollflächenkarte.",
-      "Seitenverhältnis, Innenrand, Himmelsrichtungen, Standortzeile und Karten-Inset bleiben erhalten; dadurch werden Prozentwerte am Rand nicht mehr abgeschnitten.",
-      "Bei „Karte + Wolken“ liegt die MapLibre-Basiskarte im gleichen Kartenfenster wie in der Planungsansicht unter der Wolkenebene.",
-      "Die Vergleichsansicht skaliert die eigene Karte proportional in den verfügbaren Bereich; eine verzerrende CSS-Streckung wird nicht mehr verwendet.",
-      "Die zentrale Vergleichszeit steuert die eigene Karte weiterhin direkt; Windy und Ventusky werden weiterhin bestmöglich mit der Vergleichszeit neu geladen."
+      "Die eigene Astro-Wolkenkarte wurde aus der Wettervergleichsansicht entfernt.",
+      "Die Vergleichsansicht zeigt jetzt links oben Windy, rechts oben Ventusky und links unten Meteoblue.",
+      "Die gemeinsame Vergleichszeit lädt Windy und Ventusky weiterhin mit bestmöglicher Zeitübergabe neu; Meteoblue bleibt bei der eigenen Zeitachse."
     ],
     "en": [
-      "The own astro cloud map in the 2x2 weather comparison again uses the original planning-view map renderer instead of the compact full-panel map.",
-      "Aspect ratio, inner margin, compass labels, location header and map inset are retained; edge percentage labels are no longer clipped.",
-      "With “Map + clouds”, the MapLibre base map is placed in the same map window as in the planning view below the cloud layer.",
-      "The comparison view scales the own map proportionally into the available area; distorting CSS stretching is no longer used.",
-      "The shared comparison time still controls the own map directly; Windy and Ventusky continue to be reloaded with the comparison time on a best-effort basis."
+      "The own astro cloud map has been removed from the weather comparison view.",
+      "The comparison view now shows Windy in the top-left, Ventusky in the top-right and Meteoblue in the bottom-left.",
+      "The shared comparison time continues to reload Windy and Ventusky with the best available time handoff; Meteoblue keeps its own timeline."
     ]
   }
 }
