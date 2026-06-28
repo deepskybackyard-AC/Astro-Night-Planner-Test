@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.42',
-  release: '1.1.0-test.42',
+  appVersion: '1.1.0-test.43',
+  release: '1.1.0-test.43',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.42',
+  documentTitle: 'Astro Night Planner 1.1.0-test.43',
   releaseNotes: {
     de: [
-      'Die Vergleichszeit im Wettervergleich ist nicht mehr von geladenen Astro-Wolkenkartendaten abhängig.',
-      'Windy erhält jetzt den erwarteten calendar-/Forecast-Parameter und metrische Embed-Parameter statt freier ISO-Zeitparameter.',
-      'Die Wettervergleichsansicht bleibt: links oben Windy, rechts oben Ventusky, links unten Meteoblue; die eigene Astro-Wolkenkarte bleibt deaktiviert.'
+      'Der Button „Wettervergleich in neuem Tab öffnen“ wurde aus den zusätzlichen Wetterquellen entfernt.',
+      'Der nicht mehr benötigte Code für das separate Vergleichsfenster, die zentrale Vergleichszeit und die Zeitübergabe an externe Karten wurde entfernt.',
+      'Hilfe und Handbuch beschreiben Windy, Ventusky, Meteoblue und Clear Outside jetzt als einzelne externe Kontrollquellen mit eigener Bedienung.',
     ],
     en: [
-      'The comparison time in the weather comparison view no longer depends on loaded astro cloud-map data.',
-      'Windy now receives the expected calendar/forecast parameter and metric embed parameters instead of free ISO time parameters.',
-      'The weather comparison layout remains: Windy top-left, Ventusky top-right, Meteoblue bottom-left; the own astro cloud map remains disabled.'
+      'The “Open weather comparison in new tab” button has been removed from the additional weather sources.',
+      'The no longer needed code for the separate comparison window, shared comparison time and time handoff to external maps has been removed.',
+      'Help and handbook now describe Windy, Ventusky, Meteoblue and Clear Outside as individual external reference sources with their own controls.',
     ]
   }});
