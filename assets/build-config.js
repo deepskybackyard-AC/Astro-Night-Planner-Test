@@ -3,20 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.34',
-  release: '1.1.0-test.34',
+  appVersion: '1.1.0-test.35',
+  release: '1.1.0-test.35',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.34',
+  documentTitle: 'Astro Night Planner 1.1.0-test.35',
   releaseNotes: {
     de: [
-      'Eingebettete Meteoblue-, Windy- und Ventusky-Karten starten näher am Planungsstandort.',
-      'Zusätzlicher Wettervergleich öffnet vier Kontrollkarten in einer 2×2-Ansicht im neuen Tab.',
-      'Hilfe und Handbuch wurden für Zoom und Wettervergleich ergänzt.'
+      'Die 2×2-Wettervergleichsansicht erhält oben eine gemeinsame Vergleichszeit.',
+      'Die eigene Astro-Wolkenkarte im Vergleich besitzt eine kompakte Zeitsteuerung.',
+      'Hilfe und Handbuch wurden um die Zeitsteuerung im Wettervergleich ergänzt.'
     ],
     en: [
-      'Embedded Meteoblue, Windy and Ventusky maps start closer to the planning location.',
-      'A new weather comparison opens four reference maps in a 2x2 view in a new tab.',
-      'Help and manual were extended for zoom and weather comparison.'
+      'The 2x2 weather comparison view now has a shared comparison time at the top.',
+      'The own astro cloud map in the comparison has a compact time control.',
+      'Help and manual were extended with the comparison time controls.'
     ]
   }});

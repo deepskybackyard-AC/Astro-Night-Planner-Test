@@ -1,19 +1,19 @@
 {
-  "version": "1.1.0-test.34",
-  "release": "1.1.0-test.34",
+  "version": "1.1.0-test.35",
+  "release": "1.1.0-test.35",
   "environment": "test",
-  "builtAt": "2026-06-28T14:00:00+02:00",
-  "notes": "Testversion 1.1.0-test.34: Karten-Zoom für externe Wetterquellen und 2x2-Wettervergleich im neuen Tab.",
+  "builtAt": "2026-06-28T15:15:00+02:00",
+  "notes": "Testversion 1.1.0-test.35: 2x2-Wettervergleich mit gemeinsamer Zeitsteuerung und eigenem Wolkenkarten-Slider.",
   "releaseNotes": {
     "de": [
-      "Eingebettete Meteoblue-, Windy- und Ventusky-Karten starten näher am Planungsstandort.",
-      "Neuer Button öffnet einen 2×2-Wettervergleich im neuen Tab mit eigenem Astro-Wolkenmodell, Meteoblue, Windy und Ventusky.",
-      "Hilfe und Handbuch wurden um den Wettervergleich und die nähere Kartenansicht ergänzt."
+      "Die 2×2-Wettervergleichsansicht erhält oben eine gemeinsame Vergleichszeit.",
+      "Die eigene Astro-Wolkenkarte im Vergleich besitzt eine eigene kompakte Zeitsteuerung und wird zuverlässig mit der gemeinsamen Zeit synchronisiert.",
+      "Hilfe und Handbuch wurden um die Zeitsteuerung im Wettervergleich ergänzt."
     ],
     "en": [
-      "Embedded Meteoblue, Windy and Ventusky maps start closer to the planning location.",
-      "A new button opens a 2x2 weather comparison in a new tab with the own astro cloud model, Meteoblue, Windy and Ventusky.",
-      "Help and manual were extended with the weather comparison and closer map view."
+      "The 2x2 weather comparison view now has a shared comparison time at the top.",
+      "The own astro cloud map in the comparison has a compact time control and synchronizes reliably with the shared time.",
+      "Help and manual were extended with the comparison time controls."
     ]
   }
 }
