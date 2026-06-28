@@ -1,23 +1,17 @@
 {
-  "version": "1.1.0-test.32",
-  "release": "1.1.0-test.32",
+  "version": "1.1.0-test.33",
+  "release": "1.1.0-test.33",
   "environment": "test",
-  "builtAt": "2026-06-28T12:10:00+02:00",
-  "notes": "Testversion 1.1.0-test.32: Astro-Wolkenmodell als einklappbare Rubrik; Meteoblue-Links getrennt; Niederschlagslegende und Hilfe aktualisiert.",
+  "builtAt": "2026-06-28T13:00:00+02:00",
+  "notes": "Testversion 1.1.0-test.33: eingebettete Meteoblue-Karte startet wieder als Windanimationskarte; externe Meteoblue-Buttons bleiben getrennt.",
   "releaseNotes": {
     "de": [
-      "Astro-Wolkenmodell als eigene ein-/ausklappbare Planungsrubrik umgesetzt.",
-      "Einstellungen ergänzt/umbenannt: Astro-Wolkenmodell anzeigen und initial eingeklappt.",
-      "Niederschlag in Niederschlag gesamt umbenannt und mit Regen/Schnee erklärt.",
-      "Meteoblue wieder konservativ eingebettet; externe Buttons für Windanimation und Wolken-/Niederschlagskarte ergänzt.",
-      "Hilfe/Handbuch um Praxisbeispiele zu Wolkenmodell, Niederschlag und Zusatzwetterquellen erweitert."
+      "Eingebettete Meteoblue-Wetterkarte wieder auf Windanimationskarte gesetzt.",
+      "Externe Buttons für Windanimation und Wolken-/Niederschlagskarte bleiben getrennt erhalten."
     ],
     "en": [
-      "Astro cloud model implemented as its own collapsible planning section.",
-      "Settings added/renamed: show astro cloud model and initially collapsed.",
-      "Precipitation renamed to total precipitation and explained together with rain/snow.",
-      "Meteoblue embedded more conservatively again; external buttons for wind animation and clouds/precipitation added.",
-      "Help/manual extended with practical examples for the cloud model, precipitation and additional weather sources."
+      "Embedded Meteoblue weather map set back to wind-animation map.",
+      "External buttons for wind animation and clouds/precipitation remain separate."
     ]
   }
 }

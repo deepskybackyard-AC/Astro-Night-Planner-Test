@@ -3,22 +3,20 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.1.0-test.32',
-  release: '1.1.0-test.32',
+  appVersion: '1.1.0-test.33',
+  release: '1.1.0-test.33',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.1.0-test.32',
+  documentTitle: 'Astro Night Planner 1.1.0-test.33',
   releaseNotes: {
     de: [
-      'Astro-Wolkenmodell ist jetzt eine eigene einklappbare Planungsrubrik; der alte Unter-Schalter entfällt.',
-      'Meteoblue-Wetterkarten werden wieder konservativer eingebettet; externe Buttons öffnen getrennt Windanimation oder Wolken-/Niederschlagskarte.',
-      'Niederschlagslegende und Einstellungslabels wurden fachlich eindeutiger benannt und übersetzt.',
-      'Integrierte Hilfe und Handbuch wurden um Praxisbeispiele zu Wolkenmodell, Niederschlag und Meteoblue ergänzt.'
+      'Die eingebettete Meteoblue-Wetterkarte startet wieder als Windanimationskarte.',
+      'Die externen Meteoblue-Buttons für Windanimation und Wolken-/Niederschlagskarte bleiben getrennt erhalten.',
+      'Keine weiteren Funktionsänderungen gegenüber 1.1.0-test.32.'
     ],
     en: [
-      'The astro cloud model is now its own collapsible planning section; the old inner toggle is removed.',
-      'Meteoblue weather maps are embedded more conservatively again; external buttons separately open wind animation or clouds/precipitation.',
-      'Precipitation legend and settings labels were made clearer and translated.',
-      'Integrated help and manual were expanded with practical examples for the cloud model, precipitation and Meteoblue.'
+      'The embedded Meteoblue weather map now starts as the wind-animation map again.',
+      'The external Meteoblue buttons for wind animation and clouds/precipitation remain separate.',
+      'No other functional changes compared with 1.1.0-test.32.'
     ]
   }});
