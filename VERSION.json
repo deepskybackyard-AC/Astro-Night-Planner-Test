@@ -1,19 +1,23 @@
 {
-  "version": "1.1.0-test.43",
-  "release": "1.1.0-test.43",
+  "version": "1.3.0-test.1",
+  "release": "1.3.0-test.1",
   "environment": "test",
-  "builtAt": "2026-06-28T19:55:00+02:00",
-  "notes": "Testversion 1.1.0-test.43: Separate Wettervergleichsansicht entfernt; externe Wetterquellen bleiben als einzelne Tabs verfügbar.",
-  "releaseNotes": {
+  "builtAt": "2026-06-30T21:30:00Z",
+  "notes": "Testversion 1.3.0-test.1: Mini-Horizont, Nachtbutton-Bewertung, Mehrnächte-Wetterverlauf, erster Polarlicht-Hinweis und experimentelle Aladin-Horizont-Overlays.",
+  "changes": {
     "de": [
-      "Der Button „Wettervergleich in neuem Tab öffnen“ wurde aus den zusätzlichen Wetterquellen entfernt.",
-      "Der nicht mehr benötigte Code für das separate Vergleichsfenster, die zentrale Vergleichszeit und die Zeitübergabe an externe Karten wurde entfernt.",
-      "Hilfe und Handbuch beschreiben Windy, Ventusky, Meteoblue und Clear Outside jetzt als einzelne externe Kontrollquellen mit eigener Bedienung."
+      "Mini-Höhenprofil mit aktivem persönlichem Horizont und zusätzlicher Sichtbarkeitszeit.",
+      "Datumsbuttons mit Mondbeleuchtung und farbiger Nachtbewertung auf Basis des aktuellen Planungszeitraums.",
+      "Mehrnächte-Wetterverlauf in eigenem Tab; Anzahl zusätzlicher Nächte einstellbar, Default 3.",
+      "Polarlicht-Hinweis mit automatischem Abruf beim Start, manueller Aktualisierung und Dashboard auf Basis maschinenlesbarer NOAA/SWPC-Daten.",
+      "Experimentelle Himmel-/Horizont-Overlays im externen Aladin-Tab."
     ],
     "en": [
-      "The “Open weather comparison in new tab” button has been removed from the additional weather sources.",
-      "The no longer needed code for the separate comparison window, shared comparison time and time handoff to external maps has been removed.",
-      "Help and handbook now describe Windy, Ventusky, Meteoblue and Clear Outside as individual external reference sources with their own controls."
+      "Mini altitude profile with active personal horizon and additional visibility time.",
+      "Date buttons with Moon illumination and colored night rating based on the current planning window.",
+      "Multi-night hourly weather trend in a separate tab; configurable additional nights, default 3.",
+      "Aurora indicator with automatic loading at app start, manual refresh and dashboard based on machine-readable NOAA/SWPC data.",
+      "Experimental sky/horizon overlays in the external Aladin tab."
     ]
   }
 }
