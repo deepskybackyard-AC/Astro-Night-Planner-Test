@@ -1,23 +1,23 @@
 {
-  "version": "1.3.0-test.1",
-  "release": "1.3.0-test.1",
+  "version": "1.3.0-test.2",
+  "release": "1.3.0-test.2",
   "environment": "test",
-  "builtAt": "2026-06-30T21:30:00Z",
-  "notes": "Testversion 1.3.0-test.1: Mini-Horizont, Nachtbutton-Bewertung, Mehrnächte-Wetterverlauf, erster Polarlicht-Hinweis und experimentelle Aladin-Horizont-Overlays.",
+  "builtAt": "2026-06-30T22:15:00Z",
+  "notes": "Testversion 1.3.0-test.2: Korrekturen zu Polarlichtstatus, 7 Tagesbuttons, getrennten Sichtbarkeitsspalten und neu sortierten Aladin-/Polarlicht-Einstellungen.",
   "changes": {
     "de": [
-      "Mini-Höhenprofil mit aktivem persönlichem Horizont und zusätzlicher Sichtbarkeitszeit.",
-      "Datumsbuttons mit Mondbeleuchtung und farbiger Nachtbewertung auf Basis des aktuellen Planungszeitraums.",
-      "Mehrnächte-Wetterverlauf in eigenem Tab; Anzahl zusätzlicher Nächte einstellbar, Default 3.",
-      "Polarlicht-Hinweis mit automatischem Abruf beim Start, manueller Aktualisierung und Dashboard auf Basis maschinenlesbarer NOAA/SWPC-Daten.",
-      "Experimentelle Himmel-/Horizont-Overlays im externen Aladin-Tab."
+      "Tagesbuttons auf Heute plus kommende 6 Tage reduziert; Warn- und Qualitätsrahmen deutlicher.",
+      "Polarlicht-Hinweis zeigt nur noch Warnfarben bei belastbaren Daten; Dashboard unterscheidet Datenstatus und Bewertungsgrund.",
+      "Eigene Einstellungsrubrik Polarlicht ergänzt.",
+      "Objektliste mit getrennten Spalten für Sichtbar Mindesthöhe, Sichtbar über persönlichen Horizont und Kombination aus beidem.",
+      "Aladin-Einstellungen in Anzeige > Aladin mit getrennten Bereichen Survey und Himmel & Horizont verschoben; Gradnetze initial aus und getrennt schaltbar."
     ],
     "en": [
-      "Mini altitude profile with active personal horizon and additional visibility time.",
-      "Date buttons with Moon illumination and colored night rating based on the current planning window.",
-      "Multi-night hourly weather trend in a separate tab; configurable additional nights, default 3.",
-      "Aurora indicator with automatic loading at app start, manual refresh and dashboard based on machine-readable NOAA/SWPC data.",
-      "Experimental sky/horizon overlays in the external Aladin tab."
+      "Date buttons reduced to today plus the next 6 days; warning and quality borders are more visible.",
+      "Aurora indicator uses warning colors only when supported by data; dashboard distinguishes data status and reasoning.",
+      "Dedicated Aurora settings section added.",
+      "Object list uses separate columns for visible above minimum altitude, visible above personal horizon, and both combined.",
+      "Aladin settings moved to Display > Aladin with separate Survey and Sky & Horizon sections; grids are initially off and can be toggled separately."
     ]
   }
 }

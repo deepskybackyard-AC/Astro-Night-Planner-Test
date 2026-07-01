@@ -3,25 +3,25 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.3.0-test.1',
-  release: '1.3.0-test.1',
+  appVersion: '1.3.0-test.2',
+  release: '1.3.0-test.2',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.3.0-test.1',
+  documentTitle: 'Astro Night Planner 1.3.0-test.2',
   releaseNotes: {
     de: [
-      'Mini-Höhenprofile zeigen zusätzlich den aktiven persönlichen Horizont und die Sichtbarkeitszeit über dem Horizont.',
-      'Die Datumsbuttons zeigen Mondbeleuchtung und eine farbige Nachtbewertung anhand des gewählten Planungszeitraums.',
-      'Der stündliche Wetterverlauf kann in einem neuen Tab für mehrere Nächte geöffnet werden; die Anzahl zusätzlicher Nächte ist einstellbar.',
-      'Ein erster Polarlicht-Hinweis mit automatischem Abruf beim App-Start, manueller Aktualisierung, optionalem Intervall und Dashboard wurde ergänzt.',
-      'Der externe Aladin-Tab erhält erste experimentelle Himmel-/Horizont-Overlays: äquatoriales Grid, einfache Alt-Az-/Horizont-/Kompassanzeige.'
+      'Korrektur der 1.3-Testserie: Tagesbuttons auf Heute plus 6 Folgetage reduziert und Warn-/Qualitätsrahmen deutlicher dargestellt.',
+      'Polarlicht-Hinweis und Dashboard zeigen Warnfarben nur noch bei belastbaren Daten und unterscheiden Datenstatus, Fehler und Bewertungsgrund.',
+      'Polarlicht-Einstellungen sind als eigene Unterrubrik in den Zentralen Einstellungen verfügbar.',
+      'Die Objektliste trennt Sichtbarkeit nach Mindesthöhe, persönlichem Horizont und Kombination aus beidem in eigenen Spalten.',
+      'Aladin-Einstellungen wurden in Anzeige > Aladin neu strukturiert; Survey und Himmel & Horizont sind getrennte aufklappbare Bereiche, Gradnetze sind initial aus und getrennt schaltbar.'
     ],
     en: [
-      'Mini altitude profiles now also show the active personal horizon and the visible time above that horizon.',
-      'Date buttons show Moon illumination and a colored night quality rating for the selected planning window.',
-      'The hourly weather trend can be opened in a new tab for multiple nights; the number of additional nights is configurable.',
-      'A first aurora indicator with automatic loading at app start, manual refresh, optional interval and dashboard has been added.',
-      'The external Aladin tab includes first experimental sky/horizon overlays: equatorial grid, simple alt-az, horizon and compass display.'
+      'Correction of the 1.3 test series: date buttons reduced to today plus 6 following days and warning/quality borders made clearer.',
+      'Aurora indicator and dashboard now use warning colors only when supported by data and distinguish data status, errors and reasoning.',
+      'Aurora settings are available as a dedicated sub-section in Central settings.',
+      'The object list separates visibility above minimum altitude, above the personal horizon, and both combined into separate columns.',
+      'Aladin settings were reorganized under Display > Aladin; Survey and Sky & Horizon are separate collapsible sections, grids are initially off and can be toggled independently.'
     ]
   }
 });

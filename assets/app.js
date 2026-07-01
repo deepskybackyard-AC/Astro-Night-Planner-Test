@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.3.0-test.1 – Testversion */
+/* Astro Night Planner 1.3.0-test.2 – Testversion */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.3.0-test.1', release:'1.3.0-test.1', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.3.0-test.1'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.3.0-test.2', release:'1.3.0-test.2', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.3.0-test.2'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';
@@ -461,6 +461,29 @@ Object.assign(EN_EXACT,{
   'Die eingebetteten Karten starten näher am Planungsstandort, damit lokale Strukturen schneller erkennbar sind.':'The embedded maps start closer to the planning location so local structures are easier to see.',
   'Meteoblue wird nicht zentral synchronisiert. Nutze dort die eigene Zeitachse.':'Meteoblue is not centrally synchronized. Use its own timeline there.'
 });
+Object.assign(EN_EXACT,{
+  'Sichtbar Mindesthöhe':'Visible above minimum altitude',
+  'Sichtbar über pers. Horizont':'Visible above personal horizon',
+  'Sichtbar über pers. Horizont und Mindesthöhe':'Visible above personal horizon and minimum altitude',
+  'Sichtbar über pers. Horizont + Mindesthöhe':'Visible above personal horizon + minimum altitude',
+  'Polarlicht':'Aurora',
+  'Polarlicht-Einstellungen speichern':'Save aurora settings',
+  'Intervall Minuten':'Interval in minutes',
+  'Benachrichtigung ab':'Notify from',
+  'Gelb':'Yellow',
+  'Orange':'Orange',
+  'Rot':'Red',
+  'Kp-Schwellen':'Kp thresholds',
+  'Letzter Datenstatus':'Last data status',
+  'Aladin - Survey':'Aladin - Survey',
+  'Aladin - Himmel & Horizont':'Aladin - Sky & Horizon',
+  'Äquatoriales Gradnetz anzeigen':'Show equatorial grid',
+  'Azimutales Gradnetz anzeigen':'Show azimuthal grid',
+  'Gradnetz-Abstufung':'Grid spacing',
+  'Boden/Horizontbereich anzeigen':'Show ground/horizon area',
+  'Himmelsrichtungen/Kompassmarken anzeigen':'Show cardinal directions/compass marks',
+  'Horizontlinie im Mini-Höhenprofil anzeigen':'Show horizon line in mini altitude chart'
+});
 function optionLabel(label){return language==='en'?(EN_EXACT[label]||label):label}
 function optionText(label){return esc(optionLabel(label))}
 function setText(id,text){const el=document.getElementById(id);if(el)el.textContent=text}
@@ -564,14 +587,16 @@ const CLOUD_MAP_RADIUS_OPTIONS = [
 ];
 const DISPLAY_COLUMNS = [
   ['score','Bewertung'],['name','Objekt / Typ / Katalog'],['wikipedia','Wikipedia-Symbol'],['maxAltitude','Maximalhöhe'],
-  ['visibleHours','Sichtbarkeitsdauer'],['meridian','Meridian'],['framing','Framing'],['miniChart','Mini-Höhenprofil'],
+  ['visibleHours','Sichtbar Mindesthöhe'],['visibleHorizon','Sichtbar über pers. Horizont'],['visibleHorizonAndMin','Sichtbar über pers. Horizont und Mindesthöhe'],
+  ['meridian','Meridian'],['framing','Framing'],['miniChart','Mini-Höhenprofil'],
   ['bestHour','Beste Stunde'],['moonDistance','Mondabstand'],['weather','Wetterwert'],['size','Objektgröße'],['magnitude','Magnitude'],['filters','Filterempfehlung']
 ];
 const DISPLAY_COLUMN_IDS = DISPLAY_COLUMNS.map(item=>item[0]);
+const DETAILED_DEFAULT_COLUMNS = DISPLAY_COLUMN_IDS.filter(id=>id!=='visibleHorizon');
 const DISPLAY_PROFILES = {
   compact: { name:'Kompakt', pageSize:20, columns:['score','name','wikipedia','maxAltitude','visibleHours','miniChart'], columnOrder:[...DISPLAY_COLUMN_IDS] },
   standard: { name:'Standard', pageSize:20, columns:['score','name','wikipedia','maxAltitude','visibleHours','meridian','framing','miniChart'], columnOrder:[...DISPLAY_COLUMN_IDS] },
-  detailed: { name:'Detailliert', pageSize:20, columns:[...DISPLAY_COLUMN_IDS], columnOrder:[...DISPLAY_COLUMN_IDS] },
+  detailed: { name:'Detailliert', pageSize:20, columns:[...DETAILED_DEFAULT_COLUMNS], columnOrder:[...DISPLAY_COLUMN_IDS] },
 };
 const CLOUD_SMOOTHING_OPTIONS = [
   ['structured','Strukturiert – deutlichere Wolkengrenzen'],
@@ -752,7 +777,7 @@ function standardProfile(){
       multiNightWeather:{extraNights:3},
       aurora:{enabled:true,autoRefreshMinutes:0,notifyLevel:'orange',yellowKp:5.7,orangeKp:6.7,redKp:7.3,lastStatus:null},
       miniHorizon:{show:true,showVisibleText:true},
-      externalAladin:{equatorialGrid:true,altAzGrid:true,ground:true,useHorizon:true,compass:true,orientation:'standard'},
+      externalAladin:{equatorialGrid:false,altAzGrid:false,gridStep:'10',ground:true,useHorizon:true,compass:true,orientation:'standard'},
       listDisplay:{activeProfile:'standard',profiles:deepClone(DISPLAY_PROFILES)},
       objectSizeVisible:false, frameVisible:true, meteoblueCollapsed:true,
       detailPanels:{altitudeCollapsed:true,horizonCollapsed:true},
@@ -963,7 +988,7 @@ let currentLocationsSubTab='locations';
 let currentObjectFilterTab='basis';
 let selectedDateKey='';
 let weatherSourceTab='meteoblue';
-let auroraStatus={level:'none',message:'Polarlichtdaten noch nicht geladen.',details:[],updatedAt:null,windows:[],kpMax:NaN,source:'NOAA/SWPC'};
+let auroraStatus={level:'none',message:'Polarlichtdaten noch nicht geladen.',details:[],updatedAt:null,windows:[],kpMax:NaN,source:'NOAA/SWPC',dataStatus:'not-loaded',reason:'Noch kein Abruf durchgeführt.'};
 let auroraTimer=null;
 let flightWeatherData=null;
 let flightWeatherLoading=false;
@@ -1129,6 +1154,7 @@ function normalizeProfile(p){
   out.central.miniHorizon={...base.central.miniHorizon,...(p.central?.miniHorizon||{})};
   out.central.externalAladin={...base.central.externalAladin,...(p.central?.externalAladin||{})};
   if(!['standard','south','west','north','east'].includes(out.central.externalAladin.orientation))out.central.externalAladin.orientation='standard';
+  if(!['auto','10','15','30'].includes(String(out.central.externalAladin.gridStep||'10')))out.central.externalAladin.gridStep='10';
   out.central.aladinSurveys=normalizeAladinSurveys(p.central?.aladinSurveys||base.central.aladinSurveys);
   out.central.filterDefaults={...base.central.filterDefaults,...(p.central?.filterDefaults||{})};
   out.central.filterDefaults.selectedFilters=Array.isArray(out.central.filterDefaults.selectedFilters)?out.central.filterDefaults.selectedFilters.filter(x=>FILTER_KEYS.includes(x)):DEFAULT_SELECTED_FILTERS.slice();
@@ -1142,6 +1168,7 @@ function normalizeProfile(p){
   out.central.listDisplay.profiles={...deepClone(DISPLAY_PROFILES),...(p.central?.listDisplay?.profiles||{})};
   for(const value of Object.values(out.central.listDisplay.profiles)){
     value.columns=(Array.isArray(value.columns)?value.columns:[]).map(id=>id==='bestTime'?'bestHour':id).filter(id=>DISPLAY_COLUMN_IDS.includes(id));
+    if(value.name==='Detailliert'&&!value.columns.includes('visibleHorizonAndMin'))value.columns.push('visibleHorizonAndMin');
     if(!value.columns.includes('name'))value.columns.unshift('name');
     if(!value.columns.includes('wikipedia'))value.columns.push('wikipedia');
     const legacyOrder=(Array.isArray(value.columnOrder)?value.columnOrder:value.columns).map(id=>id==='bestTime'?'bestHour':id).filter(id=>DISPLAY_COLUMN_IDS.includes(id));
@@ -2001,7 +2028,7 @@ function render(){
   layoutFramingOverlays();
   window.setTimeout(layoutFramingOverlays,80);
 }
-function dateKeys(){const today=dateKeyFor(new Date(),activeLocation().timezone);return Array.from({length:8},(_,i)=>addDays(today,i))}
+function dateKeys(){const today=dateKeyFor(new Date(),activeLocation().timezone);return Array.from({length:7},(_,i)=>addDays(today,i))}
 function isForecastDateKey(key=selectedDateKey){return dateKeys().includes(key)}
 function weatherAvailableForSelectedDate(){return isForecastDateKey(selectedDateKey)}
 function renderWeatherUnavailableNotice(){return `<section class="card notice warn weather-unavailable-notice"><h2>${language==='en'?'Weather data unavailable':'Wetterdaten nicht verfügbar'}</h2><p>${language==='en'?'No reliable forecast data is available for this date. Astronomical planning, object list, Moon information and framing remain available.':'Für dieses Datum liegen keine verlässlichen Wetterdaten im Vorhersagebereich vor. Astronomische Planung, Objektliste, Mondinformationen und Rahmung bleiben verfügbar.'}</p></section>`}
@@ -2191,7 +2218,7 @@ function renderFilters(){
 function pagination(totalPages,total){const pageSize=profile.planning.pageSize;const buttons=[];const from=Math.max(1,page-2),to=Math.min(totalPages,page+2);for(let i=from;i<=to;i++)buttons.push(`<button data-page-number="${i}" class="${i===page?'active':''}">${i}</button>`);return `<div class="pagination"><div class="result-summary"><span>${total} Treffer</span><label>Objekte/Seite <select id="pageSizeSelect"><option>10</option><option>20</option><option>50</option><option>100</option></select></label></div><div class="pages"><button data-page-number="1" ${page===1?'disabled':''}>«</button><button data-page-number="${page-1}" ${page===1?'disabled':''}>‹</button>${buttons.join('')}<button data-page-number="${page+1}" ${page===totalPages?'disabled':''}>›</button><button data-page-number="${totalPages}" ${page===totalPages?'disabled':''}>»</button></div></div>`}
 function renderObjectTable(items,columns,loc,windowRange,night){
   const heads={
-    score:'Bewertung',name:'Objekt',wikipedia:'Wiki',maxAltitude:'Max. Höhe',visibleHours:'Sichtbar',meridian:'Meridian',
+    score:'Bewertung',name:'Objekt',wikipedia:'Wiki',maxAltitude:'Max. Höhe',visibleHours:'Sichtbar Mindesthöhe',visibleHorizon:'Sichtbar über pers. Horizont',visibleHorizonAndMin:'Sichtbar über pers. Horizont + Mindesthöhe',meridian:'Meridian',
     framing:'Framing',miniChart:'Höhenprofil',bestHour:'Beste Stunde',moonDistance:'Mondabstand',
     weather:'Wetter',size:'Größe',magnitude:'Mag.',filters:'Filter'
   };
@@ -2212,7 +2239,9 @@ function objectCell(column,item,loc,windowRange,night){
     case'name':{const isTarget=targetObjectIds().has(object.id);return`<td><div class="object-name">${esc(object.id)} · ${esc(object.name)}</div><div class="small muted">${esc(object.type)} · ${esc(object.constellation)} · ${esc(object.catalogs.join(', '))}</div><button type="button" class="target-inline-button ${isTarget?'active':''}" data-toggle-target="${esc(object.id)}">${isTarget?'✓ In Meine Aufnahmeziele':'Zu Meine Aufnahmeziele hinzufügen'}</button></td>`;}
     case'wikipedia':return`<td class="wiki-cell"><button type="button" class="wiki-inline-button" data-wikipedia-object="${esc(object.id)}" title="Wikipedia" aria-label="Wikipedia für ${esc(object.id)} öffnen">W</button></td>`;
     case'maxAltitude':return`<td>${fmt(stats.maxAltitude)}°</td>`;
-    case'visibleHours':return`<td><strong>${fmt(stats.visibleHours,1)} h</strong>${profile.central.miniHorizon?.showVisibleText!==false?`<div class="small muted">Horizont ${fmt(stats.horizonVisibleHours,1)} h</div>`:''}</td>`;
+    case'visibleHours':return`<td title="Zeit oberhalb der eingestellten Mindesthöhe innerhalb der gewählten Basis der Mindestdauer."><strong>${fmt(stats.minAltitudeVisibleHours,1)} h</strong></td>`;
+    case'visibleHorizon':return`<td title="Zeit oberhalb des aktiven persönlichen Horizontprofils."><strong>${fmt(stats.horizonVisibleHours,1)} h</strong></td>`;
+    case'visibleHorizonAndMin':return`<td title="Zeit, in der das Objekt gleichzeitig über persönlichem Horizont und über Mindesthöhe steht."><strong>${fmt(stats.visibleHours,1)} h</strong></td>`;
     case'meridian':return`<td>${fmtTime(stats.meridian,loc.timezone)}<br><span class="small muted">${fmt(stats.maxAltitude)}°</span></td>`;
     case'framing':return`<td><button data-frame-object="${esc(object.id)}">${esc(item.fit)}</button><div class="small muted">Mindestrand ${Number.isFinite(item.framing?.minMargin)?fmt(item.framing.minMargin,1)+' %':'–'}</div></td>`;
     case'miniChart':return`<td><canvas class="mini-chart" width="230" height="92" data-points="${encodeURIComponent(JSON.stringify(stats.points.map(point=>[point.t.getTime(),point.alt])))}" data-horizon-points="${encodeURIComponent(JSON.stringify(stats.points.map(point=>[point.t.getTime(),point.horizonAlt??0])))}" data-show-horizon="${profile.central.miniHorizon?.show!==false?'1':'0'}" data-start="${windowRange.start.getTime()}" data-end="${windowRange.end.getTime()}" data-civil-start="${night.civilDusk.getTime()}" data-civil-end="${night.civilDawn.getTime()}" data-astro-start="${dateMs(night.astronomicalDusk)}" data-astro-end="${dateMs(night.astronomicalDawn)}" data-naut-start="${night.nauticalDusk.getTime()}" data-naut-end="${night.nauticalDawn.getTime()}" data-min-alt="${profile.planning.minAltitude}"></canvas>${profile.central.miniHorizon?.show!==false?`<div class="mini-chart-caption muted">Horizontlinie</div>`:''}</td>`;
@@ -2444,30 +2473,47 @@ function auroraLevelLabel(level){return{none:'keine Warnung',yellow:'erhöht',or
 async function fetchJsonSafe(url){const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw new Error(`${response.status} ${response.statusText}`);return response.json()}
 async function fetchAuroraStatus(options={}){
   if(profile?.central?.aurora?.enabled===false)return;
+  auroraStatus={...(auroraStatus||{}),level:'none',message:'Polarlichtdaten werden geladen …',dataStatus:'loading',reason:'Abruf läuft.',updatedAt:new Date().toISOString(),details:[],windows:[],kpMax:NaN,source:'NOAA/SWPC'};
+  if(options.manual)render();
   try{
     const [kpData,alerts,mag]=await Promise.allSettled([fetchJsonSafe(noaaKpStatusUrl()),fetchJsonSafe(noaaAlertsUrl()),fetchJsonSafe(noaaSolarWindUrl())]);
-    const details=[];let windows=[],kpMax=NaN,bestLevel='none';
+    const details=[],problems=[];let windows=[],kpMax=NaN,bestLevel='none',reason='Keine Warnschwelle erreicht.',hasStrongSignal=false;
     if(kpData.status==='fulfilled'&&Array.isArray(kpData.value)){
       const rows=kpData.value.slice(1).map(row=>({time:new Date(row[0]||row[1]),kp:parseKpNumber(row[row.length-1])})).filter(row=>row.time instanceof Date&&!isNaN(row.time)&&Number.isFinite(row.kp));
       const now=Date.now(),limit=now+48*3600000;
       windows=rows.filter(row=>row.time.getTime()>=now-3*3600000&&row.time.getTime()<=limit);
-      kpMax=windows.reduce((m,row)=>Math.max(m,row.kp),NaN);
-      for(const row of windows){const lvl=auroraLevelFromKp(row.kp);if(auroraLevelRank(lvl)>auroraLevelRank(bestLevel))bestLevel=lvl}
-      details.push(`NOAA Kp-Prognose: Maximum nächste 48 h ${Number.isFinite(kpMax)?kpMax.toFixed(1):'–'}`);
+      kpMax=windows.reduce((m,row)=>Math.max(m,row.kp),-Infinity);
+      if(!Number.isFinite(kpMax)){
+        kpMax=NaN;problems.push('Kp-Prognose geladen, aber keine auswertbaren Werte im 48-h-Zeitraum gefunden.');
+      }else{
+        for(const row of windows){const lvl=auroraLevelFromKp(row.kp);if(auroraLevelRank(lvl)>auroraLevelRank(bestLevel))bestLevel=lvl}
+        if(auroraLevelRank(bestLevel)>0){hasStrongSignal=true;reason=`Kp-Prognose erreicht ${kpMax.toFixed(1)} in den nächsten 48 Stunden.`;}
+      }
+      details.push(`NOAA Kp-Prognose: ${Number.isFinite(kpMax)?`Maximum nächste 48 h ${kpMax.toFixed(1)}`:'keine auswertbaren Werte im 48-h-Zeitraum'}`);
+    }else{
+      problems.push(`Kp-Prognose konnte nicht geladen werden${kpData.status==='rejected'?`: ${kpData.reason?.message||kpData.reason}`:''}.`);
+      details.push('NOAA Kp-Prognose: nicht verfügbar.');
     }
     if(alerts.status==='fulfilled'&&Array.isArray(alerts.value)){
       const recent=alerts.value.slice(-30).filter(item=>/Geomagnetic|G[1-5]|Kp/i.test([item.message,item.product_id,item.swpc_product_type].join(' ')));
       if(recent.length)details.push(`${recent.length} NOAA-Warn-/Hinweismeldungen in den aktuellen Daten.`);
-      if(recent.some(item=>/G3|G4|G5|Kp.?7|Kp.?8|Kp.?9/i.test(JSON.stringify(item))))bestLevel=auroraLevelRank(bestLevel)<2?'orange':bestLevel;
+      if(recent.some(item=>/G3|G4|G5|Kp.?7|Kp.?8|Kp.?9/i.test(JSON.stringify(item)))){bestLevel=auroraLevelRank(bestLevel)<2?'orange':bestLevel;hasStrongSignal=true;reason='Offizielle NOAA-Warn-/Hinweismeldung mit starker geomagnetischer Aktivität gefunden.';}
+      else if(recent.length&&bestLevel==='none')details.push('Warnmeldungen vorhanden, aber keine starke Schwelle für Deutschland erkannt.');
+    }else{
+      problems.push(`NOAA-Warnmeldungen konnten nicht geladen werden${alerts.status==='rejected'?`: ${alerts.reason?.message||alerts.reason}`:''}.`);
     }
     if(mag.status==='fulfilled'&&Array.isArray(mag.value)){
       const last=mag.value.slice(-1)[0]||[];const bz=Number(last[3]);if(Number.isFinite(bz))details.push(`Sonnenwind Bz zuletzt ${bz.toFixed(1)} nT.`);
+    }else{
+      problems.push(`Sonnenwinddaten konnten nicht geladen werden${mag.status==='rejected'?`: ${mag.reason?.message||mag.reason}`:''}.`);
     }
-    const message=bestLevel==='none'?'Keine relevante Polarlichtwarnung in den aktuellen Daten.':`Polarlicht ${auroraLevelLabel(bestLevel)} · Kp bis ${Number.isFinite(kpMax)?kpMax.toFixed(1):'–'} in den nächsten 48 h`;
-    auroraStatus={level:bestLevel,message,details,updatedAt:new Date().toISOString(),windows,kpMax,source:'NOAA/SWPC'};
+    let dataStatus='ok';
+    if(!Number.isFinite(kpMax)&&!hasStrongSignal){bestLevel='none';dataStatus=problems.length?'partial':'no-kp';reason='Keine belastbare Kp-Prognose oder offizielle starke Warnmeldung vorhanden.';}
+    const message=auroraLevelRank(bestLevel)>0?(Number.isFinite(kpMax)?`Polarlicht ${auroraLevelLabel(bestLevel)} · Kp bis ${kpMax.toFixed(1)} in den nächsten 48 h`:`Polarlicht ${auroraLevelLabel(bestLevel)} · offizielle NOAA-Warnmeldung oder belastbares Kurzfristsignal`):(dataStatus==='ok'?'Keine relevante Polarlichtwarnung in den aktuellen Daten.':'Polarlichtdaten unvollständig · keine belastbare Warnung');
+    auroraStatus={level:bestLevel,message,details:[...details,...problems],updatedAt:new Date().toISOString(),windows,kpMax,source:'NOAA/SWPC',dataStatus,reason};
     updateAuroraBadgeAndNotify(bestLevel,message,options.manual);
   }catch(error){
-    auroraStatus={level:'none',message:`Polarlichtdaten konnten nicht geladen werden: ${error.message}`,details:[String(error.message)],updatedAt:new Date().toISOString(),windows:[],kpMax:NaN,source:'NOAA/SWPC'};
+    auroraStatus={level:'none',message:`Polarlichtdaten konnten nicht geladen werden: ${error.message}`,details:[String(error.message)],updatedAt:new Date().toISOString(),windows:[],kpMax:NaN,source:'NOAA/SWPC',dataStatus:'error',reason:'Datenquelle nicht erreichbar oder Format nicht erkannt.'};
   }
   render();
 }
@@ -2497,10 +2543,11 @@ function openMultiNightWeatherWindow(){
   const win=window.open('about:blank','_blank');if(!win){alert('Popup blockiert. Bitte Popups für diese Seite erlauben.');return}win.document.open();win.document.write(doc);win.document.close();
 }
 function openAuroraDashboard(){
-  const loc=activeLocation();
-  const rows=(auroraStatus.windows||[]).map(row=>`<tr><td>${fmtDateTime(row.time,loc.timezone)}</td><td>${fmt(row.kp,1)}</td><td>${esc(auroraLevelLabel(auroraLevelFromKp(row.kp)))}</td></tr>`).join('')||'<tr><td colspan="3">Keine Kp-Prognose geladen.</td></tr>';
-  const details=(auroraStatus.details||[]).map(item=>`<li>${esc(item)}</li>`).join('')||'<li>Keine Details geladen.</li>';
-  const doc=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Polarlicht-Dashboard</title><link rel="stylesheet" href="assets/styles.css"><style>body{padding:24px}.dashboard-card{margin:18px 0;padding:18px;border:1px solid #264564;border-radius:18px;background:#0b1b2c}.external-links a{display:inline-block;margin:6px 10px 6px 0}</style></head><body><main><h1>Polarlicht-Dashboard</h1><section class="dashboard-card ${auroraLevelClass(auroraStatus.level)}"><h2>Status: ${esc(auroraStatus.message)}</h2><p class="muted">Quelle: ${esc(auroraStatus.source||'NOAA/SWPC')} · Stand ${auroraStatus.updatedAt?fmtDateTime(new Date(auroraStatus.updatedAt),loc.timezone):'–'}</p><ul>${details}</ul></section><section class="dashboard-card"><h2>Kp-Prognose nächste 48 Stunden</h2><div class="weather-scroll"><table class="weather-table"><thead><tr><th>Zeit</th><th>Kp</th><th>Stufe</th></tr></thead><tbody>${rows}</tbody></table></div></section><section class="dashboard-card external-links"><h2>Externe Kontrollquellen</h2><a href="https://www.spaceweather.gov/" target="_blank" rel="noopener">NOAA/SWPC</a><a href="https://www.spaceweatherlive.com/" target="_blank" rel="noopener">SpaceWeatherLive</a><a href="https://www.gfz-potsdam.de/kp-index" target="_blank" rel="noopener">GFZ Kp-Index</a></section></main></body></html>`;
+  const loc=activeLocation();if(!loc)return;
+  const details=(auroraStatus.details||[]).map(item=>`<li>${esc(item)}</li>`).join('')||'<li>Keine Detaildaten vorhanden.</li>';
+  const rows=(auroraStatus.windows||[]).length?(auroraStatus.windows||[]).map(row=>`<tr><td>${fmtDateTime(row.time,loc.timezone)}</td><td>${fmt(row.kp,1)}</td><td>${esc(auroraLevelLabel(auroraLevelFromKp(row.kp)))}</td></tr>`).join(''):`<tr><td colspan="3">${auroraStatus.dataStatus==='loading'?'Daten werden geladen …':auroraStatus.dataStatus==='error'?'Datenquelle nicht erreichbar oder Format nicht erkannt.':auroraStatus.dataStatus==='partial'?'Kp-Prognose konnte nicht geladen oder nicht ausgewertet werden.':'Kp-Prognose geladen, aber keine Werte im Zeitraum gefunden.'}</td></tr>`;
+  const statusText=auroraStatus.reason||'Keine Bewertungsgrundlage vorhanden.';
+  const doc=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Polarlicht-Dashboard</title><link rel="stylesheet" href="assets/styles.css"><style>body{padding:24px}.dashboard-card{margin:18px 0;padding:18px;border:3px solid #264564;border-radius:18px;background:#0b1b2c}.dashboard-card.aurora-yellow{border-color:#e6c857;background:linear-gradient(135deg,rgba(230,200,87,.16),#0b1b2c 45%)}.dashboard-card.aurora-orange{border-color:#ff9b3d;background:linear-gradient(135deg,rgba(255,155,61,.18),#0b1b2c 45%)}.dashboard-card.aurora-red{border-color:#ff5a6d;background:linear-gradient(135deg,rgba(255,90,109,.20),#0b1b2c 45%)}.external-links a{display:inline-block;margin:6px 10px 6px 0}</style></head><body><main><h1>Polarlicht-Dashboard</h1><section class="dashboard-card ${auroraLevelClass(auroraStatus.level)}"><h2>Status: ${esc(auroraStatus.message)}</h2><p class="muted">Quelle: ${esc(auroraStatus.source||'NOAA/SWPC')} · Stand ${auroraStatus.updatedAt?fmtDateTime(new Date(auroraStatus.updatedAt),loc.timezone):'–'} · Datenstatus: ${esc(auroraStatus.dataStatus||'unbekannt')}</p><p><strong>Bewertung:</strong> ${esc(statusText)}</p><ul>${details}</ul></section><section class="dashboard-card"><h2>Kp-Prognose nächste 48 Stunden</h2><div class="weather-scroll"><table class="weather-table"><thead><tr><th>Zeit</th><th>Kp</th><th>Stufe</th></tr></thead><tbody>${rows}</tbody></table></div></section><section class="dashboard-card external-links"><h2>Externe Kontrollquellen</h2><a href="https://www.spaceweather.gov/" target="_blank" rel="noopener">NOAA/SWPC</a><a href="https://www.spaceweatherlive.com/" target="_blank" rel="noopener">SpaceWeatherLive</a><a href="https://www.gfz-potsdam.de/kp-index" target="_blank" rel="noopener">GFZ Kp-Index</a></section></main></body></html>`;
   const win=window.open('about:blank','_blank');if(!win){alert('Popup blockiert. Bitte Popups für diese Seite erlauben.');return}win.document.open();win.document.write(doc);win.document.close();
 }
 function renderFraming(o,windowRange,loc){
@@ -2514,7 +2561,7 @@ function renderFraming(o,windowRange,loc){
   const moon=moonCoords(time),moonRaDeg=moon.raHours*15,moonDecDeg=moon.decDeg,moonSep=angularSeparation(o.raHours,o.decDeg,moon.raHours,moon.decDeg),moonAlt=altitude(moon.raHours,moon.decDeg,time,loc.latitude,loc.longitude),moonPhase=moonPhaseInfo(time),moonName=language==='en'?'Moon':'Mond';
   const outline=curatedOutlineForObject(o),availableSurveys=enabledAladinSurveys(profile);let survey=profile.planning.aladinSurvey||availableSurveys[0]?.hipsId||'P/DSS2/color';if(!availableSurveys.some(item=>item.hipsId===survey))survey=availableSurveys[0]?.hipsId||'P/DSS2/color';
   const comparisonFrames=(profile.planning.comparisonSetupIds||[]).map(id=>(profile.equipment.setups||[]).find(setup=>setup.id===id)).filter(Boolean).map(fovForSetup).filter(Boolean).map((item,index)=>({id:item.id,name:item.name,width:item.width,height:item.height,rotation:frameRotation,color:['#ffcf5a','#ba7cff','#7ef29a'][index%3]}));
-  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),frameRa:String(frameCenterRa),frameDec:String(frameCenterDec),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),targetRa:String(o.raHours*15),targetDec:String(o.decDeg),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:language==='en'?`${moonName} · ${fmt(moonSep)}° distance · altitude ${fmt(moonAlt)}°`:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language,frameKey:`${o.id}-${Math.round(frameCenterRa*100000)}-${Math.round(frameCenterDec*100000)}-${profile.central.frameVisible?'1':'0'}`,eqGrid:String(profile.central.externalAladin?.equatorialGrid!==false),altAzGrid:String(profile.central.externalAladin?.altAzGrid!==false),ground:String(profile.central.externalAladin?.ground!==false),compass:String(profile.central.externalAladin?.compass!==false),orientation:String(profile.central.externalAladin?.orientation||'standard')}).toString();
+  const query=new URLSearchParams({ra:String(o.raHours*15),dec:String(o.decDeg),frameRa:String(frameCenterRa),frameDec:String(frameCenterDec),fov:String(targetFov),survey:String(survey),frameW:String(setupW),frameH:String(setupH),frameRot:String(frameRotation),showFrame:String(Boolean(profile.central.frameVisible&&setup)),objectW:String(objectW),objectH:String(objectH),objectRot:String(objectRotation),catalogRot:String(catalogRotation),showObject:String(Boolean(profile.central.objectSizeVisible)),showLabels:String(profile.central.aladinLabels?.visible!==false),labelDetail:String(profile.central.aladinLabels?.detail||'auto'),targetId:String(o.id),targetName:String(o.name),targetRa:String(o.raHours*15),targetDec:String(o.decDeg),showMoon:String(Boolean(profile.planning.showMoonInAladin)),moonRa:String(moonRaDeg),moonDec:String(moonDecDeg),moonLabel:language==='en'?`${moonName} · ${fmt(moonSep)}° distance · altitude ${fmt(moonAlt)}°`:`${moonName} · ${fmt(moonSep)}° Abstand · Höhe ${fmt(moonAlt)}°`,moonName,moonIllumination:String(moonPhase.illumination),moonAge:String(moonPhase.age),moonWaxing:String(moonPhase.waxing),outlinePolygons:'',outlineSource:'',dbName:DB_NAME,comparisonFrames:JSON.stringify(comparisonFrames),lang:language,frameKey:`${o.id}-${Math.round(frameCenterRa*100000)}-${Math.round(frameCenterDec*100000)}-${profile.central.frameVisible?'1':'0'}`,eqGrid:String(profile.central.externalAladin?.equatorialGrid===true),altAzGrid:String(profile.central.externalAladin?.altAzGrid===true),gridStep:String(profile.central.externalAladin?.gridStep||'10'),ground:String(profile.central.externalAladin?.ground!==false),compass:String(profile.central.externalAladin?.compass!==false),orientation:String(profile.central.externalAladin?.orientation||'standard')}).toString();
   const scopes=profile.equipment.telescopes.map(item=>`<option value="${esc(item.id)}" ${item.id===activeScope()?.id?'selected':''}>${esc(item.name)}</option>`).join(''),cameras=profile.equipment.cameras.map(item=>`<option value="${esc(item.id)}" ${item.id===activeCamera()?.id?'selected':''}>${esc(item.name)}</option>`).join('');
   const selectableObjects=[...new Map([...currentComputedObjects.map(entry=>entry.object),o].map(item=>[item.id,item])).values()].sort((a,b)=>a.id.localeCompare(b.id,'de',{numeric:true})),objectOptions=selectableObjects.map(x=>`<option value="${esc(x.id)}" ${x.id===o.id?'selected':''}>${esc(x.id)} · ${esc(x.name)}</option>`).join('');
   const analysis=framingAnalysis(o,{rotation:frameRotation,optimize:false});
@@ -2684,10 +2731,11 @@ function resetDraftSection(section){
     draft.central.windUnit=base.central.windUnit;draft.central.activeWindProfile=base.central.activeWindProfile;draft.central.windProfiles=deepClone(base.central.windProfiles);draft.central.dew=deepClone(base.central.dew);draft.central.jet=deepClone(base.central.jet);
   }
   if(section==='weatherModels')draft.central.weatherModels=deepClone(base.central.weatherModels);
-  if(section==='cloudMap'){draft.central.cloudMap=deepClone(base.central.cloudMap);draft.central.weatherSources=deepClone(base.central.weatherSources);draft.central.multiNightWeather=deepClone(base.central.multiNightWeather);draft.central.aurora=deepClone(base.central.aurora);draft.central.miniHorizon=deepClone(base.central.miniHorizon);draft.central.externalAladin=deepClone(base.central.externalAladin);}
+  if(section==='cloudMap'){draft.central.cloudMap=deepClone(base.central.cloudMap);draft.central.weatherSources=deepClone(base.central.weatherSources);draft.central.multiNightWeather=deepClone(base.central.multiNightWeather);}
+  if(section==='aurora')draft.central.aurora=deepClone(base.central.aurora);
   if(section==='weights')draft.central.weights=deepClone(base.central.weights);
   if(section==='display'){
-    draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);draft.central.visibleSections=deepClone(base.central.visibleSections);
+    draft.central.defaultPlanningWindow=base.central.defaultPlanningWindow;draft.central.framing=deepClone(base.central.framing);draft.central.qualityThresholds=deepClone(base.central.qualityThresholds);draft.central.aladinLabels=deepClone(base.central.aladinLabels);draft.central.aladinSurveys=deepClone(base.central.aladinSurveys);draft.central.externalAladin=deepClone(base.central.externalAladin);draft.central.miniHorizon=deepClone(base.central.miniHorizon);draft.central.listDisplay=deepClone(base.central.listDisplay);draft.central.frameVisible=base.central.frameVisible;draft.central.objectSizeVisible=base.central.objectSizeVisible;draft.central.meteoblueCollapsed=base.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(base.central.detailPanels);draft.central.collapsed=deepClone(base.central.collapsed);draft.central.visibleSections=deepClone(base.central.visibleSections);
   }
   if(section==='locations'){
     draft.locations=deepClone(base.locations);draft.selectedLocationId=base.selectedLocationId;draft.central.defaultLocationId=base.central.defaultLocationId;draft.central.gpsBehavior=base.central.gpsBehavior;draft.central.locationSearchCountry=base.central.locationSearchCountry;locationSearchResults=[];locationSearchQuery='';locationSearchError='';horizonUndoStack=[];horizonObstacleDrawId=null;
@@ -2703,11 +2751,12 @@ function discardDraftSection(section){
     draft.central.windUnit=profile.central.windUnit;draft.central.activeWindProfile=profile.central.activeWindProfile;draft.central.windProfiles=deepClone(profile.central.windProfiles);draft.central.dew=deepClone(profile.central.dew);draft.central.jet=deepClone(profile.central.jet);
   }
   if(section==='weatherModels')draft.central.weatherModels=deepClone(profile.central.weatherModels);
-  if(section==='cloudMap'){draft.central.cloudMap=deepClone(profile.central.cloudMap);draft.central.weatherSources=deepClone(profile.central.weatherSources||{meteoblue:true,clearoutside:true,windy:true,ventusky:true});draft.central.multiNightWeather=deepClone(profile.central.multiNightWeather||{extraNights:3});draft.central.aurora=deepClone(profile.central.aurora||standardProfile().central.aurora);draft.central.miniHorizon=deepClone(profile.central.miniHorizon||standardProfile().central.miniHorizon);draft.central.externalAladin=deepClone(profile.central.externalAladin||standardProfile().central.externalAladin);}
+  if(section==='cloudMap'){draft.central.cloudMap=deepClone(profile.central.cloudMap);draft.central.weatherSources=deepClone(profile.central.weatherSources||{meteoblue:true,clearoutside:true,windy:true,ventusky:true});draft.central.multiNightWeather=deepClone(profile.central.multiNightWeather||{extraNights:3});}
+  if(section==='aurora')draft.central.aurora=deepClone(profile.central.aurora||standardProfile().central.aurora);
   if(section==='weights')draft.central.weights=deepClone(profile.central.weights);
   if(section==='filterProfiles'){draft.central.sizeProfiles=deepClone(profile.central.sizeProfiles);draft.central.objectTypeProfiles=deepClone(profile.central.objectTypeProfiles);draft.central.defaultMinScore=profile.central.defaultMinScore;draft.central.defaultMinVisibleReference=profile.central.defaultMinVisibleReference;draft.central.defaultMaxSurfaceBrightness=profile.central.defaultMaxSurfaceBrightness;}
   if(section==='display'){
-    draft.central.defaultPlanningWindow=profile.central.defaultPlanningWindow;draft.central.framing=deepClone(profile.central.framing);draft.central.qualityThresholds=deepClone(profile.central.qualityThresholds);draft.central.aladinLabels=deepClone(profile.central.aladinLabels);draft.central.aladinSurveys=deepClone(profile.central.aladinSurveys);draft.central.listDisplay=deepClone(profile.central.listDisplay);draft.central.frameVisible=profile.central.frameVisible;draft.central.objectSizeVisible=profile.central.objectSizeVisible;draft.central.meteoblueCollapsed=profile.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(profile.central.detailPanels);draft.central.collapsed=deepClone(profile.central.collapsed);draft.central.visibleSections=deepClone(profile.central.visibleSections||{});
+    draft.central.defaultPlanningWindow=profile.central.defaultPlanningWindow;draft.central.framing=deepClone(profile.central.framing);draft.central.qualityThresholds=deepClone(profile.central.qualityThresholds);draft.central.aladinLabels=deepClone(profile.central.aladinLabels);draft.central.aladinSurveys=deepClone(profile.central.aladinSurveys);draft.central.externalAladin=deepClone(profile.central.externalAladin||standardProfile().central.externalAladin);draft.central.miniHorizon=deepClone(profile.central.miniHorizon||standardProfile().central.miniHorizon);draft.central.listDisplay=deepClone(profile.central.listDisplay);draft.central.frameVisible=profile.central.frameVisible;draft.central.objectSizeVisible=profile.central.objectSizeVisible;draft.central.meteoblueCollapsed=profile.central.meteoblueCollapsed;draft.central.detailPanels=deepClone(profile.central.detailPanels);draft.central.collapsed=deepClone(profile.central.collapsed);draft.central.visibleSections=deepClone(profile.central.visibleSections||{});
   }
   if(section==='locations'){
     draft.locations=deepClone(profile.locations);draft.selectedLocationId=profile.selectedLocationId;draft.central.defaultLocationId=profile.central.defaultLocationId;draft.central.gpsBehavior=profile.central.gpsBehavior;draft.central.locationSearchCountry=profile.central.locationSearchCountry;locationSearchResults=[];locationSearchQuery='';locationSearchError='';horizonUndoStack=[];horizonObstacleDrawId=null;
@@ -2755,7 +2804,7 @@ function renderCentral(){
   const c=draft.central;
   const total=Object.values(c.weights).reduce((a,b)=>a+Number(b||0),0);
   const weatherTotal=Object.values(c.weatherModels?.weights||{}).reduce((a,b)=>a+Number(b||0),0);
-  return`<div class="settings-tabs subtabs">${[['wind','Wind'],['weather','Wetter/Karte'],['weights','Bewertung'],['display','Anzeige'],['filters','Filterprofile']].map(([k,n])=>`<button data-central-subtab="${k}" class="${currentCentralSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card subtab-panel ${currentCentralSubTab==='wind'?'active':''}">
+  return`<div class="settings-tabs subtabs">${[['wind','Wind'],['weather','Wetter/Karte'],['weights','Bewertung'],['display','Anzeige'],['filters','Filterprofile'],['aurora','Polarlicht']].map(([k,n])=>`<button data-central-subtab="${k}" class="${currentCentralSubTab===k?'active':''}">${n}</button>`).join('')}</div><div class="card subtab-panel ${currentCentralSubTab==='wind'?'active':''}">
     ${renderSaveBar('centralWind','Windwerte speichern','top')}
     <div class="section-title-row"><div><h2>Wind und Aufnahmequalität</h2><div class="small muted">Grenzwerte bewerten die erwartete Aufnahmequalität, nicht die strukturelle Sicherheit der Ausrüstung.</div></div></div>
     <div class="grid two">
@@ -2798,10 +2847,17 @@ function renderCentral(){
     </div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultCloudMapShowValues" type="checkbox" ${c.cloudMap?.showValues!==false?'checked':''}>Prozentwerte an Prognosepunkten anzeigen</label><label class="chip"><input id="cloudMapCollapsedDefault" type="checkbox" ${c.cloudMap?.collapsed?'checked':''}>Astro-Wolkenmodell initial eingeklappt</label><label class="chip"><input id="meteoblueMapCollapsedDefault" type="checkbox" ${c.cloudMap?.meteoblueMapCollapsed?'checked':''}>Meteoblue-Wetterkarte initial eingeklappt</label><label class="chip"><input data-default-cloud-overlay="precip" type="checkbox" ${c.cloudMap?.weatherOverlays?.precip!==false?'checked':''}>Niederschlag gesamt standardmäßig anzeigen</label><label class="chip"><input data-default-cloud-overlay="rain" type="checkbox" ${c.cloudMap?.weatherOverlays?.rain!==false?'checked':''}>Regen standardmäßig anzeigen</label><label class="chip"><input data-default-cloud-overlay="snow" type="checkbox" ${c.cloudMap?.weatherOverlays?.snow!==false?'checked':''}>Schnee standardmäßig anzeigen</label></div>
     <div class="metric" style="margin-top:12px"><strong>${language==='en'?'External weather-source tabs':'Tabs für externe Wetterquellen'}</strong><div class="small muted">${language==='en'?'Selected external weather sources are shown as tabs in the planning view. They are loaded only when selected and are not automatically included in the astro score.':'Ausgewählte externe Wetterquellen werden in der Planung als Tabs angezeigt. Sie werden erst beim Anwählen geladen und fließen nicht automatisch in die Astro-Bewertung ein.'}</div><div class="grid two" style="margin-top:8px">${[['meteoblue','Meteoblue'],['clearoutside','Clear Outside'],['windy','Windy'],['ventusky','Ventusky']].map(([key,label])=>`<label class="chip"><input data-weather-source-enabled="${key}" type="checkbox" ${(c.weatherSources?.[key]!==false)?'checked':''}>${esc(label)}${key==='clearoutside'?(language==='en'?' shown by default':' initial sichtbar'):''}</label>`).join('')}</div></div><div class="metric" style="margin-top:12px"><strong>Mehrnächte-Wetterverlauf</strong><div class="small muted">Zusätzliche Nächte im externen stündlichen Wetterverlauf. 3 bedeutet: aktuelle Nacht plus 3 weitere Nächte.</div><label style="margin-top:8px;display:block">Anzahl zusätzlicher Nächte<input id="multiNightExtraNights" type="number" min="0" max="7" step="1" value="${c.multiNightWeather?.extraNights??3}"></label></div>
-    <div class="metric" style="margin-top:12px"><strong>Polarlicht-Hinweis</strong><div class="small muted">Daten werden beim App-Start geladen. Intervall 0 bedeutet: danach nur manuell.</div><div class="grid three" style="margin-top:8px"><label class="chip"><input id="auroraEnabled" type="checkbox" ${c.aurora?.enabled!==false?'checked':''}>Polarlicht-Hinweis anzeigen</label><label>Intervall Minuten<input id="auroraAutoRefreshMinutes" type="number" min="0" max="720" step="5" value="${c.aurora?.autoRefreshMinutes??0}"></label><label>Benachrichtigung ab<select id="auroraNotifyLevel"><option value="yellow" ${(c.aurora?.notifyLevel||'orange')==='yellow'?'selected':''}>Gelb</option><option value="orange" ${(c.aurora?.notifyLevel||'orange')==='orange'?'selected':''}>Orange</option><option value="red" ${(c.aurora?.notifyLevel||'orange')==='red'?'selected':''}>Rot</option></select></label></div></div>
-    <div class="metric" style="margin-top:12px"><strong>Mini-Höhenprofil und externer Aladin-Tab</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="miniHorizonShow" type="checkbox" ${c.miniHorizon?.show!==false?'checked':''}>Horizont im Mini-Höhenprofil anzeigen</label><label class="chip"><input id="miniHorizonText" type="checkbox" ${c.miniHorizon?.showVisibleText!==false?'checked':''}>Horizontzeit in Objektliste anzeigen</label><label class="chip"><input id="externalAladinAltAzGrid" type="checkbox" ${c.externalAladin?.altAzGrid!==false?'checked':''}>Azimutales Raster im externen Aladin-Tab</label><label class="chip"><input id="externalAladinGround" type="checkbox" ${c.externalAladin?.ground!==false?'checked':''}>Boden/Horizont im externen Aladin-Tab</label></div></div>
     <div class="notice" style="margin-top:12px">25, 49 oder 81 Prognosepunkte bestimmen die API-Datenmenge. Die sichtbare Karte wird unabhängig davon in hoher Auflösung weich interpoliert; es werden keine Zellumrandungen gezeichnet. Standard: 49 Punkte in einem Radius von 120 km.</div>
     ${renderSaveBar('cloudMap','Wolkenkarte speichern')}
+  </div>
+  <div class="card subtab-panel ${currentCentralSubTab==='aurora'?'active':''}">
+    ${renderSaveBar('aurora','Polarlicht-Einstellungen speichern','top')}
+    <div class="section-title-row"><div><h2>Polarlicht</h2><div class="small muted">Daten werden beim App-Start geladen. Intervall 0 bedeutet: danach nur manuell.</div></div></div>
+    <div class="grid three" style="margin-top:12px"><label class="chip"><input id="auroraEnabled" type="checkbox" ${c.aurora?.enabled!==false?'checked':''}>Polarlicht-Hinweis anzeigen</label><label>Intervall Minuten<input id="auroraAutoRefreshMinutes" type="number" min="0" max="720" step="5" value="${c.aurora?.autoRefreshMinutes??0}"></label><label>Benachrichtigung ab<select id="auroraNotifyLevel"><option value="yellow" ${(c.aurora?.notifyLevel||'orange')==='yellow'?'selected':''}>Gelb</option><option value="orange" ${(c.aurora?.notifyLevel||'orange')==='orange'?'selected':''}>Orange</option><option value="red" ${(c.aurora?.notifyLevel||'orange')==='red'?'selected':''}>Rot</option></select></label></div>
+    <div class="grid three" style="margin-top:12px"><label>Schwelle Gelb Kp<input id="auroraYellowKp" type="number" min="0" max="9" step="0.1" value="${c.aurora?.yellowKp??5.7}"></label><label>Schwelle Orange Kp<input id="auroraOrangeKp" type="number" min="0" max="9" step="0.1" value="${c.aurora?.orangeKp??6.7}"></label><label>Schwelle Rot Kp<input id="auroraRedKp" type="number" min="0" max="9" step="0.1" value="${c.aurora?.redKp??7.3}"></label></div>
+    <div class="notice" style="margin-top:12px">Warnfarben werden nur gesetzt, wenn eine auswertbare Kp-Prognose, eine offizielle starke NOAA-Warnmeldung oder ein anderes belastbares Signal vorliegt. Fehlende Daten erzeugen keine Polarlichtwarnung.</div>
+    <div class="metric" style="margin-top:12px"><strong>Letzter Datenstatus</strong><div class="small muted">${esc(auroraStatus?.message||'Noch kein Abruf.')} ${auroraStatus?.updatedAt?`· ${fmtDateTime(new Date(auroraStatus.updatedAt),activeLocation()?.timezone||'Europe/Berlin')}`:''}</div></div>
+    ${renderSaveBar('aurora','Polarlicht-Einstellungen speichern')}
   </div>
   <div class="card subtab-panel ${currentCentralSubTab==='weights'?'active':''}">
     ${renderSaveBar('weights','Bewertung speichern','top')}
@@ -2834,12 +2890,16 @@ function renderCentral(){
     <div class="grid two"><label>Standard-Planungszeitraum<select id="defaultPlanningWindow">${[['sunset','Sonnenuntergang–Sonnenaufgang'],['civil','Bürgerliche Nacht'],['nautical','Nautischer Planungszeitraum'],['astronomicalTwilight','Nautisch + astronomisch'],['astronomicalNight','Astronomische Nacht']].map(([key,name])=>`<option value="${key}" ${c.defaultPlanningWindow===key?'selected':''}>${name}</option>`).join('')}</select></label></div>
     <div class="grid two" style="margin-top:12px"><label>Gewünschter Mindestfreiraum zum Bildrand (%)<input id="framingMinMargin" type="number" min="0" max="45" step="1" value="${Number(c.framing?.minMarginPercent??10)}"></label><label class="chip"><input id="framingAutoRotate" type="checkbox" ${c.framing?.autoRotate!==false?'checked':''}>Kamera bei verlässlichem Positionswinkel automatisch optimal drehen</label></div>
     <div class="grid two" style="margin-top:12px"><div class="metric"><strong>Qualitätsampel</strong><div class="small muted">Rot 0 bis unter Gelb, Gelb bis unter Grün, Grün bis 100.</div><div class="grid two" style="margin-top:8px"><label>Gelb ab<input id="qualityYellow" type="number" min="1" max="98" step="1" value="${Number(c.qualityThresholds?.yellow??60)}"></label><label>Grün ab<input id="qualityGreen" type="number" min="2" max="99" step="1" value="${Number(c.qualityThresholds?.green??80)}"></label></div></div><div class="metric"><strong>Objektbeschriftungen in Aladin</strong><label class="chip" style="margin-top:8px"><input id="defaultAladinLabelsVisible" type="checkbox" ${c.aladinLabels?.visible!==false?'checked':''}>Objektnamen und Katalognummern anzeigen</label><label>Detailstufe<select id="defaultAladinLabelDetail">${ALADIN_LABEL_DETAIL_OPTIONS.map(([key,label])=>`<option value="${key}" ${c.aladinLabels?.detail===key?'selected':''}>${optionText(label)}</option>`).join('')}</select></label></div></div>
-    <div class="display-config-selector static"><div class="section-title-row"><div><h3>Objektlisteninformationen konfigurieren</h3><div class="small muted">Sichtbarkeit, Reihenfolge und aktives Darstellungsprofil der Objektliste.</div></div><label>Objektliste Darstellungsprofil – aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div><div class="display-config-list">${Object.entries(c.listDisplay.profiles).map(([key,value])=>renderDisplayColumnConfigurator(key,value)).join('')}</div></div>
+    <div class="display-config-selector static"><div class="section-title-row"><div><h3>Objektlisteninformationen konfigurieren</h3><div class="small muted">Sichtbarkeit, Reihenfolge und aktives Darstellungsprofil der Objektliste.</div></div><label>Objektliste Darstellungsprofil – aktiv<select id="activeDisplayProfile">${Object.entries(c.listDisplay.profiles).map(([key,value])=>`<option value="${key}" ${c.listDisplay.activeProfile===key?'selected':''}>${esc(value.name)}</option>`).join('')}</select></label></div><div class="grid two" style="margin:12px 0"><label class="chip"><input id="miniHorizonShow" type="checkbox" ${c.miniHorizon?.show!==false?'checked':''}>Horizontlinie im Mini-Höhenprofil anzeigen</label></div><div class="display-config-list">${Object.entries(c.listDisplay.profiles).map(([key,value])=>renderDisplayColumnConfigurator(key,value)).join('')}</div></div>
     <div class="grid two" style="margin-top:12px"><label class="chip"><input id="defaultFrameVisible" type="checkbox" ${c.frameVisible?'checked':''}>Setup-Rahmen standardmäßig anzeigen</label><label class="chip"><input id="defaultObjectVisible" type="checkbox" ${c.objectSizeVisible?'checked':''}>Objektgröße standardmäßig anzeigen</label><label class="chip"><input id="defaultMeteoblueCollapsed" type="checkbox" ${c.meteoblueCollapsed?'checked':''}>Meteoblue standardmäßig eingeklappt</label><label class="chip"><input id="defaultAltitudeCollapsed" type="checkbox" ${c.detailPanels?.altitudeCollapsed?'checked':''}>Höhenkurve initial eingeklappt</label><label class="chip"><input id="defaultHorizonCollapsed" type="checkbox" ${c.detailPanels?.horizonCollapsed?'checked':''}>Horizontansicht initial eingeklappt</label></div>
     <div class="metric" style="margin-top:12px"><strong>Aufklappzustand beim Öffnen der Planung</strong><div class="grid three" style="margin-top:8px"><label class="chip"><input id="defaultProfilesCollapsed" type="checkbox" ${c.collapsed?.profiles?'checked':''}>„Profile für diese Planung“ eingeklappt</label><label class="chip"><input id="defaultWeatherSummaryCollapsed" type="checkbox" ${c.collapsed?.weatherSummary?'checked':''}>„Wetter und Aufnahmequalität“ eingeklappt</label><label class="chip"><input id="defaultWeatherHourlyCollapsed" type="checkbox" ${c.collapsed?.weatherHourly?'checked':''}>„Stündlicher Wetterverlauf“ eingeklappt</label></div></div><div class="metric section-visibility-config" style="margin-top:12px"><strong>${language==='en'?'Show or hide planning sections':'Planungsrubriken anzeigen oder ausblenden'}</strong><div class="small muted" style="margin-top:4px">${language==='en'?'Disabled sections are completely hidden in the planning view. This is independent of whether a visible section starts open or collapsed.':'Ausgeschaltete Rubriken werden in der Planung komplett ausgeblendet. Das ist unabhängig davon, ob eine sichtbare Rubrik offen oder eingeklappt startet.'}</div><div class="grid three" style="margin-top:8px">${[['profiles','Profile für diese Planung'],['weatherSummary','Wetter und Aufnahmequalität'],['weatherHourly','Stündlicher Wetterverlauf'],['cloudMap','Astro-Wolkenmodell'],['weatherSources','Zusätzliche Wetterquellen'],['objectSelection','Objektauswahl']].map(([key,label])=>`<label class="chip"><input data-visible-section="${key}" type="checkbox" ${c.visibleSections?.[key]!==false?'checked':''}>${optionText(label)} ${language==='en'?'show':'anzeigen'}</label>`).join('')}</div></div>
-    <details class="metric aladin-survey-settings" style="margin-top:16px"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin-Surveys</strong><span class="small muted">Weitere Surveys können manuell per HiPS-ID ergänzt werden. Monochrome Surveys werden nativ angezeigt.</span></summary><div class="section-title-row" style="margin-top:12px"><div><div class="small muted">Surveys in der Aladin-Auswahl aktivieren, umbenennen oder eigene HiPS-IDs ergänzen. Diese Expertenliste ist initial zugeklappt.</div></div><button id="addAladinSurvey" type="button">Survey hinzufügen</button></div>
+    <div class="metric aladin-settings" style="margin-top:16px"><h3>Aladin</h3><details class="aladin-survey-settings"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin - Survey</strong><span class="small muted">Weitere Surveys können manuell per HiPS-ID ergänzt werden. Monochrome Surveys werden nativ angezeigt.</span></summary><div class="section-title-row" style="margin-top:12px"><div><div class="small muted">Surveys in der Aladin-Auswahl aktivieren, umbenennen oder eigene HiPS-IDs ergänzen. Diese Expertenliste ist initial zugeklappt.</div></div><button id="addAladinSurvey" type="button">Survey hinzufügen</button></div>
       <div class="aladin-survey-list">${normalizeAladinSurveys(c.aladinSurveys).map(item=>`<div class="survey-config-row" data-survey-row="${esc(item.id)}"><label class="chip"><input data-aladin-survey="${esc(item.id)}" data-field="enabled" type="checkbox" ${item.enabled?'checked':''}>in Auswahl</label><label>Anzeigename<input data-aladin-survey="${esc(item.id)}" data-field="name" value="${esc(item.name)}"></label><label>HiPS-ID<input data-aladin-survey="${esc(item.id)}" data-field="hipsId" value="${esc(item.hipsId)}" ${item.builtin?'readonly':''}></label><label>Kategorie<input data-aladin-survey="${esc(item.id)}" data-field="category" value="${esc(item.category||'')}"></label>${item.builtin?'':`<button type="button" class="danger" data-delete-aladin-survey="${esc(item.id)}">Entfernen</button>`}</div>`).join('')}</div>
     </details>
+    <details class="aladin-horizon-settings" style="margin-top:12px"><summary><span class="disclosure-arrow" aria-hidden="true"></span><strong>Aladin - Himmel & Horizont</strong><span class="small muted">Gradnetze, Boden/Horizont und Himmelsrichtungen für den externen Aladin-Tab.</span></summary>
+      <div class="grid three" style="margin-top:12px"><label class="chip"><input id="externalAladinEquatorialGrid" type="checkbox" ${c.externalAladin?.equatorialGrid===true?'checked':''}>Äquatoriales Gradnetz anzeigen</label><label class="chip"><input id="externalAladinAltAzGrid" type="checkbox" ${c.externalAladin?.altAzGrid===true?'checked':''}>Azimutales Gradnetz anzeigen</label><label>Gradnetz-Abstufung<select id="externalAladinGridStep"><option value="auto" ${String(c.externalAladin?.gridStep||'10')==='auto'?'selected':''}>Auto</option><option value="10" ${String(c.externalAladin?.gridStep||'10')==='10'?'selected':''}>10°</option><option value="15" ${String(c.externalAladin?.gridStep||'10')==='15'?'selected':''}>15°</option><option value="30" ${String(c.externalAladin?.gridStep||'10')==='30'?'selected':''}>30°</option></select></label><label class="chip"><input id="externalAladinGround" type="checkbox" ${c.externalAladin?.ground!==false?'checked':''}>Boden/Horizontbereich anzeigen</label><label class="chip"><input id="externalAladinCompass" type="checkbox" ${c.externalAladin?.compass!==false?'checked':''}>Himmelsrichtungen/Kompassmarken anzeigen</label></div>
+      <div class="notice" style="margin-top:12px">Die Gradnetze sind initial deaktiviert. Das azimutale Raster wird dezenter gezeichnet. Bei aktivem Boden wird der Bereich unterhalb der Horizontlinie abgedunkelt.</div>
+    </details></div>
     ${renderSaveBar('display','Anzeigeeinstellungen speichern')}
   </div>`;
 }
@@ -3727,11 +3787,10 @@ function bindCentralDraft(){
   set('meteoblueMapCollapsedDefault',element=>draft.central.cloudMap.meteoblueMapCollapsed=element.checked,'cloudMap');
   document.querySelectorAll('[data-weather-source-enabled]').forEach(element=>element.onchange=()=>{draft.central.weatherSources=draft.central.weatherSources||{};draft.central.weatherSources[element.dataset.weatherSourceEnabled]=element.checked;setSectionDirty('cloudMap')});
   const multiNightExtra=document.getElementById('multiNightExtraNights');if(multiNightExtra)multiNightExtra.onchange=()=>{draft.central.multiNightWeather=draft.central.multiNightWeather||{};draft.central.multiNightWeather.extraNights=clamp(Math.round(Number(multiNightExtra.value)||3),0,7);setSectionDirty('cloudMap')};
-  const auroraEnabled=document.getElementById('auroraEnabled');if(auroraEnabled)auroraEnabled.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.enabled=auroraEnabled.checked;setSectionDirty('cloudMap')};
-  const auroraAuto=document.getElementById('auroraAutoRefreshMinutes');if(auroraAuto)auroraAuto.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.autoRefreshMinutes=clamp(Math.round(Number(auroraAuto.value)||0),0,720);setSectionDirty('cloudMap')};
-  const auroraNotify=document.getElementById('auroraNotifyLevel');if(auroraNotify)auroraNotify.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.notifyLevel=auroraNotify.value;setSectionDirty('cloudMap')};
-  for(const [id,key] of [['miniHorizonShow','show'],['miniHorizonText','showVisibleText']]){const el=document.getElementById(id);if(el)el.onchange=()=>{draft.central.miniHorizon=draft.central.miniHorizon||{};draft.central.miniHorizon[key]=el.checked;setSectionDirty('cloudMap')}}
-  for(const [id,key] of [['externalAladinAltAzGrid','altAzGrid'],['externalAladinGround','ground']]){const el=document.getElementById(id);if(el)el.onchange=()=>{draft.central.externalAladin=draft.central.externalAladin||{};draft.central.externalAladin[key]=el.checked;setSectionDirty('cloudMap')}}
+  const auroraEnabled=document.getElementById('auroraEnabled');if(auroraEnabled)auroraEnabled.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.enabled=auroraEnabled.checked;setSectionDirty('aurora')};
+  const auroraAuto=document.getElementById('auroraAutoRefreshMinutes');if(auroraAuto)auroraAuto.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.autoRefreshMinutes=clamp(Math.round(Number(auroraAuto.value)||0),0,720);setSectionDirty('aurora')};
+  const auroraNotify=document.getElementById('auroraNotifyLevel');if(auroraNotify)auroraNotify.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora.notifyLevel=auroraNotify.value;setSectionDirty('aurora')};
+  for(const [id,key] of [['auroraYellowKp','yellowKp'],['auroraOrangeKp','orangeKp'],['auroraRedKp','redKp']]){const el=document.getElementById(id);if(el)el.onchange=()=>{draft.central.aurora=draft.central.aurora||{};draft.central.aurora[key]=Number(el.value);setSectionDirty('aurora')}}
   document.querySelectorAll('[data-weight]').forEach(element=>element.onchange=()=>{
     draft.central.weights[element.dataset.weight]=Math.round(Number(element.value));
     setSectionDirty('weights');
@@ -3760,6 +3819,9 @@ function bindCentralDraft(){
   }));
   set('defaultAladinLabelsVisible',element=>draft.central.aladinLabels.visible=element.checked,'display');
   set('defaultAladinLabelDetail',element=>draft.central.aladinLabels.detail=element.value,'display');
+  const miniHorizonShow=document.getElementById('miniHorizonShow');if(miniHorizonShow)miniHorizonShow.onchange=()=>{draft.central.miniHorizon=draft.central.miniHorizon||{};draft.central.miniHorizon.show=miniHorizonShow.checked;setSectionDirty('display')};
+  for(const [id,key] of [['externalAladinEquatorialGrid','equatorialGrid'],['externalAladinAltAzGrid','altAzGrid'],['externalAladinGround','ground'],['externalAladinCompass','compass']]){const el=document.getElementById(id);if(el)el.onchange=()=>{draft.central.externalAladin=draft.central.externalAladin||{};draft.central.externalAladin[key]=el.checked;setSectionDirty('display')}}
+  const gridStep=document.getElementById('externalAladinGridStep');if(gridStep)gridStep.onchange=()=>{draft.central.externalAladin=draft.central.externalAladin||{};draft.central.externalAladin.gridStep=gridStep.value;setSectionDirty('display')};
   document.querySelectorAll('[data-aladin-survey]').forEach(element=>element.onchange=()=>{const item=(draft.central.aladinSurveys||[]).find(x=>x.id===element.dataset.aladinSurvey);if(!item)return;const field=element.dataset.field;if(field==='enabled')item.enabled=element.checked;else item[field]=String(element.value||'').trim();setSectionDirty('display')});
   document.getElementById('addAladinSurvey')?.addEventListener('click',()=>{draft.central.aladinSurveys=normalizeAladinSurveys(draft.central.aladinSurveys);draft.central.aladinSurveys.push({id:`custom-survey-${Date.now()}`,name:'Neuer Survey',hipsId:'',category:'Benutzerdefiniert',enabled:true,builtin:false});setSectionDirty('display');render()});
   document.querySelectorAll('[data-delete-aladin-survey]').forEach(button=>button.onclick=()=>{draft.central.aladinSurveys=(draft.central.aladinSurveys||[]).filter(item=>item.id!==button.dataset.deleteAladinSurvey);setSectionDirty('display');render()});
@@ -3981,11 +4043,14 @@ async function saveDraftSection(section){
     profile.central.cloudMap={...deepClone(draft.central.cloudMap)};
     profile.central.weatherSources=deepClone(draft.central.weatherSources||{meteoblue:true,clearoutside:true,windy:true,ventusky:true});
     profile.central.multiNightWeather=deepClone(draft.central.multiNightWeather||{extraNights:3});
-    profile.central.aurora=deepClone(draft.central.aurora||standardProfile().central.aurora);
-    profile.central.miniHorizon=deepClone(draft.central.miniHorizon||standardProfile().central.miniHorizon);
-    profile.central.externalAladin=deepClone(draft.central.externalAladin||standardProfile().central.externalAladin);
-    setupAuroraAutoRefresh();
     profile.planning.temporaryCloudMapView=null;profile.planning.temporaryCloudMapBaseMode=null;profile.planning.temporaryCloudSmoothing=null;profile.planning.temporaryCloudMapShowValues=null;profile.planning.cloudMapWeatherOverlays=deepClone(profile.central.cloudMap.weatherOverlays||{precip:true,rain:true,snow:true});profile.planning.cloudMapLayer=profile.central.cloudMap.defaultLayer;profile.planning.cloudMapMode=profile.central.cloudMap.defaultMode;profile.planning.cloudMapFrame=0;profile.planning.cloudMapTimeStepMinutes=null;cloudMapData=null;dirtySections.delete('cloudMap');
+  }
+  if(section==='aurora'){
+    const a=draft.central.aurora||standardProfile().central.aurora;
+    a.autoRefreshMinutes=clamp(Math.round(Number(a.autoRefreshMinutes)||0),0,720);
+    a.yellowKp=Number(a.yellowKp)||5.7;a.orangeKp=Number(a.orangeKp)||6.7;a.redKp=Number(a.redKp)||7.3;
+    if(!(a.yellowKp<a.orangeKp&&a.orangeKp<a.redKp)){alert('Bitte gültige Polarlicht-Schwellen eingeben: Gelb < Orange < Rot.');return}
+    profile.central.aurora=deepClone(a);setupAuroraAutoRefresh();dirtySections.delete('aurora');
   }
   if(section==='weights'){
     const total=Object.values(draft.central.weights).reduce((sum,value)=>sum+Number(value),0);
@@ -3996,7 +4061,7 @@ async function saveDraftSection(section){
     const yellow=Math.round(Number(draft.central.qualityThresholds?.yellow)),green=Math.round(Number(draft.central.qualityThresholds?.green));
     if(!Number.isFinite(yellow)||!Number.isFinite(green)||yellow<1||green>100||yellow>=green){alert('Bitte gültige Qualitätsgrenzen eingeben: „Gelb ab“ muss kleiner als „Grün ab“ sein.');return}
     draft.central.qualityThresholds={yellow,green};
-    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.framing=deepClone(draft.central.framing);profile.central.qualityThresholds=deepClone(draft.central.qualityThresholds);profile.central.aladinLabels=deepClone(draft.central.aladinLabels);profile.central.aladinSurveys=deepClone(draft.central.aladinSurveys);profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.central.collapsed=deepClone(draft.central.collapsed);profile.central.visibleSections=deepClone(draft.central.visibleSections||{});profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
+    profile.central.defaultPlanningWindow=draft.central.defaultPlanningWindow;profile.planning.planningWindow=draft.central.defaultPlanningWindow;profile.central.framing=deepClone(draft.central.framing);profile.central.qualityThresholds=deepClone(draft.central.qualityThresholds);profile.central.aladinLabels=deepClone(draft.central.aladinLabels);profile.central.aladinSurveys=deepClone(draft.central.aladinSurveys);profile.central.externalAladin=deepClone(draft.central.externalAladin||standardProfile().central.externalAladin);profile.central.miniHorizon=deepClone(draft.central.miniHorizon||standardProfile().central.miniHorizon);profile.central.listDisplay=deepClone(draft.central.listDisplay);profile.central.frameVisible=draft.central.frameVisible;profile.central.objectSizeVisible=draft.central.objectSizeVisible;profile.central.meteoblueCollapsed=draft.central.meteoblueCollapsed;profile.central.detailPanels=deepClone(draft.central.detailPanels);profile.central.collapsed=deepClone(draft.central.collapsed);profile.central.visibleSections=deepClone(draft.central.visibleSections||{});profile.planning.detailsOpen=false;page=1;dirtySections.delete('display');
   }
   if(section==='locations'){
     draft.locations.forEach(item=>{horizonProfilesFor(item).forEach(entry=>{ensureHorizonProfile(item,entry.id);entry.horizonProfile[HORIZON_LAST_INDEX]=entry.horizonProfile[0]});syncCardinalHorizon(item,item.selectedHorizonProfileId)});
