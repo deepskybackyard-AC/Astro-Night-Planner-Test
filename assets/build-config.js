@@ -3,27 +3,27 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.3.0-test.4',
-  release: '1.3.0-test.4',
+  appVersion: '1.3.0-test.5',
+  release: '1.3.0-test.5',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.3.0-test.4',
+  documentTitle: 'Astro Night Planner 1.3.0-test.5',
   releaseNotes: {
     de: [
-      'Die Objekt-Detailansicht wird außerhalb der breiten Tabelle dargestellt; der horizontale Scrollbalken gehört wieder zur übergeordneten Objektliste.',
-      'Lange Sichtbarkeits-Spaltenköpfe werden mehrzeilig umbrochen.',
-      'Polarlicht-Warnfarben Gelb, Orange und Rot sind deutlicher unterscheidbar.',
-      'Boden/Horizont und azimutales Gradnetz im externen Aladin-Tab werden als sichtbares Overlay robuster neu projiziert.',
-      'Die Bodenmaske folgt der projizierten Horizontlinie statt einer festen Bildschirmgeraden.',
-      'Der Farbpicker für das azimutale Gradnetz zeigt zusätzlich ein Farbfeld mit der gewählten Farbe.'
+      'Die Boden-Transparenz im externen Aladin-Tab wird richtig herum interpretiert: 0 % = stark abgedunkelt, 100 % = vollständig transparent.',
+      'Das azimutale Gradnetz nutzt im Auto-Modus feinere Abstufungen je nach Zoomstufe und kann manuell auf Auto, 10°, 5°, 2° oder 1° gesetzt werden.',
+      'Gradzahl-Labels werden am sichtbaren Rand der azimutalen Rasterlinien gezeichnet.',
+      'Himmelsrichtungen und Zwischenrichtungen werden robuster an den sichtbaren Rand gesetzt.',
+      'Das Farbfeld des azimutalen Gradnetzes wurde vergrößert.',
+      'Hilfe und Handbuch wurden zu Boden-Transparenz, azimutalem Gradnetz und Himmelsrichtungen aktualisiert.'
     ],
     en: [
-      'Object details are rendered outside the wide table; the horizontal scrollbar belongs to the parent object list again.',
-      'Long visibility column headings wrap to multiple lines.',
-      'Aurora warning colors yellow, orange and red are easier to distinguish.',
-      'Ground/horizon and azimuthal grid in the external Aladin tab are reprojected more robustly as a visible overlay.',
-      'The ground mask follows the projected horizon line instead of a fixed screen line.',
-      'The azimuthal grid color picker also shows a color swatch with the selected color.'
+      'Ground transparency in the external Aladin tab is interpreted correctly: 0% = strongly darkened, 100% = fully transparent.',
+      'The azimuthal grid now uses finer automatic spacing depending on zoom level and can be set manually to Auto, 10°, 5°, 2° or 1°.',
+      'Degree labels are drawn at the visible edges of azimuthal grid lines.',
+      'Cardinal and intercardinal direction labels are clamped to the visible edge more robustly.',
+      'The azimuthal grid color swatch was enlarged.',
+      'Help and manual were updated for ground transparency, the azimuthal grid and compass directions.'
     ]
   }
 });

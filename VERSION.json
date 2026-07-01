@@ -1,25 +1,25 @@
 {
-  "version": "1.3.0-test.4",
-  "release": "1.3.0-test.4",
+  "version": "1.3.0-test.5",
+  "release": "1.3.0-test.5",
   "environment": "test",
-  "builtAt": "2026-07-01T23:10:00Z",
-  "notes": "Testversion 1.3.0-test.4: Korrektur der Objektlisten-Scrollbar, deutlichere Sichtbarkeitsspalten, unterscheidbarere Polarlichtfarben, sichtbares Aladin-Boden/Alt-Az-Overlay und Farbfeld für den Grid-Farbpicker.",
+  "builtAt": "2026-07-01T23:45:00Z",
+  "notes": "Testversion 1.3.0-test.5: Korrekturen am externen Aladin-Tab mit richtiger Boden-Transparenz, dynamischer Abstufung und Randbeschriftung des azimutalen Gradnetzes sowie dauerhaft sichtbaren Himmelsrichtungen.",
   "changes": {
     "de": [
-      "Die Objekt-Detailansicht wird nicht mehr innerhalb der breiten Tabelle gerendert; der horizontale Scrollbalken sitzt wieder an der übergeordneten Objektliste.",
-      "Lange Sichtbarkeits-Spaltenköpfe werden mehrzeilig umbrochen, damit die Detailansicht weniger Breite benötigt.",
-      "Gelb, Orange und Rot beim Polarlicht-Hinweis wurden farblich und textlich deutlicher voneinander getrennt.",
-      "Boden/Horizont und azimutales Gradnetz im externen Aladin-Tab werden robuster als sichtbares Overlay oberhalb der Aladin-Ansicht gezeichnet und regelmäßig neu projiziert.",
-      "Die Bodenmaske wird aus der tatsächlichen Projektion berechnet und folgt beim Verschieben/Zoomen dem Horizont statt als feste Bildschirmgerade zu erscheinen.",
-      "Der Farbpicker für das azimutale Gradnetz zeigt zusätzlich ein deutliches Farbfeld mit der aktuell gewählten Farbe."
+      "Die Einstellung Transparenz Boden (%) wird im externen Aladin-Tab richtig herum interpretiert: 0 % bedeutet stark abgedunkelt, 100 % bedeutet vollständig transparent.",
+      "Das azimutale Gradnetz besitzt im Auto-Modus nun feinere Abstufungen je nach Zoomstufe und kann manuell auf Auto, 10°, 5°, 2° oder 1° gesetzt werden.",
+      "Azimutales Gradnetz: Gradzahl-Labels werden am sichtbaren Rand der Linien gezeichnet, damit die Rasterlinien besser lesbar sind.",
+      "Himmelsrichtungen werden im externen Aladin-Tab robuster angezeigt; N/O/S/W sowie Zwischenrichtungen werden bei Bedarf an den sichtbaren Rand gesetzt.",
+      "Der Farbpicker für das azimutale Gradnetz zeigt ein größeres Farbfeld mit der aktuell gewählten Farbe.",
+      "Hilfe und Handbuch wurden zu Boden-Transparenz, azimutalem Gradnetz und Himmelsrichtungen aktualisiert."
     ],
     "en": [
-      "Object details are no longer rendered inside the wide table; the horizontal scrollbar is back on the parent object list.",
-      "Long visibility column headings now wrap to multiple lines to reduce unnecessary width.",
-      "Yellow, orange and red aurora states are more clearly separated by color and text.",
-      "Ground/horizon and azimuthal grid in the external Aladin tab are drawn more robustly as a visible overlay above the Aladin view and reprojected regularly.",
-      "The ground mask is calculated from the actual projection and follows the horizon while panning/zooming instead of using a fixed screen line.",
-      "The azimuthal grid color picker now also shows a clear swatch with the selected color."
+      "The external Aladin tab now interprets ground transparency correctly: 0% means strongly darkened, 100% means fully transparent.",
+      "The azimuthal grid now uses finer automatic spacing depending on zoom level and can be set manually to Auto, 10°, 5°, 2° or 1°.",
+      "Azimuthal grid labels are drawn at the visible line edges to make grid lines easier to read.",
+      "Compass directions are displayed more robustly in the external Aladin tab; cardinal and intercardinal labels are clamped to the visible edge when needed.",
+      "The azimuthal grid color picker shows a larger color swatch with the selected color.",
+      "Help and manual were updated for ground transparency, the azimuthal grid and compass directions."
     ]
   }
 }
