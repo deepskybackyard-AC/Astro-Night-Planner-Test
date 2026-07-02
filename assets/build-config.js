@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.3.1-test.1',
-  release: '1.3.1-test.1',
+  appVersion: '1.3.1-test.2',
+  release: '1.3.1-test.2',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.3.1-test.1',
+  documentTitle: 'Astro Night Planner 1.3.1-test.2',
   releaseNotes: {
     de: [
       'Polarlicht-Bewertung korrigiert: NOAA-Alert-Meldungen setzen nicht mehr allein eine lokale Warnfarbe; maßgeblich sind auswertbare Kp-Daten.',
