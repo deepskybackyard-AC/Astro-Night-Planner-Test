@@ -3,13 +3,15 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.3.1-test.2',
-  release: '1.3.1-test.2',
+  appVersion: '1.3.1-test.3',
+  release: '1.3.1-test.3',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.3.1-test.2',
+  documentTitle: 'Astro Night Planner 1.3.1-test.3',
   releaseNotes: {
     de: [
+      'NOAA-/GFZ-Kontrollgrafiken im Polarlicht-Dashboard größer dargestellt; maximal dreispaltig mit besserer Lesbarkeit auf großen Monitoren.',
+      'Fehlende deutsch/englische Polarlicht-Texte in Dashboard, Status, Kp-Tabelle, Grafikkarten und Einstellungen ergänzt.',
       'Polarlicht-Bewertung korrigiert: NOAA-Alert-Meldungen setzen nicht mehr allein eine lokale Warnfarbe; maßgeblich sind auswertbare Kp-Daten.',
       'NOAA-Kp-Prognose, beobachteter NOAA-Kp und GFZ-Kp-Prognose werden getrennt ausgewertet und im Dashboard nachvollziehbar angezeigt.',
       'Das Polarlicht-Dashboard enthält einen Button „Polarlichtdaten aktualisieren“ sowie NOAA- und GFZ-Kontrollgrafiken mit Vergrößern- und Quellenfunktionen.',
@@ -17,6 +19,8 @@ window.ANP_BUILD = Object.freeze({
       'Der Hilfe-Button „Neuerungen“ öffnet wieder eine versionsweise Übersicht: aktuelle Version zuerst, danach ältere Versionsschritte.'
     ],
     en: [
+      'NOAA/GFZ reference graphics in the aurora dashboard are shown larger; they remain limited to three columns for better readability on large monitors.',
+      'Missing German/English aurora text in the dashboard, status, Kp table, graphic cards and settings has been completed.',
       'Aurora assessment corrected: NOAA alert messages no longer set a local warning color by themselves; machine-readable Kp data is decisive.',
       'NOAA Kp forecast, observed NOAA Kp and GFZ Kp forecast are evaluated separately and shown transparently in the dashboard.',
       'The aurora dashboard now includes a Refresh aurora data button plus NOAA and GFZ reference graphics with enlarge and source actions.',
