@@ -1,21 +1,23 @@
 {
-  "version": "1.3.0-test.6",
-  "release": "1.3.0-test.6",
+  "version": "1.3.1-test.1",
+  "release": "1.3.1-test.1",
   "environment": "test",
-  "builtAt": "2026-07-02T00:10:00Z",
-  "notes": "Testversion 1.3.0-test.6: Korrekturen am externen Aladin-Tab mit zuverlässigeren Gradzahl-Labels und Himmelsrichtungen bei stärkerem Zoom sowie bereinigter Farbwahl für das azimutale Gradnetz.",
+  "builtAt": "2026-07-02T20:55:00Z",
+  "notes": "Testversion 1.3.1-test.1: Korrigierte Polarlicht-Bewertung, GFZ-Kp-Prognose, NOAA/GFZ-Kontrollgrafiken im Dashboard und reparierte Neuerungsübersicht in der Hilfe.",
   "changes": {
     "de": [
-      "Gradzahl-Labels des azimutalen Gradnetzes bleiben auch bei feineren Zoom-Abstufungen am sichtbaren Rand erhalten.",
-      "Himmelsrichtungen und Zwischenrichtungen werden bei stärkerem Zoom zuverlässiger an den sichtbaren Rand gesetzt.",
-      "Die Farbwahl für das azimutale Gradnetz wurde bereinigt: Es gibt nur noch ein Farbfeld/einen Farbpicker.",
-      "Hilfe und Handbuch erklären die Horizontdarstellung im externen Aladin-Tab und die Orientierungshilfe durch das azimutale Raster."
+      "Polarlicht-Bewertung korrigiert: NOAA-Alert-Meldungen setzen nicht mehr allein eine lokale Warnfarbe; maßgeblich sind auswertbare Kp-Daten.",
+      "NOAA-Kp-Prognose, beobachteter NOAA-Kp und GFZ-Kp-Prognose werden getrennt ausgewertet und im Dashboard nachvollziehbar angezeigt.",
+      "Das Polarlicht-Dashboard enthält einen Button „Polarlichtdaten aktualisieren“ sowie NOAA- und GFZ-Kontrollgrafiken mit Vergrößern- und Quellenfunktionen.",
+      "Der GFZ-Kontrolllink führt jetzt zur Vorhersageseite. Hilfe und Handbuch erklären Datenquellen, Warnstufen und Grenzen der lokalen Polarlichtbewertung.",
+      "Der Hilfe-Button „Neuerungen“ öffnet wieder eine versionsweise Übersicht: aktuelle Version zuerst, danach ältere Versionsschritte."
     ],
     "en": [
-      "Azimuthal grid degree labels remain visible at the visible edge even with finer zoom-dependent spacing.",
-      "Cardinal and intercardinal direction labels are placed more reliably at the visible edge at higher zoom levels.",
-      "The azimuthal grid color setting was simplified: only one color field/color picker remains.",
-      "Help and manual explain the horizon display in the external Aladin tab and the orientation aid provided by the azimuthal grid."
+      "Aurora assessment corrected: NOAA alert messages no longer set a local warning color by themselves; machine-readable Kp data is decisive.",
+      "NOAA Kp forecast, observed NOAA Kp and GFZ Kp forecast are evaluated separately and shown transparently in the dashboard.",
+      "The aurora dashboard now includes a Refresh aurora data button plus NOAA and GFZ reference graphics with enlarge and source actions.",
+      "The GFZ reference link now opens the forecast page. Help and manual explain data sources, warning levels and limits of local aurora assessment.",
+      "The Help button “What’s new” now opens a versioned overview: current version first, followed by older version steps."
     ]
   }
 }

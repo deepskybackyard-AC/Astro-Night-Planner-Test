@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.3.0-test.6 - Test-Cache */
+/* Astro Night Planner 1.3.1-test.1 - Test-Cache */
 'use strict';
 const ENV = 'test';
-const VERSION = '1.3.0-test.6';
+const VERSION = '1.3.1-test.1';
 const CACHE_NAME = `astro-night-planner-${ENV}-${VERSION}`;
 const CORE = [
   './', './index.html', './manifest.webmanifest', './VERSION.json', './icon.svg', './icon-192.png', './icon-512.png',
