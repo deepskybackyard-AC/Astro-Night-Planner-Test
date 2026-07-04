@@ -1,19 +1,21 @@
 {
-  "version": "1.3.1-test.3",
-  "release": "1.3.1-test.3",
+  "version": "1.4.0-test.1",
+  "release": "1.4.0-test.1",
   "environment": "test",
-  "builtAt": "2026-07-02T22:05:00Z",
-  "notes": "Testversion 1.3.1-test.3: Polarlicht-Kontrollgrafiken vergrößert und fehlende deutsch/englische Polarlicht-Übersetzungen ergänzt.",
+  "builtAt": "2026-07-04T15:10:00Z",
+  "notes": "Testversion 1.4.0-test.1: lokale HiPS-/Survey-Quellen vorbereitet, Survey-Einstellungen in Tabs gegliedert und Hilfe/Übersetzungen erweitert.",
   "changes": {
     "de": [
-      "NOAA-/GFZ-Kontrollgrafiken im Polarlicht-Dashboard werden größer dargestellt, bleiben aber maximal dreispaltig.",
-      "Polarlicht-Dashboard, Kp-Tabelle, Kontrollgrafiken, Statusmeldungen, Buttons und Einstellungen wurden deutsch/englisch nachübersetzt.",
-      "Die Grafik-Karten verwenden größere maximale Breite und Höhe, damit Kp- und Vorhersagegrafiken auf großen Monitoren besser ablesbar sind."
+      "Survey-Einstellungen in die Tabs Surveys und Lokale Survey-Quellen aufgeteilt.",
+      "Lokale Survey-Basis-URL, relative Pfade pro Survey, Erreichbarkeitsprüfung und Online-Fallback ergänzt.",
+      "Hilfekapitel zu lokalen Surveys und Local Survey Server mit Beispiel ergänzt.",
+      "Neue Survey-Funktionen und Kategorien deutsch/englisch übersetzt."
     ],
     "en": [
-      "NOAA/GFZ reference graphics in the aurora dashboard are shown larger while remaining limited to three columns.",
-      "Aurora dashboard, Kp table, reference graphics, status messages, buttons and settings received missing German/English translations.",
-      "Graphic cards use larger maximum width and height so Kp and forecast graphics are easier to read on large monitors."
+      "Survey settings split into the Surveys and Local survey sources tabs.",
+      "Added local survey base URL, relative paths per survey, reachability checks and online fallback.",
+      "Added help chapter for local surveys and Local Survey Server with an example.",
+      "New survey features and categories translated in German and English."
     ]
   }
 }
