@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.8',
-  release: '1.4.0-test.8',
+  appVersion: '1.4.0-test.9',
+  release: '1.4.0-test.9',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.8',
+  documentTitle: 'Astro Night Planner 1.4.0-test.9',
   releaseNotes: {
     de: [
       'Die Aladin-Rahmung erlaubt jetzt stabile temporäre Kombinationen aus Objekt, Teleskop, Reducer/Korrektor und Kamera; die Auswahl springt nicht mehr auf das aktive Setup zurück.',

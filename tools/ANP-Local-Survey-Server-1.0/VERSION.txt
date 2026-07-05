@@ -1,6 +1,17 @@
 ANP Local Survey Server
 Version: 1.0
-Build: 1.4.0-test.8 helper package
-Modes:
-- Double-click: opens the Windows/browser configuration interface without a console window
-- Command line: ANP-Local-Survey-Server-1.0.exe --console opens the console/DOS mode
+Build: 1.0-test.9
+
+Changes in this package:
+- Doppelklick startet die lokale Windows-/Browser-Oberfläche.
+- Autostart-Option über HKCU Run-Key.
+- Hintergrundmodus: --background.
+- Konsolenmodus: --console.
+- Tray-Icon mit Menü: Oberfläche öffnen, Server starten, Server stoppen, Beenden.
+
+Changes in this package:
+- Double-click starts the local Windows/browser interface.
+- Autostart option via HKCU Run key.
+- Background mode: --background.
+- Console mode: --console.
+- Tray icon with menu: open interface, start server, stop server, exit.
