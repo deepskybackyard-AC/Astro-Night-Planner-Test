@@ -1,8 +1,5 @@
-ANP Local Survey Server
+Astro Night Planner Local Survey Server
 Version: 1.0
-Build: 1.0 helper package for Astro Night Planner 1.4.0
-Modes:
-- Double-click: visible Windows control window plus browser configuration interface
-- Tray menu: open interface, start server, stop server, exit program
-- Command line: ANP-Local-Survey-Server-1.0.exe --console opens the console/DOS mode
-- Background: ANP-Local-Survey-Server-1.0.exe --background
+Build: stable-control-worker
+
+This build separates the Windows control window/tray from the local web-server worker. The tray menu and Exit action stay responsive even when the browser configuration page is closed or a server request is slow.

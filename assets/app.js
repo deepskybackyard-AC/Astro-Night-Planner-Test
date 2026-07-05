@@ -1,7 +1,7 @@
-/* Astro Night Planner 1.4.0-test.11 – Testversion */
+/* Astro Night Planner 1.4.0-test.12 – Testversion */
 'use strict';
 
-const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.4.0-test.11', release:'1.4.0-test.11', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.4.0-test.11'});
+const BUILD = Object.freeze(window.ANP_BUILD || {environment:'test', appVersion:'1.4.0-test.12', release:'1.4.0-test.12', databaseName:'astro-night-planner-test-v1', documentTitle:'Astro Night Planner 1.4.0-test.12'});
 const ENV = BUILD.environment === 'test' ? 'test' : 'prod';
 const APP_VERSION = BUILD.appVersion || '1.0.0';
 const RELEASE = BUILD.release || '1.0';

@@ -1,68 +1,101 @@
 Astro Night Planner Local Survey Server 1.0
 ==========================================
 
-Deutsch
+Purpose
 -------
-Dieses Windows-Hilfsprogramm stellt lokale HiPS-Survey-Ordner über eine lokale HTTP-Adresse bereit, damit Astro Night Planner sie im Aladin-Himmelsbild verwenden kann.
+This Windows helper provides local HiPS survey folders to Astro Night Planner via a local HTTP address, for example:
 
-Bedienung:
-- Doppelklick auf ANP-Local-Survey-Server-1.0.exe öffnet ein sichtbares Windows-Kontrollfenster und zusätzlich die Browser-Konfigurationsseite.
-- Wenn der Browser nicht automatisch öffnet, nutze „Oberfläche öffnen“ im Kontrollfenster oder im Tray-Menü.
-- Das X im Kontrollfenster versteckt das Fenster nur in den Infobereich. Das Programm läuft weiter.
-- „Server stoppen“ stoppt nur den lokalen Survey-Dateiserver.
-- „Beenden / Exit“ stoppt Survey-Server und Konfigurationsoberfläche vollständig. Danach ist die EXE freigegeben und kann ersetzt oder gelöscht werden.
-- Das Tray-Menü bietet „Oberfläche öffnen“, „Server starten“, „Server stoppen“ und „Beenden“.
+  http://127.0.0.1:8765/
 
-Autostart:
-- „Mit Windows starten“ legt einen Autostart-Eintrag für den aktuellen Windows-Benutzer an.
-- „Beim Start im Hintergrund/Infobereich bleiben“ startet ohne sichtbares Browserfenster und bleibt über das Tray-Icon bedienbar.
-- „Lokalen Survey-Server automatisch starten“ startet den eigentlichen Dateiserver automatisch.
+A browser app cannot read Windows file paths such as D:\AstroSurveys directly. The helper bridges this gap by serving the selected survey root folder as a local web server with CORS enabled.
 
-Konsolenmodus / DOS-Box:
-- Eingabeaufforderung im Programmordner öffnen.
-- Starten mit: ANP-Local-Survey-Server-1.0.exe --console
-- Hintergrundmodus: ANP-Local-Survey-Server-1.0.exe --background
+Start and control window
+------------------------
+Double-click:
 
-Empfohlene Ordnerstruktur:
-D:\AstroSurveys\nsns\ohs8\properties
-D:\AstroSurveys\nsns\ohs8\Norder3\...
-D:\AstroSurveys\nsns\halpha8\properties
+  ANP-Local-Survey-Server-1.0.exe
 
-Eintragung im Astro Night Planner:
-Lokale Survey-Basis-URL: http://127.0.0.1:8765/
-Relativer Survey-Pfad: nsns/ohs8/ oder nsns/halpha8/ usw.
+A native Windows control window opens. It contains:
 
-Die App kann dieses Windows-Programm nicht direkt starten. Wenn das Hilfsprogramm bereits läuft, kann die App die lokale Konfigurationsoberfläche öffnen. Wenn es nicht erreichbar ist, starte die EXE manuell oder aktiviere den Autostart.
+  - Open interface / Oberfläche öffnen
+  - Start server / Server starten
+  - Stop server / Server stoppen
+  - Exit / Beenden
 
-English
--------
-This Windows helper serves local HiPS survey folders through a local HTTP address so Astro Night Planner can use them in the Aladin sky image.
+Closing the window with X only hides it to the notification area. The program keeps running so Astro Night Planner can continue to use local surveys.
 
-Operation:
-- Double-click ANP-Local-Survey-Server-1.0.exe to open a visible Windows control window and the browser configuration page.
-- If the browser does not open automatically, use “Open interface” in the control window or tray menu.
-- Closing the control window with X only hides it to the notification area. The program keeps running.
-- “Stop server” stops only the local survey file server.
-- “Beenden / Exit” stops the survey server and configuration interface completely. The EXE is then released and can be replaced or deleted.
-- The tray menu contains “Open interface”, “Start server”, “Stop server” and “Exit”.
+Important: use Exit / Beenden when you want to completely stop the helper. Exit stops the local survey server, closes the internal configuration service and releases the EXE file so it can be replaced or deleted.
 
-Autostart:
-- “Start with Windows” creates an autostart entry for the current Windows user.
-- “Start in background / tray” starts without a visible browser window and keeps the helper available through the tray icon.
-- “Automatically start local survey server” starts the actual file server automatically.
+Tray icon
+---------
+The tray icon remains available while the helper is running. Right-click it to open the menu:
 
-Console mode / DOS window:
-- Open Command Prompt in the program folder.
-- Start with: ANP-Local-Survey-Server-1.0.exe --console
-- Background mode: ANP-Local-Survey-Server-1.0.exe --background
+  - Open interface / Oberfläche öffnen
+  - Start server / Server starten
+  - Stop server / Server stoppen
+  - Exit / Beenden
 
-Recommended folder structure:
-D:\AstroSurveys\nsns\ohs8\properties
-D:\AstroSurveys\nsns\ohs8\Norder3\...
-D:\AstroSurveys\nsns\halpha8\properties
+The tray/control part is separated from the web-server worker. This keeps the tray menu responsive even if the browser configuration page is closed or a server request becomes slow.
 
-Settings in Astro Night Planner:
-Local survey base URL: http://127.0.0.1:8765/
-Relative survey path: nsns/ohs8/ or nsns/halpha8/ etc.
+Browser configuration page
+--------------------------
+The helper opens a local configuration page in your default browser. If the browser does not open automatically, use the button in the Windows control window or open the shown local address manually.
 
-The app cannot directly start this Windows program. If the helper is already running, the app can open the local configuration interface. If it is not reachable, start the EXE manually or enable autostart.
+The configuration page lets you set:
+
+  - survey root folder
+  - local host address
+  - local survey port, usually 8765
+  - language German/English
+  - Start with Windows
+  - Start in background / tray
+  - Automatically start local survey server
+
+Background mode and autostart
+-----------------------------
+When Start with Windows is enabled, the helper is registered for the current Windows user. If Start in background / tray is enabled, Windows starts it with:
+
+  ANP-Local-Survey-Server-1.0.exe --background
+
+The control window stays hidden, but the tray icon remains available.
+
+Console mode
+------------
+For troubleshooting or text-only operation, run:
+
+  ANP-Local-Survey-Server-1.0.exe --console
+
+Useful commands in console mode:
+
+  start   start the local survey file server
+  stop    stop the local survey file server
+  open    open the browser configuration page
+  status  show current status
+  quit    stop and exit
+
+Folder examples
+---------------
+Choose one shared root folder, for example:
+
+  D:\AstroSurveys
+
+Example structure:
+
+  D:\AstroSurveys\nsns\ohs8\properties
+  D:\AstroSurveys\nsns\ohs8\Norder4\...
+  D:\AstroSurveys\nsns\halpha8\properties
+  D:\AstroSurveys\nsns\oiii8\properties
+
+In Astro Night Planner, enter the base URL:
+
+  http://127.0.0.1:8765/
+
+Then enter relative paths per survey, for example:
+
+  nsns/ohs8/
+  nsns/halpha8/
+  nsns/oiii8/
+  nsns/sii8/
+  nsns/hbr8/
+  nsns/rgb8/
+

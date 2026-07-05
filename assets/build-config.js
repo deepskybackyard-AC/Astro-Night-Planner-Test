@@ -3,11 +3,11 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.11',
-  release: '1.4.0-test.11',
+  appVersion: '1.4.0-test.12',
+  release: '1.4.0-test.12',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.11',
+  documentTitle: 'Astro Night Planner 1.4.0-test.12',
   releaseNotes: {
     de: [
       'Die Hilfe und das Handbuch beschreiben lokale Surveys, den Local Survey Server, Tray-Bedienung, Autostart, Fallback und Ordnerstruktur ausführlich als Endanwenderdokumentation.',
