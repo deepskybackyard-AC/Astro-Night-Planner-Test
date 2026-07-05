@@ -3,25 +3,25 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.6',
-  release: '1.4.0-test.6',
+  appVersion: '1.4.0-test.7',
+  release: '1.4.0-test.7',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.6',
+  documentTitle: 'Astro Night Planner 1.4.0-test.7',
   releaseNotes: {
     de: [
-      'Der Service Worker lässt lokale Survey-Server wie 127.0.0.1, localhost und private LAN-Adressen durch.',
-      'Lokale HiPS-Surveys verwenden das Kachelformat aus der properties-Datei, zum Beispiel PNG.',
-      'Ohne Online-Fallback zeigt die App bei lokaler Nichterreichbarkeit einen Fehler statt DSS.',
-      'Hilfe und Handbuch beschreiben lokale Surveys, Ordnerkürzel, Windows-Hilfsprogramm, Fallback und Tagesbutton-Mondhöhe ausführlicher auf Deutsch und Englisch.',
-      'Standort- und Datumsfelder der Planungsnacht sind höher ausgerichtet; die Mondkulmination weist auf vor/nach dem Planungszeitraum hin.'
+      'Die Aladin-Rahmung erlaubt jetzt temporäre Kombinationen aus Objekt, Teleskop, Reducer/Korrektor und Kamera, auch wenn diese Kombination nicht als Setup gespeichert ist.',
+      'In der Aladin-Ansicht gibt es eine Reducer-/Korrektor-/Barlow-Auswahl; die Rahmung wird aus effektiver Brennweite und Kamera berechnet.',
+      'Nicht gespeicherte Ausrüstungskombinationen erhalten einen sichtbaren Hinweis statt auf das ursprüngliche Setup zurückzuspringen.',
+      'Weitere deutsch/englische Übersetzungen wurden für neue 1.4.0-Bereiche nachgezogen, unter anderem Objektdetails, Wetterverlauf, Aurora-Status und Aladin-Einstellungen.',
+      'Das Local-Survey-Server-Paket enthält eine Haupt-EXE mit Windows-Oberfläche im Browser und zusätzlichem Konsolenmodus über --console.'
     ],
     en: [
-      'Local Aladin surveys are checked before the sky view starts; the online fallback is used only when the local source is unavailable and fallback is enabled.',
-      'The Aladin frame explicitly applies local HTTP HiPS sources as the active image source and reapplies them after initialization so no online start layer remains above them.',
-      'The survey diagnostic now distinguishes between the planned source and the source actually selected by the Aladin frame.',
-      'Date buttons are more compact; unnecessary flex spacing caused by BR elements has been suppressed.',
-      'The survey diagnostic in the sky tab is now top-aligned with the button/selection row.'
+      'The Aladin framing view now allows temporary combinations of object, telescope, reducer/corrector and camera even when the combination is not saved as a setup.',
+      'The Aladin view includes a reducer/corrector/Barlow selector; framing is calculated from effective focal length and camera.',
+      'Unsaved equipment combinations show a visible notice instead of jumping back to the original setup.',
+      'Additional German/English translations were added for new 1.4.0 areas, including object details, weather trend, aurora status and Aladin settings.',
+      'The Local Survey Server package contains one main EXE with a Windows/browser configuration interface and an additional console mode via --console.'
     ]
   },
   versionHistory: {

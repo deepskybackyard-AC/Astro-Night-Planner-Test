@@ -3,58 +3,52 @@ Astro Night Planner Local Survey Server 1.0
 
 Deutsch
 -------
-Dieses Windows-Programm stellt lokale HiPS-Survey-Ordner für den Astro Night Planner über eine lokale HTTP-Adresse bereit. Es benötigt keine Python-Installation.
+Dieses Windows-Hilfsprogramm stellt lokale HiPS-Survey-Ordner ueber eine lokale HTTP-Adresse bereit, damit Astro Night Planner sie im Aladin-Himmelsbild verwenden kann.
 
-Das Paket enthält bewusst nur eine EXE:
-  ANP-Local-Survey-Server-1.0.exe
+Start per Doppelklick:
+- Oeffnet eine lokale Windows-/Browser-Oberflaeche.
+- Dort konfigurierst du Survey-Hauptordner, Adresse und Port.
+- Du kannst den lokalen Survey-Server starten, lokale Ordner pruefen und bekannte NSNS-Surveys herunterladen.
 
-Nach dem Start wählst du im Programm die Sprache Deutsch oder English. Danach führt ein Menü durch Konfiguration, Serverstart, Statusprüfung, Download bekannter NSNS-Surveys und Prüfung lokaler Survey-Ordner.
+Konsolenmodus / DOS-Box:
+- Eingabeaufforderung im Programmordner oeffnen.
+- Starten mit:
+  ANP-Local-Survey-Server-1.0.exe --console
+- Der Konsolenmodus bietet dieselben Grundfunktionen textbasiert an.
 
-Kurzablauf:
-1. ZIP entpacken.
-2. ANP-Local-Survey-Server-1.0.exe starten.
-3. Menüpunkt 1 öffnen und einen gemeinsamen Survey-Hauptordner wählen, z. B. D:\AstroSurveys.
-4. Bekannte NSNS-Surveys über Menüpunkt 4 herunterladen oder vorhandene HiPS-Ordner unterhalb dieses Hauptordners ablegen.
-5. Menüpunkt 2 starten und das Fenster während der Nutzung offen lassen.
-6. Im Astro Night Planner unter Einstellungen → Zentrale Einstellungen → Anzeige → Aladin → Survey → Lokale Survey-Quellen eintragen:
-   Lokale Survey-Basis-URL: http://127.0.0.1:8765/
-   Relativer Pfad je Survey, z. B. nsns/ohs8/
-7. In der App mit „Lokale Survey-Quelle prüfen“ testen.
-
-Beispielstruktur:
+Empfohlene Ordnerstruktur:
 D:\AstroSurveys\nsns\ohs8\properties
 D:\AstroSurveys\nsns\ohs8\Norder3\...
 D:\AstroSurveys\nsns\halpha8\properties
-D:\AstroSurveys\nsns\oiii8\properties
-D:\AstroSurveys\nsns\sii8\properties
 
-Wichtig: Der Astro Night Planner liest keinen lokalen Dateipfad direkt. Die App greift über http://127.0.0.1:8765/ auf den laufenden lokalen Server zu.
+Eintragung im Astro Night Planner:
+Lokale Survey-Basis-URL: http://127.0.0.1:8765/
+Relativer Survey-Pfad: nsns/ohs8/ oder nsns/halpha8/ usw.
+
+Der Server muss waehrend der Nutzung lokaler Surveys laufen. Ein normaler Windows-Dateipfad kann vom Browser nicht direkt gelesen werden.
 
 English
 -------
-This Windows program serves local HiPS survey folders to Astro Night Planner through a local HTTP address. It does not require a Python installation.
+This Windows helper serves local HiPS survey folders through a local HTTP address so Astro Night Planner can use them in the Aladin sky image.
 
-The package intentionally contains only one EXE:
-  ANP-Local-Survey-Server-1.0.exe
+Start by double-click:
+- Opens a local Windows/browser interface.
+- Configure survey root folder, address and port.
+- Start the local survey server, validate local folders and download known NSNS surveys.
 
-After starting the program, choose Deutsch or English. A menu then guides you through configuration, server start, status checks, downloading known NSNS surveys, and validating local survey folders.
+Console mode / DOS window:
+- Open Command Prompt in the program folder.
+- Start with:
+  ANP-Local-Survey-Server-1.0.exe --console
+- Console mode offers the same core functions as a text menu.
 
-Quick setup:
-1. Unzip the package.
-2. Start ANP-Local-Survey-Server-1.0.exe.
-3. Open menu item 1 and choose one common survey root folder, for example D:\AstroSurveys.
-4. Download known NSNS surveys with menu item 4 or place existing HiPS folders below this root folder.
-5. Start menu item 2 and keep the window open while using local surveys.
-6. In Astro Night Planner go to Settings → Central settings → Display → Aladin → Survey → Local survey sources and enter:
-   Local survey base URL: http://127.0.0.1:8765/
-   Relative path per survey, for example nsns/ohs8/
-7. Test it in the app with “Check local survey source”.
-
-Example structure:
+Recommended folder structure:
 D:\AstroSurveys\nsns\ohs8\properties
 D:\AstroSurveys\nsns\ohs8\Norder3\...
 D:\AstroSurveys\nsns\halpha8\properties
-D:\AstroSurveys\nsns\oiii8\properties
-D:\AstroSurveys\nsns\sii8\properties
 
-Important: Astro Night Planner does not read local file paths directly. The app accesses the running local server through http://127.0.0.1:8765/.
+Settings in Astro Night Planner:
+Local survey base URL: http://127.0.0.1:8765/
+Relative survey path: nsns/ohs8/ or nsns/halpha8/ etc.
+
+The server must be running while local surveys are used. Browsers cannot read normal Windows file paths directly.

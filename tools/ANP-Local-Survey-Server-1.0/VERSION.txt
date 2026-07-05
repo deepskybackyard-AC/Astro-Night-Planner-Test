@@ -1,1 +1,6 @@
-Astro Night Planner Local Survey Server 1.0
+ANP Local Survey Server
+Version: 1.0
+Build: 1.4.0-test.7 helper package
+Modes:
+- Double-click: Windows/browser configuration interface
+- Command line: ANP-Local-Survey-Server-1.0.exe --console

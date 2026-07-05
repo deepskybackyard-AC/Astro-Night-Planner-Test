@@ -1,25 +1,23 @@
 {
-  "version": "1.4.0-test.6",
-  "release": "1.4.0-test.6",
+  "version": "1.4.0-test.7",
+  "release": "1.4.0-test.7",
   "environment": "test",
-  "builtAt": "2026-07-05T14:20:00Z",
-  "notes": "Testversion 1.4.0-test.6: Service-Worker-Bypass fuer lokale Survey-Server, lokale HiPS-Formate aus properties, ausfuehrliche lokale-Survey-Hilfe, Tagesbereich hoeher ausgerichtet und Mondkulmination mit Hinweis zum Planungszeitraum.",
+  "builtAt": "2026-07-05T15:30:00Z",
+  "notes": "Testversion 1.4.0-test.7: temporäre Aladin-Ausrüstungskombinationen mit Reducer-Auswahl, weitere Übersetzungskorrekturen, Windows/Browser-GUI plus Konsolenmodus für Local Survey Server.",
   "changes": {
     "de": [
-      "Der Service Worker laesst lokale Survey-Server wie 127.0.0.1, localhost und private LAN-Adressen durch, damit lokale HiPS-Dateien nicht mehr als Offline-Fehler abgefangen werden.",
-      "Lokale HiPS-Surveys lesen das Kachelformat aus der properties-Datei; PNG-Kacheln werden nicht mehr durch ein erzwungenes JPEG-Format blockiert.",
-      "Wenn die lokale Quelle nicht darstellbar ist und der Online-Fallback deaktiviert wurde, wird ein Fehler angezeigt statt still auf DSS zu wechseln.",
-      "Die Hilfe und das Handbuch beschreiben die lokale Survey-Einrichtung, Ordnerkuerzel, Basis-URL, relative Pfade, Fallback und die Tagesbutton-Mondhoehe ausfuehrlicher auf Deutsch und Englisch.",
-      "Standort- und Datumsfelder der Planungsnacht sind hoeher ausgerichtet; Tagesbuttons bleiben kompakt.",
-      "Die Mondkulmination zeigt jetzt an, wenn sie vor oder nach dem gewaehlten Planungszeitraum liegt."
+      "Aladin erlaubt temporäre Kombinationen aus Teleskop, Reducer/Korrektor/Barlow und Kamera, auch wenn die Kombination nicht als Setup gespeichert ist.",
+      "Bei nicht gespeicherten Kombinationen wird eine Meldung angezeigt; die Rahmung wird trotzdem temporär berechnet.",
+      "Die Aladin-Ansicht enthält eine Reducer-/Korrektor-/Barlow-Auswahl und berechnet die effektive Brennweite daraus.",
+      "Weitere harte deutsche Texte in neuen 1.4.0-Bereichen wurden übersetzt, darunter Objekt-Details, Höhenkurve, Horizontansicht, Mehrnächte-Wetter und Aurora-Status.",
+      "Das Local-Survey-Server-Paket enthält eine Haupt-EXE mit Windows-/Browser-Oberfläche und zusätzlichem Konsolenmodus über --console."
     ],
     "en": [
-      "The service worker bypasses local survey servers such as 127.0.0.1, localhost and private LAN addresses so local HiPS files are no longer intercepted as offline failures.",
-      "Local HiPS surveys read the tile format from the properties file; PNG tiles are no longer blocked by a forced JPEG format.",
-      "If the local source cannot be displayed and online fallback is disabled, an error is shown instead of silently switching to DSS.",
-      "Help and manual now describe local survey setup, folder codes, base URL, relative paths, fallback and the date-button Moon altitude in more detail in German and English.",
-      "Planning-night location and date fields are aligned higher; date buttons remain compact.",
-      "Moon culmination now states when it lies before or after the selected planning window."
+      "Aladin allows temporary combinations of telescope, reducer/corrector/Barlow and camera even when the combination is not saved as a setup.",
+      "Unsaved combinations show a notice while the framing is still calculated temporarily.",
+      "The Aladin view includes a reducer/corrector/Barlow selector and uses it for effective focal length.",
+      "More hard-coded German texts in new 1.4.0 areas were translated, including object details, altitude curve, horizon view, multi-night weather and aurora status.",
+      "The Local Survey Server package contains one main EXE with a Windows/browser interface plus console mode via --console."
     ]
   }
 }
