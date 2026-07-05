@@ -1,9 +1,9 @@
 {
-  "version": "1.4.0-test.9",
-  "release": "1.4.0-test.9",
+  "version": "1.4.0-test.10",
+  "release": "1.4.0-test.10",
   "environment": "test",
   "builtAt": "2026-07-05T16:34:00Z",
-  "notes": "Testversion 1.4.0-test.9: Local-Survey-Server mit Autostart, Hintergrundmodus und Tray-Menü; verbesserter Browserstart der Konfigurationsoberfläche.",
+  "notes": "Testversion 1.4.0-test.10: Local-Survey-Server mit sichtbarem Windows-Kontrollfenster, zuverlässigem Tray-Menü, Server stoppen und Programm beenden.",
   "changes": {
     "de": [
       "Das Local-Survey-Server-Programm bietet jetzt eine Windows-Integration mit Autostart-Option, Hintergrund-/Infobereich-Modus und automatischem Start des lokalen Survey-Servers.",
