@@ -1,6 +1,6 @@
 ANP Local Survey Server
 Version: 1.0
-Build: 1.4.0-test.10 helper package
+Build: 1.0 helper package for Astro Night Planner 1.4.0
 Modes:
 - Double-click: visible Windows control window plus browser configuration interface
 - Tray menu: open interface, start server, stop server, exit program

@@ -1,21 +1,21 @@
 {
-  "version": "1.4.0-test.10",
-  "release": "1.4.0-test.10",
+  "version": "1.4.0-test.11",
+  "release": "1.4.0-test.11",
   "environment": "test",
-  "builtAt": "2026-07-05T16:34:00Z",
-  "notes": "Testversion 1.4.0-test.10: Local-Survey-Server mit sichtbarem Windows-Kontrollfenster, zuverlässigem Tray-Menü, Server stoppen und Programm beenden.",
+  "builtAt": "2026-07-05T20:55:00Z",
+  "notes": "Finale Testbasis für 1.4.0: Hilfe/Handbuch für lokale Surveys und Local Survey Server erweitert; Serveroberfläche aus der App heraus öffnbar, wenn das Hilfsprogramm läuft.",
   "changes": {
     "de": [
-      "Das Local-Survey-Server-Programm bietet jetzt eine Windows-Integration mit Autostart-Option, Hintergrund-/Infobereich-Modus und automatischem Start des lokalen Survey-Servers.",
-      "Ein Tray-Icon stellt Befehle zum Öffnen der Oberfläche, Starten/Stoppen des Survey-Servers und Beenden bereit.",
-      "Der Browserstart der Konfigurationsoberfläche wurde robuster umgesetzt; falls die Oberfläche nicht geöffnet wird, bleibt sie weiterhin unter der angezeigten lokalen Adresse erreichbar.",
-      "Das Paket enthält weiterhin den Konsolenmodus über ANP-Local-Survey-Server-1.0.exe --console."
+      "Hilfe und Handbuch beschreiben lokale Surveys und den Local Survey Server ausführlich inklusive Ordnerstruktur, relativer Pfade, Tray-Menü, Autostart, Hintergrundbetrieb, Stoppen/Beenden und Fallback-Logik.",
+      "Die App bietet in den lokalen Survey-Einstellungen einen Button zum Öffnen der Local-Survey-Server-Oberfläche, wenn das Windows-Hilfsprogramm bereits läuft.",
+      "Die Hilfe wurde als Endanwenderdokumentation formuliert und enthält keine internen Entwicklungs- oder Paket-Hinweise.",
+      "Neue Meldungen rund um das Öffnen des Local Survey Servers sind deutsch und englisch übersetzt."
     ],
     "en": [
-      "The Local Survey Server program now includes Windows integration with autostart, background/notification-area mode and automatic local survey server startup.",
-      "A tray icon provides commands to open the interface, start/stop the survey server and exit the program.",
-      "Opening the browser configuration interface was made more robust; if it does not open automatically, it remains available at the local address shown by the program.",
-      "The package still includes console mode via ANP-Local-Survey-Server-1.0.exe --console."
+      "Help and manual describe local surveys and the Local Survey Server in detail, including folder structure, relative paths, tray menu, autostart, background mode, stop/exit behavior and fallback logic.",
+      "The app offers a button in the local survey settings to open the Local Survey Server interface when the Windows helper is already running.",
+      "The help was rewritten as end-user documentation and contains no internal development or package notes.",
+      "New messages around opening the Local Survey Server are translated into German and English."
     ]
   }
 }

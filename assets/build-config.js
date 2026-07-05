@@ -3,25 +3,23 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.10',
-  release: '1.4.0-test.10',
+  appVersion: '1.4.0-test.11',
+  release: '1.4.0-test.11',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.10',
+  documentTitle: 'Astro Night Planner 1.4.0-test.11',
   releaseNotes: {
     de: [
-      'Die Aladin-Rahmung erlaubt jetzt stabile temporäre Kombinationen aus Objekt, Teleskop, Reducer/Korrektor und Kamera; die Auswahl springt nicht mehr auf das aktive Setup zurück.',
-      'In der Aladin-Ansicht gibt es eine Reducer-/Korrektor-/Barlow-Auswahl; die Rahmung wird aus effektiver Brennweite und Kamera berechnet.',
-      'Nicht gespeicherte Ausrüstungskombinationen erhalten einen sichtbaren Hinweis statt auf das ursprüngliche Setup zurückzuspringen.',
-      'Weitere deutsch/englische Übersetzungen wurden für neue 1.4.0-Bereiche nachgezogen, unter anderem Objektdetails, Wetterverlauf, Aurora-Status und Aladin-Einstellungen.',
-      'Das Local-Survey-Server-Paket enthält eine GUI-Subsystem-EXE: Doppelklick öffnet die Browser-Oberfläche ohne DOS-Fenster; --console öffnet den Konsolenmodus.'
+      'Die Hilfe und das Handbuch beschreiben lokale Surveys, den Local Survey Server, Tray-Bedienung, Autostart, Fallback und Ordnerstruktur ausführlich als Endanwenderdokumentation.',
+      'In den Survey-Einstellungen gibt es einen Button zum Öffnen der Local-Survey-Server-Oberfläche, wenn das Windows-Hilfsprogramm bereits läuft.',
+      'Alle neuen Hinweise und Meldungen zum Local Survey Server sind deutsch und englisch hinterlegt.',
+      'Die finale 1.4.0-Basis bleibt kompatibel mit lokalen HiPS-Quellen, PNG-Kacheln und Online-Fallback.'
     ],
     en: [
-      'The Aladin framing view now allows temporary combinations of object, telescope, reducer/corrector and camera even when the combination is not saved as a setup.',
-      'The Aladin view includes a reducer/corrector/Barlow selector; framing is calculated from effective focal length and camera.',
-      'Temporary equipment choices are now kept reliably instead of jumping back to the active setup.',
-      'Additional German/English translations were added for new 1.4.0 areas, including object details, weather trend, aurora status and Aladin settings.',
-      'The Local Survey Server package contains a GUI-subsystem EXE: double-click opens the browser interface without a DOS window; --console opens console mode.'
+      'Help and manual now describe local surveys, the Local Survey Server, tray usage, autostart, fallback and folder structure in detail for end users.',
+      'The survey settings include a button to open the Local Survey Server interface when the Windows helper is already running.',
+      'All new Local Survey Server notices and messages are available in German and English.',
+      'The final 1.4.0 base remains compatible with local HiPS sources, PNG tiles and online fallback.'
     ]
   },
   versionHistory: {
