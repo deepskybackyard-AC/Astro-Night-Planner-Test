@@ -1,21 +1,23 @@
 {
-  "version": "1.4.0-test.3",
-  "release": "1.4.0-test.3",
+  "version": "1.4.0-test.4",
+  "release": "1.4.0-test.4",
   "environment": "test",
-  "builtAt": "2026-07-04T16:30:00Z",
-  "notes": "Testversion 1.4.0-test.3: optionaler Local Survey Server als Windows-EXE ohne Python mit vollständigem Download bekannter NSNS-HiPS-Surveys ergänzt; Hilfe und App-Links aktualisiert.",
+  "builtAt": "2026-07-05T13:20:00Z",
+  "notes": "Testversion 1.4.0-test.4: lokale Aladin-Survey-Diagnose ergänzt, Survey-Zuordnung beim lokalen Check stabilisiert und Mondaufgang/maximale Mondhöhe/Monduntergang in Tagesbuttons sowie Wetterverlauf integriert.",
   "changes": {
     "de": [
-      "Optionales Windows-Hilfsprogramm Local Survey Server jetzt als EXE-Paket; keine Python-, wget- oder PowerShell-Bedienung erforderlich.",
-      "Das Hilfsprogramm bietet Konfiguration, Schnellstart, Statusanzeige, Autostart-Option und vollständigen Download bekannter NSNS-HiPS-Surveys.",
-      "In den lokalen Survey-Einstellungen wurde der Download-Link auf das neue EXE-Paket aktualisiert.",
-      "Hilfe und Handbuch erklären den vollständigen HiPS-Download, lokale Basis-URL, relative Survey-Pfade und Beispielkonfiguration."
+      "Im Himmelsbild wird jetzt angezeigt, welche Survey-Quelle tatsächlich an Aladin übergeben wurde: lokal oder online inklusive URL/HiPS-ID.",
+      "Lokale Survey-Prüfungen bleiben bei der richtigen Survey-Zeile; Pfad und Status werden in der Liste sichtbar angezeigt.",
+      "Der Aladin-Frame behandelt lokale HTTP-HiPS-Quellen robuster und zeigt die geladene Survey-URL direkt im Frame an.",
+      "Tagesbuttons enthalten nun Mondaufgang, maximale Mondhöhe und Monduntergang bezogen auf den Planungszeitraum der jeweiligen Nacht.",
+      "Die Mondinformationen wurden zusätzlich in die Titelzeile des stündlichen Wetterverlaufs und in die Mehrnächte-Wetteransicht integriert."
     ],
     "en": [
-      "Optional Windows helper Local Survey Server now provided as an EXE package; no Python, wget or PowerShell interaction required.",
-      "The helper provides configuration, quick start, status view, autostart option and complete download of known NSNS HiPS surveys.",
-      "The download link in local survey settings now points to the new EXE package.",
-      "Help and manual explain complete HiPS download, local base URL, relative survey paths and example setup."
+      "The sky view now displays which survey source was actually handed to Aladin: local or online including URL/HiPS ID.",
+      "Local survey checks keep the correct survey row open; path and status are visible in the list.",
+      "The Aladin frame handles local HTTP HiPS sources more robustly and displays the loaded survey URL in the frame.",
+      "Date buttons now include Moon rise, maximum Moon altitude and Moon set relative to each planning window.",
+      "Moon information was also integrated into the hourly weather heading and the multi-night weather view."
     ]
   }
 }

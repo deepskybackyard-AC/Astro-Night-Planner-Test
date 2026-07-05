@@ -3,35 +3,33 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.3',
-  release: '1.4.0-test.3',
+  appVersion: '1.4.0-test.4',
+  release: '1.4.0-test.4',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.3',
+  documentTitle: 'Astro Night Planner 1.4.0-test.4',
   releaseNotes: {
     de: [
-      'Optionales Windows-Hilfsprogramm „Local Survey Server“ im Paket ergänzt; es benötigt keine Python-Installation und kann bekannte NSNS-HiPS-Dateien vollständig herunterladen.',
-      'Die Survey-Konfiguration in den Anzeigeeinstellungen wurde in die Tabs „Surveys“ und „Lokale Survey-Quellen“ aufgeteilt.',
-      'Lokale HiPS-/Survey-Quellen können vorbereitet werden: lokale Basis-URL, relativer Pfad pro Survey, Online-Fallback und Erreichbarkeitsprüfung.',
-      'Hinter jedem Survey gibt es eine Aktion „Lokale Quelle“, um die lokale Quelle für genau diesen Survey zu konfigurieren.',
-      'Ein Hilfebutton führt direkt zum neuen Kapitel „Lokale Surveys und Local Survey Server“ mit Beispielkonfiguration.',
-      'NSNS-Surveys bleiben wie bisher vorhanden; bestehende Default-Sichtbarkeiten werden nicht verändert.',
-      'Deutsch/Englisch-Übersetzungen für die neuen Survey-Funktionen und Survey-Kategorien wurden ergänzt.'
+      'Lokale Aladin-Surveys werden jetzt im Himmelsbild diagnostisch sichtbar: Die tatsächlich an Aladin übergebene Survey-Quelle wird angezeigt.',
+      'Der lokale Survey-Check bleibt nach der Prüfung bei der korrekten Survey-Zeile und zeigt Pfad und Status direkt in der Liste.',
+      'Der Aladin-Frame übergibt lokale HTTP-HiPS-Quellen robuster an Aladin Lite und zeigt die geladene Survey-URL im Frame an.',
+      'Die Tagesbuttons zeigen zusätzlich Mondaufgang, maximale Mondhöhe und Monduntergang bezogen auf den jeweiligen Planungszeitraum.',
+      'Die Mondinformationen wurden auch in die Titelzeile des stündlichen Wetterverlaufs und in die Mehrnächte-Wetteransicht übernommen.'
     ],
     en: [
-      'Added optional Windows helper “Local Survey Server” to the package; it does not require Python and can download known NSNS HiPS surveys completely.',
-      'Survey configuration in display settings is now split into the “Surveys” and “Local survey sources” tabs.',
-      'Local HiPS/survey sources can be prepared with a local base URL, relative path per survey, online fallback and reachability checks.',
-      'Each survey now has a “Local source” action to configure the local source for that specific survey.',
-      'A help button opens the new “Local surveys and Local Survey Server” chapter directly with an example setup.',
-      'NSNS surveys remain available as before; existing default visibility settings are not changed.',
-      'German/English translations for the new survey features and survey categories have been completed.'
+      'Local Aladin surveys now show a diagnostic readout in the sky view: the actual survey source handed to Aladin is displayed.',
+      'The local survey check now keeps the correct survey row open and shows path and status directly in the list.',
+      'The Aladin frame passes local HTTP HiPS sources more robustly to Aladin Lite and displays the loaded survey URL in the frame.',
+      'Date buttons now include Moon rise, maximum Moon altitude and Moon set relative to each planning window.',
+      'Moon information has also been added to the hourly weather heading and the multi-night weather view.'
     ]
   },
   versionHistory: {
     de: {
       version140: { title: 'Version 1.4.0 gegenüber 1.3.1', items: [
         'Optionales Local-Survey-Server-Hilfsprogramm ohne Python mit vollständigem HiPS-Download bekannter NSNS-HiPS-Dateien.',
+        'Diagnoseanzeige für lokal/online tatsächlich geladene Aladin-Survey-Quelle.',
+        'Erweiterte Mondinformationen in Tagesbuttons, stündlichem Wetterverlauf und Mehrnächte-Wetter.',
         'Survey-Einstellungen mit getrennten Tabs für bestehende Surveys und lokale Survey-Quellen.',
         'Optionale lokale HiPS-Basis-URL und relative lokale Pfade pro Survey für Offline-/Lokalsurvey-Nutzung.',
         'Erreichbarkeitsprüfung für lokale Survey-Quellen und Online-Fallback, wenn lokale Daten nicht verfügbar sind.',
@@ -60,6 +58,8 @@ window.ANP_BUILD = Object.freeze({
     en: {
       version140: { title: 'Version 1.4.0 compared with 1.3.1', items: [
         'Optional Local Survey Server helper without Python, with complete HiPS download of known NSNS HiPS files.',
+        'Diagnostic display for the actual local/online Aladin survey source loaded.',
+        'Extended Moon information in date buttons, hourly weather and multi-night weather.',
         'Survey settings with separate tabs for existing surveys and local survey sources.',
         'Optional local HiPS base URL and relative local path per survey for offline/local survey use.',
         'Reachability checks for local survey sources and online fallback when local data is unavailable.',

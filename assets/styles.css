@@ -714,3 +714,10 @@ body{padding-bottom:0}
 .mini-tabs{margin-bottom:10px}.local-survey-list{display:grid;gap:10px;margin-top:10px}.local-survey-row{border:1px solid #25425f;border-radius:12px;background:rgba(5,16,28,.55);padding:10px 12px}.local-survey-row summary{display:flex;gap:12px;align-items:center;cursor:pointer}.local-survey-row summary strong{min-width:260px}.survey-config-row button[data-open-local-survey]{align-self:end;white-space:nowrap}.survey-config-row label input[readonly]{opacity:.8}
 /* 1.4.0 local survey configuration */
 .mini-tabs{margin-bottom:10px}.local-survey-list{display:grid;gap:10px;margin-top:10px}.local-survey-row{border:1px solid #25425f;border-radius:12px;background:rgba(5,16,28,.55);padding:10px 12px}.local-survey-row summary{display:flex;gap:12px;align-items:center;cursor:pointer}.local-survey-row summary strong{min-width:260px}.survey-config-row button[data-open-local-survey]{align-self:end;white-space:nowrap}.survey-config-row label input[readonly]{opacity:.8}
+
+/* 1.4.0-test.4: erweiterte Mondinfos in den Datumsbuttons und lokale Survey-Diagnose */
+.enhanced-date-buttons button{min-height:128px;line-height:1.14;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px}
+.enhanced-date-buttons .moon-window-info{display:block;color:#cfe5ff;white-space:nowrap}
+.enhanced-date-buttons .quality-date-info{margin-top:3px}
+.aladin-survey-debug{flex-basis:100%;margin-top:4px;word-break:break-all}
+.local-survey-row summary{flex-wrap:wrap}.local-survey-path{font-size:12px;background:rgba(255,255,255,.06);border:1px solid #29415f;border-radius:7px;padding:2px 6px;color:#dcecff}
