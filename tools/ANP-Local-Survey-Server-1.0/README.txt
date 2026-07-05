@@ -6,7 +6,7 @@ Deutsch
 Dieses Windows-Hilfsprogramm stellt lokale HiPS-Survey-Ordner ueber eine lokale HTTP-Adresse bereit, damit Astro Night Planner sie im Aladin-Himmelsbild verwenden kann.
 
 Start per Doppelklick:
-- Oeffnet eine lokale Windows-/Browser-Oberflaeche.
+- Oeffnet die lokale Windows-/Browser-Oberflaeche ohne zusaetzliches DOS-Fenster.
 - Dort konfigurierst du Survey-Hauptordner, Adresse und Port.
 - Du kannst den lokalen Survey-Server starten, lokale Ordner pruefen und bekannte NSNS-Surveys herunterladen.
 
@@ -32,7 +32,7 @@ English
 This Windows helper serves local HiPS survey folders through a local HTTP address so Astro Night Planner can use them in the Aladin sky image.
 
 Start by double-click:
-- Opens a local Windows/browser interface.
+- Opens the local Windows/browser interface without an additional DOS window.
 - Configure survey root folder, address and port.
 - Start the local survey server, validate local folders and download known NSNS surveys.
 

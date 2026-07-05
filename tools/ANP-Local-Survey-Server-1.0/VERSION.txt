@@ -1,6 +1,6 @@
 ANP Local Survey Server
 Version: 1.0
-Build: 1.4.0-test.7 helper package
+Build: 1.4.0-test.8 helper package
 Modes:
-- Double-click: Windows/browser configuration interface
-- Command line: ANP-Local-Survey-Server-1.0.exe --console
+- Double-click: opens the Windows/browser configuration interface without a console window
+- Command line: ANP-Local-Survey-Server-1.0.exe --console opens the console/DOS mode

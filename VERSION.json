@@ -1,23 +1,19 @@
 {
-  "version": "1.4.0-test.7",
-  "release": "1.4.0-test.7",
+  "version": "1.4.0-test.8",
+  "release": "1.4.0-test.8",
   "environment": "test",
-  "builtAt": "2026-07-05T15:30:00Z",
-  "notes": "Testversion 1.4.0-test.7: temporäre Aladin-Ausrüstungskombinationen mit Reducer-Auswahl, weitere Übersetzungskorrekturen, Windows/Browser-GUI plus Konsolenmodus für Local Survey Server.",
+  "builtAt": "2026-07-05T16:10:00Z",
+  "notes": "Testversion 1.4.0-test.8: korrigierter temporärer Aladin-Equipmentwechsel, funktionierendes Speichern temporärer Setups und Local-Survey-Server-EXE ohne DOS-Fenster beim Doppelklick.",
   "changes": {
     "de": [
-      "Aladin erlaubt temporäre Kombinationen aus Teleskop, Reducer/Korrektor/Barlow und Kamera, auch wenn die Kombination nicht als Setup gespeichert ist.",
-      "Bei nicht gespeicherten Kombinationen wird eine Meldung angezeigt; die Rahmung wird trotzdem temporär berechnet.",
-      "Die Aladin-Ansicht enthält eine Reducer-/Korrektor-/Barlow-Auswahl und berechnet die effektive Brennweite daraus.",
-      "Weitere harte deutsche Texte in neuen 1.4.0-Bereichen wurden übersetzt, darunter Objekt-Details, Höhenkurve, Horizontansicht, Mehrnächte-Wetter und Aurora-Status.",
-      "Das Local-Survey-Server-Paket enthält eine Haupt-EXE mit Windows-/Browser-Oberfläche und zusätzlichem Konsolenmodus über --console."
+      "Aladin-Equipmentwechsel vergleicht jetzt gegen die aktive Setup-Kombination statt gegen globale Standardwerte; dadurch springt ein temporär gewähltes Teleskop nicht mehr zurück.",
+      "Nicht gespeicherte Kombinationen aus Teleskop, Reducer/Korrektor/Barlow und Kamera werden weiterhin temporär gerahmt und können jetzt als Setup gespeichert werden.",
+      "Das Local-Survey-Server-Programm ist jetzt als Windows-GUI-Subsystem gebaut: Doppelklick öffnet die Browser-Oberfläche ohne DOS-Fenster; der Konsolenmodus bleibt über --console verfügbar."
     ],
     "en": [
-      "Aladin allows temporary combinations of telescope, reducer/corrector/Barlow and camera even when the combination is not saved as a setup.",
-      "Unsaved combinations show a notice while the framing is still calculated temporarily.",
-      "The Aladin view includes a reducer/corrector/Barlow selector and uses it for effective focal length.",
-      "More hard-coded German texts in new 1.4.0 areas were translated, including object details, altitude curve, horizon view, multi-night weather and aurora status.",
-      "The Local Survey Server package contains one main EXE with a Windows/browser interface plus console mode via --console."
+      "Aladin equipment changes are now compared against the active setup combination rather than global defaults, so a temporarily selected telescope no longer jumps back.",
+      "Unsaved combinations of telescope, reducer/corrector/Barlow and camera remain temporarily framed and can now be saved as a setup.",
+      "The Local Survey Server program is now built as a Windows GUI-subsystem executable: double-click opens the browser interface without a DOS window; console mode remains available via --console."
     ]
   }
 }

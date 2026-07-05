@@ -3,25 +3,25 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.7',
-  release: '1.4.0-test.7',
+  appVersion: '1.4.0-test.8',
+  release: '1.4.0-test.8',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.7',
+  documentTitle: 'Astro Night Planner 1.4.0-test.8',
   releaseNotes: {
     de: [
-      'Die Aladin-Rahmung erlaubt jetzt temporäre Kombinationen aus Objekt, Teleskop, Reducer/Korrektor und Kamera, auch wenn diese Kombination nicht als Setup gespeichert ist.',
+      'Die Aladin-Rahmung erlaubt jetzt stabile temporäre Kombinationen aus Objekt, Teleskop, Reducer/Korrektor und Kamera; die Auswahl springt nicht mehr auf das aktive Setup zurück.',
       'In der Aladin-Ansicht gibt es eine Reducer-/Korrektor-/Barlow-Auswahl; die Rahmung wird aus effektiver Brennweite und Kamera berechnet.',
       'Nicht gespeicherte Ausrüstungskombinationen erhalten einen sichtbaren Hinweis statt auf das ursprüngliche Setup zurückzuspringen.',
       'Weitere deutsch/englische Übersetzungen wurden für neue 1.4.0-Bereiche nachgezogen, unter anderem Objektdetails, Wetterverlauf, Aurora-Status und Aladin-Einstellungen.',
-      'Das Local-Survey-Server-Paket enthält eine Haupt-EXE mit Windows-Oberfläche im Browser und zusätzlichem Konsolenmodus über --console.'
+      'Das Local-Survey-Server-Paket enthält eine GUI-Subsystem-EXE: Doppelklick öffnet die Browser-Oberfläche ohne DOS-Fenster; --console öffnet den Konsolenmodus.'
     ],
     en: [
       'The Aladin framing view now allows temporary combinations of object, telescope, reducer/corrector and camera even when the combination is not saved as a setup.',
       'The Aladin view includes a reducer/corrector/Barlow selector; framing is calculated from effective focal length and camera.',
-      'Unsaved equipment combinations show a visible notice instead of jumping back to the original setup.',
+      'Temporary equipment choices are now kept reliably instead of jumping back to the active setup.',
       'Additional German/English translations were added for new 1.4.0 areas, including object details, weather trend, aurora status and Aladin settings.',
-      'The Local Survey Server package contains one main EXE with a Windows/browser configuration interface and an additional console mode via --console.'
+      'The Local Survey Server package contains a GUI-subsystem EXE: double-click opens the browser interface without a DOS window; --console opens console mode.'
     ]
   },
   versionHistory: {
