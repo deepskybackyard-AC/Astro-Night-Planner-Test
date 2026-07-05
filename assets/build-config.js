@@ -3,13 +3,14 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.1',
-  release: '1.4.0-test.1',
+  appVersion: '1.4.0-test.2',
+  release: '1.4.0-test.2',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.1',
+  documentTitle: 'Astro Night Planner 1.4.0-test.2',
   releaseNotes: {
     de: [
+      'Optionales Windows-Hilfsprogramm „Local Survey Server“ im Paket ergänzt; es benötigt keine Python-Installation und kann bekannte NSNS-HiPS-Dateien bei Bedarf automatisch nachladen.',
       'Die Survey-Konfiguration in den Anzeigeeinstellungen wurde in die Tabs „Surveys“ und „Lokale Survey-Quellen“ aufgeteilt.',
       'Lokale HiPS-/Survey-Quellen können vorbereitet werden: lokale Basis-URL, relativer Pfad pro Survey, Online-Fallback und Erreichbarkeitsprüfung.',
       'Hinter jedem Survey gibt es eine Aktion „Lokale Quelle“, um die lokale Quelle für genau diesen Survey zu konfigurieren.',
@@ -18,6 +19,7 @@ window.ANP_BUILD = Object.freeze({
       'Deutsch/Englisch-Übersetzungen für die neuen Survey-Funktionen und Survey-Kategorien wurden ergänzt.'
     ],
     en: [
+      'Added optional Windows helper “Local Survey Server” to the package; it does not require Python and can automatically cache known NSNS HiPS files on demand.',
       'Survey configuration in display settings is now split into the “Surveys” and “Local survey sources” tabs.',
       'Local HiPS/survey sources can be prepared with a local base URL, relative path per survey, online fallback and reachability checks.',
       'Each survey now has a “Local source” action to configure the local source for that specific survey.',
@@ -29,6 +31,7 @@ window.ANP_BUILD = Object.freeze({
   versionHistory: {
     de: {
       version140: { title: 'Version 1.4.0 gegenüber 1.3.1', items: [
+        'Optionales Local-Survey-Server-Hilfsprogramm ohne Python mit On-Demand-Download/Cache bekannter NSNS-HiPS-Dateien.',
         'Survey-Einstellungen mit getrennten Tabs für bestehende Surveys und lokale Survey-Quellen.',
         'Optionale lokale HiPS-Basis-URL und relative lokale Pfade pro Survey für Offline-/Lokalsurvey-Nutzung.',
         'Erreichbarkeitsprüfung für lokale Survey-Quellen und Online-Fallback, wenn lokale Daten nicht verfügbar sind.',
@@ -56,6 +59,7 @@ window.ANP_BUILD = Object.freeze({
     },
     en: {
       version140: { title: 'Version 1.4.0 compared with 1.3.1', items: [
+        'Optional Local Survey Server helper without Python, with on-demand download/cache of known NSNS HiPS files.',
         'Survey settings with separate tabs for existing surveys and local survey sources.',
         'Optional local HiPS base URL and relative local path per survey for offline/local survey use.',
         'Reachability checks for local survey sources and online fallback when local data is unavailable.',

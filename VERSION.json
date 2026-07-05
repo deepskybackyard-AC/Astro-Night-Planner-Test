@@ -1,21 +1,21 @@
 {
-  "version": "1.4.0-test.1",
-  "release": "1.4.0-test.1",
+  "version": "1.4.0-test.2",
+  "release": "1.4.0-test.2",
   "environment": "test",
-  "builtAt": "2026-07-04T15:10:00Z",
-  "notes": "Testversion 1.4.0-test.1: lokale HiPS-/Survey-Quellen vorbereitet, Survey-Einstellungen in Tabs gegliedert und Hilfe/Übersetzungen erweitert.",
+  "builtAt": "2026-07-04T16:30:00Z",
+  "notes": "Testversion 1.4.0-test.2: optionaler Local Survey Server ohne Python mit On-Demand-Download/Cache bekannter NSNS-HiPS-Dateien ergänzt; Hilfe und App-Links aktualisiert.",
   "changes": {
     "de": [
-      "Survey-Einstellungen in die Tabs Surveys und Lokale Survey-Quellen aufgeteilt.",
-      "Lokale Survey-Basis-URL, relative Pfade pro Survey, Erreichbarkeitsprüfung und Online-Fallback ergänzt.",
-      "Hilfekapitel zu lokalen Surveys und Local Survey Server mit Beispiel ergänzt.",
-      "Neue Survey-Funktionen und Kategorien deutsch/englisch übersetzt."
+      "Optionales Windows-Hilfsprogramm Local Survey Server im Paket ergänzt; keine Python-Installation erforderlich.",
+      "Der lokale Server kann bekannte NSNS-HiPS-Dateien bei Bedarf automatisch aus der Online-Quelle nachladen und lokal speichern.",
+      "In den lokalen Survey-Einstellungen wurde ein Download-Link zum Serverprogramm ergänzt.",
+      "Hilfe und Handbuch erklären den neuen Server, On-Demand-Download, lokalen Cache und Beispielkonfiguration."
     ],
     "en": [
-      "Survey settings split into the Surveys and Local survey sources tabs.",
-      "Added local survey base URL, relative paths per survey, reachability checks and online fallback.",
-      "Added help chapter for local surveys and Local Survey Server with an example.",
-      "New survey features and categories translated in German and English."
+      "Added optional Windows helper Local Survey Server to the package; no Python installation required.",
+      "The local server can automatically fetch and cache known NSNS HiPS files from the online source on demand.",
+      "Added a download link to the server helper in the local survey settings.",
+      "Help and manual now explain the new server, on-demand download, local cache and example setup."
     ]
   }
 }
