@@ -3,25 +3,25 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.4',
-  release: '1.4.0-test.4',
+  appVersion: '1.4.0-test.5',
+  release: '1.4.0-test.5',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.4',
+  documentTitle: 'Astro Night Planner 1.4.0-test.5',
   releaseNotes: {
     de: [
-      'Lokale Aladin-Surveys werden jetzt im Himmelsbild diagnostisch sichtbar: Die tatsächlich an Aladin übergebene Survey-Quelle wird angezeigt.',
-      'Der lokale Survey-Check bleibt nach der Prüfung bei der korrekten Survey-Zeile und zeigt Pfad und Status direkt in der Liste.',
-      'Der Aladin-Frame übergibt lokale HTTP-HiPS-Quellen robuster an Aladin Lite und zeigt die geladene Survey-URL im Frame an.',
-      'Die Tagesbuttons zeigen zusätzlich Mondaufgang, maximale Mondhöhe und Monduntergang bezogen auf den jeweiligen Planungszeitraum.',
-      'Die Mondinformationen wurden auch in die Titelzeile des stündlichen Wetterverlaufs und in die Mehrnächte-Wetteransicht übernommen.'
+      'Lokale Aladin-Surveys werden vor dem Start des Himmelsbildes geprüft; der Online-Fallback wird nur noch verwendet, wenn die lokale Quelle nicht erreichbar ist und der Fallback aktiv ist.',
+      'Der Aladin-Frame übergibt lokale HTTP-HiPS-Quellen explizit als aktive Bildquelle und setzt sie nach dem Initialisieren erneut, damit kein Online-Startlayer darüber liegen bleibt.',
+      'Die Survey-Diagnose unterscheidet jetzt zwischen geplanter und tatsächlich vom Aladin-Frame gewählter Quelle.',
+      'Die Tagesbuttons sind kompakter; überflüssige Flex-Zeilenabstände durch BR-Elemente wurden unterdrückt.',
+      'Die Survey-Diagnose im Himmelsbild-Tab ist jetzt oben mit der Button-/Auswahlzeile ausgerichtet.'
     ],
     en: [
-      'Local Aladin surveys now show a diagnostic readout in the sky view: the actual survey source handed to Aladin is displayed.',
-      'The local survey check now keeps the correct survey row open and shows path and status directly in the list.',
-      'The Aladin frame passes local HTTP HiPS sources more robustly to Aladin Lite and displays the loaded survey URL in the frame.',
-      'Date buttons now include Moon rise, maximum Moon altitude and Moon set relative to each planning window.',
-      'Moon information has also been added to the hourly weather heading and the multi-night weather view.'
+      'Local Aladin surveys are checked before the sky view starts; the online fallback is used only when the local source is unavailable and fallback is enabled.',
+      'The Aladin frame explicitly applies local HTTP HiPS sources as the active image source and reapplies them after initialization so no online start layer remains above them.',
+      'The survey diagnostic now distinguishes between the planned source and the source actually selected by the Aladin frame.',
+      'Date buttons are more compact; unnecessary flex spacing caused by BR elements has been suppressed.',
+      'The survey diagnostic in the sky tab is now top-aligned with the button/selection row.'
     ]
   },
   versionHistory: {
