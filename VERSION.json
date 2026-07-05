@@ -1,23 +1,25 @@
 {
-  "version": "1.4.0-test.5",
-  "release": "1.4.0-test.5",
+  "version": "1.4.0-test.6",
+  "release": "1.4.0-test.6",
   "environment": "test",
-  "builtAt": "2026-07-05T13:45:00Z",
-  "notes": "Testversion 1.4.0-test.5: lokaler Aladin-HiPS-Fallback wird erst nach fehlgeschlagener lokaler Prüfung verwendet, lokale Quellen werden im Frame explizit gesetzt, Tagesbuttons kompakter und Survey-Diagnose oben ausgerichtet.",
+  "builtAt": "2026-07-05T14:20:00Z",
+  "notes": "Testversion 1.4.0-test.6: Service-Worker-Bypass fuer lokale Survey-Server, lokale HiPS-Formate aus properties, ausfuehrliche lokale-Survey-Hilfe, Tagesbereich hoeher ausgerichtet und Mondkulmination mit Hinweis zum Planungszeitraum.",
   "changes": {
     "de": [
-      "Lokale Aladin-Surveys werden vor dem Start des Himmelsbildes geprüft; der Online-Fallback wird nur noch verwendet, wenn die lokale Quelle nicht erreichbar ist und der Fallback aktiv ist.",
-      "Der Aladin-Frame setzt lokale HTTP-HiPS-Quellen explizit als aktive Bildquelle und erneut nach der Initialisierung, damit kein Online-Startlayer darüber liegen bleibt.",
-      "Die Survey-Diagnose unterscheidet zwischen geplanter Quelle und tatsächlich im Aladin-Frame gewählter Quelle.",
-      "Die Tagesbuttons sind durch unterdrückte BR-Flex-Abstände und reduzierte Zeilenhöhe kompakter.",
-      "Die Survey-Diagnose im Himmelsbild-Tab ist oben mit Auswahl und Button ausgerichtet."
+      "Der Service Worker laesst lokale Survey-Server wie 127.0.0.1, localhost und private LAN-Adressen durch, damit lokale HiPS-Dateien nicht mehr als Offline-Fehler abgefangen werden.",
+      "Lokale HiPS-Surveys lesen das Kachelformat aus der properties-Datei; PNG-Kacheln werden nicht mehr durch ein erzwungenes JPEG-Format blockiert.",
+      "Wenn die lokale Quelle nicht darstellbar ist und der Online-Fallback deaktiviert wurde, wird ein Fehler angezeigt statt still auf DSS zu wechseln.",
+      "Die Hilfe und das Handbuch beschreiben die lokale Survey-Einrichtung, Ordnerkuerzel, Basis-URL, relative Pfade, Fallback und die Tagesbutton-Mondhoehe ausfuehrlicher auf Deutsch und Englisch.",
+      "Standort- und Datumsfelder der Planungsnacht sind hoeher ausgerichtet; Tagesbuttons bleiben kompakt.",
+      "Die Mondkulmination zeigt jetzt an, wenn sie vor oder nach dem gewaehlten Planungszeitraum liegt."
     ],
     "en": [
-      "Local Aladin surveys are checked before the sky view starts; the online fallback is used only when the local source is unavailable and fallback is enabled.",
-      "The Aladin frame explicitly sets local HTTP HiPS sources as the active image source and reapplies them after initialization so no online start layer remains above them.",
-      "The survey diagnostic distinguishes between the planned source and the source actually selected by the Aladin frame.",
-      "Date buttons are more compact by suppressing BR flex spacing and reducing line height.",
-      "The survey diagnostic in the sky tab is top-aligned with the selection and button row."
+      "The service worker bypasses local survey servers such as 127.0.0.1, localhost and private LAN addresses so local HiPS files are no longer intercepted as offline failures.",
+      "Local HiPS surveys read the tile format from the properties file; PNG tiles are no longer blocked by a forced JPEG format.",
+      "If the local source cannot be displayed and online fallback is disabled, an error is shown instead of silently switching to DSS.",
+      "Help and manual now describe local survey setup, folder codes, base URL, relative paths, fallback and the date-button Moon altitude in more detail in German and English.",
+      "Planning-night location and date fields are aligned higher; date buttons remain compact.",
+      "Moon culmination now states when it lies before or after the selected planning window."
     ]
   }
 }

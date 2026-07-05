@@ -1,0 +1,2 @@
+Astro Night Planner Local Survey Server
+Version: 1.0

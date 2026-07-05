@@ -3,18 +3,18 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.0-test.5',
-  release: '1.4.0-test.5',
+  appVersion: '1.4.0-test.6',
+  release: '1.4.0-test.6',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.0-test.5',
+  documentTitle: 'Astro Night Planner 1.4.0-test.6',
   releaseNotes: {
     de: [
-      'Lokale Aladin-Surveys werden vor dem Start des Himmelsbildes geprüft; der Online-Fallback wird nur noch verwendet, wenn die lokale Quelle nicht erreichbar ist und der Fallback aktiv ist.',
-      'Der Aladin-Frame übergibt lokale HTTP-HiPS-Quellen explizit als aktive Bildquelle und setzt sie nach dem Initialisieren erneut, damit kein Online-Startlayer darüber liegen bleibt.',
-      'Die Survey-Diagnose unterscheidet jetzt zwischen geplanter und tatsächlich vom Aladin-Frame gewählter Quelle.',
-      'Die Tagesbuttons sind kompakter; überflüssige Flex-Zeilenabstände durch BR-Elemente wurden unterdrückt.',
-      'Die Survey-Diagnose im Himmelsbild-Tab ist jetzt oben mit der Button-/Auswahlzeile ausgerichtet.'
+      'Der Service Worker lässt lokale Survey-Server wie 127.0.0.1, localhost und private LAN-Adressen durch.',
+      'Lokale HiPS-Surveys verwenden das Kachelformat aus der properties-Datei, zum Beispiel PNG.',
+      'Ohne Online-Fallback zeigt die App bei lokaler Nichterreichbarkeit einen Fehler statt DSS.',
+      'Hilfe und Handbuch beschreiben lokale Surveys, Ordnerkürzel, Windows-Hilfsprogramm, Fallback und Tagesbutton-Mondhöhe ausführlicher auf Deutsch und Englisch.',
+      'Standort- und Datumsfelder der Planungsnacht sind höher ausgerichtet; die Mondkulmination weist auf vor/nach dem Planungszeitraum hin.'
     ],
     en: [
       'Local Aladin surveys are checked before the sky view starts; the online fallback is used only when the local source is unavailable and fallback is enabled.',

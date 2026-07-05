@@ -76,14 +76,14 @@
     const wikiTerm=row=>catalogIdTerms(row)[0]||displayName(row)||uniqueTerms([...(row?.aliases||[]),row?.id])[0]||row?.id||'';
     const wikiUrl=row=>{const langCode=(document.documentElement.lang||navigator.language||'de').toLowerCase().startsWith('en')?'en':'de';const query=wikiTerm(row);return `https://${langCode}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`};
 
+    let activeSurveyFormat='jpeg';
+    let activeSurveySource='online';
     const applyNativeSurveyRendering=(attempt=0)=>{
       try{
         const layer=viewer?.getBaseImageLayer?.();
         if(layer){
-          // Use the survey provider's native rendering. For DSS2 red/blue this is grayscale in Aladin,
-          // even though the band name contains a color. Prefer JPEG tiles where available because they
-          // carry the native preview colors used by Aladin's survey browser.
-          try{layer.setImageFormat?.('jpeg')}catch{}
+          const format=activeSurveySource==='local'?activeSurveyFormat:'jpeg';
+          if(format)try{layer.setImageFormat?.(format)}catch{}
           try{layer.setColormap?.('native',{stretch:'linear',reversed:false})}catch{try{layer.setColormap?.('native')}catch{}}
           try{layer.setAlpha?.(1)}catch{try{layer.setOpacity?.(1)}catch{}}
         }
@@ -214,9 +214,29 @@
     const loadCatalog=async()=>{try{const response=await fetch('assets/catalog.generated.json',{cache:'force-cache'});if(response.ok)catalogRows=parseCatalog(await response.json())}catch{}finally{scheduleLabels()}};
     const isHttpUrl=value=>/^https?:\/\//i.test(String(value||''));
     const surveyPropertiesUrl=value=>String(value||'').replace(/\/+$/,'')+'/properties';
+    const parseHiPSProperties=text=>{
+      const out={};
+      String(text||'').split(/\r?\n/).forEach(line=>{const m=line.match(/^\s*([^#=]+?)\s*=\s*(.*?)\s*$/);if(m)out[m[1].trim().toLowerCase()]=m[2].trim()});
+      return out;
+    };
+    const preferredTileFormat=properties=>{
+      const formats=String(properties.hips_tile_format||properties.tile_format||'').toLowerCase().split(/[ ,]+/).filter(Boolean);
+      if(formats.includes('png'))return'png';
+      if(formats.includes('jpeg'))return'jpeg';
+      if(formats.includes('jpg'))return'jpeg';
+      return formats[0]||'';
+    };
     const checkLocalSurvey=async value=>{
-      if(!isHttpUrl(value))return false;
-      try{const response=await fetch(surveyPropertiesUrl(value),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});return response.ok}catch{return false}
+      if(!isHttpUrl(value))return{ok:false,error:'not-http'};
+      try{
+        const response=await fetch(surveyPropertiesUrl(value),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+        if(!response.ok)return{ok:false,error:`HTTP ${response.status}`};
+        const text=await response.text();
+        const properties=parseHiPSProperties(text);
+        if(!properties.hips_order&&!properties.obs_collection&&!properties.dataproduct_type)return{ok:false,error:'invalid-properties'};
+        const format=preferredTileFormat(properties)||'jpeg';
+        return{ok:true,properties,format};
+      }catch(error){return{ok:false,error:error?.message||String(error)}}
     };
     const resolveSurvey=async()=>{
       const wantsLocal=preferredSurveySource==='local'||(isHttpUrl(survey)&&(!onlineSurvey||survey!==onlineSurvey));
@@ -224,10 +244,10 @@
       const online=onlineSurvey||(!isHttpUrl(survey)?survey:'P/DSS2/color');
       if(wantsLocal&&local){
         surveyInfo.textContent=(surveyName?surveyName+' · ':'')+(lang==='en'?'checking local source · ':'prüfe lokale Quelle · ')+local;
-        const ok=await checkLocalSurvey(local);
-        if(ok)return{raw:local,source:'local'};
-        if(fallbackOnline&&online)return{raw:online,source:'online',fallback:true};
-        return{raw:local,source:'local',unavailable:true};
+        const localCheck=await checkLocalSurvey(local);
+        if(localCheck.ok)return{raw:local,source:'local',format:localCheck.format,properties:localCheck.properties};
+        if(fallbackOnline&&online)return{raw:online,source:'online',fallback:true,localError:localCheck.error};
+        return{raw:local,source:'local',unavailable:true,localError:localCheck.error};
       }
       return{raw:survey||online||'P/DSS2/color',source:isHttpUrl(survey)?'local':'online'};
     };
@@ -235,9 +255,9 @@
       if(isHttpUrl(raw)&&A.imageHiPS){try{return A.imageHiPS(raw,{id:raw,name:surveyName||'Local HiPS'})}catch(e){console.warn('Lokale HiPS-Quelle konnte nicht vorbereitet werden',e)}}
       return raw;
     };
-    const announceSurvey=resolved=>{const label=resolved.source==='local'?(lang==='en'?'local':'lokal'):(lang==='en'?'online':'online');surveyInfo.textContent=(surveyName?surveyName+' · ':'')+label+' · '+resolved.raw;postHost({type:'anp-aladin-survey-source',source:resolved.source,survey:resolved.raw,fallback:Boolean(resolved.fallback),unavailable:Boolean(resolved.unavailable)})};
-    const enforceSurvey=(selectedSurvey,resolved)=>{if(!viewer||resolved.source!=='local')return;try{if(typeof viewer.setImageSurvey==='function')viewer.setImageSurvey(selectedSurvey)}catch(e){console.warn('Lokale Survey konnte nicht erneut gesetzt werden',e)}applyNativeSurveyRendering(0)};
-    const start=async()=>{try{const resolved=await resolveSurvey();const selectedSurvey=surveyOption(resolved.raw);announceSurvey(resolved);viewer=A.aladin('#aladin-lite-div',{survey:selectedSurvey,target:`${ra} ${dec}`,fov:initialFov,projection:'TAN',cooFrame:'ICRS',showCooGrid:showEqGrid,showReticle:true,showZoomControl:true,showFullscreenControl:true,showLayersControl:true,showSimbadPointerControl:false,showCooGridControl:true,showShareControl:true,showGotoControl:true});window.setTimeout(()=>enforceSurvey(selectedSurvey,resolved),260);window.setTimeout(()=>enforceSurvey(selectedSurvey,resolved),900);applyNativeSurveyRendering();if(Number.isFinite(catalogRot))overlayState.objectRot=catalogRot;const recenter=()=>{try{viewer.gotoRaDec(ra,dec);viewer.setFoV(initialFov);applyNativeSurveyRendering(0);redraw();scheduleLabels();updateMoonMarker();loading.style.display='none';parent.postMessage({type:'anp-aladin-ready'},location.origin)}catch(e){fail(e.message||String(e))}};setTimeout(recenter,180);setTimeout(()=>{redraw();scheduleLabels();updateMoonMarker()},420);setTimeout(recenter,700);setTimeout(()=>{redraw();scheduleLabels();updateMoonMarker()},1250);setInterval(()=>{scheduleLabels();updateMoonMarker();if(external)drawSkyOverlay()},500);window.addEventListener('resize',()=>{updateMoonMarker();drawSkyOverlay()});if(external){let lastDraw=0;const loop=()=>{const now=Date.now();if(now-lastDraw>250){lastDraw=now;drawSkyOverlay()}requestAnimationFrame(loop)};requestAnimationFrame(loop)}loadCatalog();getOutline().then(item=>{userOutlinePolygons=item?.polygons||null;redraw();const r=document.getElementById('outlineReadout');if(r&&userOutlinePolygons)r.textContent=L.loaded})}catch(e){fail(e.message||String(e))}};
+    const announceSurvey=resolved=>{const label=resolved.source==='local'?(lang==='en'?'local':'lokal'):(lang==='en'?'online':'online');const extra=resolved.format?` · ${resolved.format}`:'';surveyInfo.textContent=(surveyName?surveyName+' · ':'')+label+' · '+resolved.raw+extra;postHost({type:'anp-aladin-survey-source',source:resolved.source,survey:resolved.raw,fallback:Boolean(resolved.fallback),unavailable:Boolean(resolved.unavailable),format:resolved.format||''})};
+    const enforceSurvey=(selectedSurvey,resolved)=>{if(!viewer)return;try{if(typeof viewer.setImageSurvey==='function')viewer.setImageSurvey(selectedSurvey)}catch(e){console.warn('Survey konnte nicht erneut gesetzt werden',e)}applyNativeSurveyRendering(0);try{viewer.requestRedraw?.()}catch{}try{viewer.view?.requestRedraw?.()}catch{}};
+    const start=async()=>{try{const resolved=await resolveSurvey();if(resolved.unavailable){announceSurvey(resolved);fail((lang==='en'?'Local survey is unavailable and online fallback is disabled.':'Lokale Survey-Quelle ist nicht erreichbar und der Online-Fallback ist deaktiviert.')+(resolved.localError?` (${resolved.localError})`:''));return}activeSurveySource=resolved.source;activeSurveyFormat=resolved.format||'jpeg';const selectedSurvey=surveyOption(resolved.raw);viewer=A.aladin('#aladin-lite-div',{survey:selectedSurvey,target:`${ra} ${dec}`,fov:initialFov,projection:'TAN',cooFrame:'ICRS',showCooGrid:showEqGrid,showReticle:true,showZoomControl:true,showFullscreenControl:true,showLayersControl:true,showSimbadPointerControl:false,showCooGridControl:true,showShareControl:true,showGotoControl:true});window.setTimeout(()=>enforceSurvey(selectedSurvey,resolved),120);window.setTimeout(()=>enforceSurvey(selectedSurvey,resolved),360);window.setTimeout(()=>enforceSurvey(selectedSurvey,resolved),900);applyNativeSurveyRendering();announceSurvey(resolved);if(Number.isFinite(catalogRot))overlayState.objectRot=catalogRot;const recenter=()=>{try{viewer.gotoRaDec(ra,dec);viewer.setFoV(initialFov);applyNativeSurveyRendering(0);try{viewer.requestRedraw?.()}catch{}redraw();scheduleLabels();updateMoonMarker();loading.style.display='none';parent.postMessage({type:'anp-aladin-ready'},location.origin)}catch(e){fail(e.message||String(e))}};setTimeout(recenter,180);setTimeout(()=>{redraw();scheduleLabels();updateMoonMarker()},420);setTimeout(recenter,700);setTimeout(()=>{redraw();scheduleLabels();updateMoonMarker()},1250);setTimeout(()=>{try{const f=viewer.getFov?.();const fovValue=Array.isArray(f)?Number(f[0]):Number(f);if(Number.isFinite(fovValue)){viewer.setFoV(fovValue*1.0001);window.setTimeout(()=>viewer.setFoV(fovValue),60)}}catch{}},1000);setInterval(()=>{scheduleLabels();updateMoonMarker();if(external)drawSkyOverlay()},500);window.addEventListener('resize',()=>{updateMoonMarker();drawSkyOverlay()});if(external){let lastDraw=0;const loop=()=>{const now=Date.now();if(now-lastDraw>250){lastDraw=now;drawSkyOverlay()}requestAnimationFrame(loop)};requestAnimationFrame(loop)}loadCatalog();getOutline().then(item=>{userOutlinePolygons=item?.polygons||null;redraw();const r=document.getElementById('outlineReadout');if(r&&userOutlinePolygons)r.textContent=L.loaded})}catch(e){fail(e.message||String(e))}};
     if(window.A&&A.init&&typeof A.init.then==='function')A.init.then(()=>start()).catch(e=>fail(e.message||String(e)));else if(window.A)start();else fail('Bibliothek nicht verfügbar.');
   })();
   </script>
