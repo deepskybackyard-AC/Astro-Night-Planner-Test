@@ -1,21 +1,21 @@
 {
-  "version": "1.4.0-test.12",
-  "release": "1.4.0-test.12",
+  "version": "1.4.1-test.1",
+  "release": "1.4.1-test.1",
   "environment": "test",
-  "builtAt": "2026-07-05T21:20:00Z",
-  "notes": "Finale Testbasis für 1.4.0: Local Survey Server stabilisiert; Kontrollfenster/Tray sind von der Webserver-Logik getrennt und bleiben bedienbar.",
+  "builtAt": "2026-07-06T17:18:22Z",
+  "notes": "Testversion 1.4.1: zusaetzlicher nativer Linux/macOS Local Survey Server, getrennte Downloads und Node-24-Workflow.",
   "changes": {
     "de": [
-      "Der Local Survey Server trennt Kontrollfenster/Tray von der Webserver-Logik. Dadurch bleiben Tray-Menü und Beenden auch nach dem Schließen der Browseroberfläche bedienbar.",
-      "Beenden/Exit stoppt den lokalen Survey-Server und den internen Konfigurationsdienst vollständig und gibt die EXE zum Überschreiben oder Löschen frei.",
-      "Server starten/stoppen und Oberfläche öffnen laufen nicht mehr blockierend im Windows-Oberflächen-Thread.",
-      "Das separate Serverpaket bleibt Version 1.0 und enthält die aktualisierte README mit Start-, Tray-, Stop-, Exit-, Autostart- und Konsolenmodus-Hinweisen."
+      "Zusätzliches natives Linux/macOS-Paket für lokale HiPS-Surveys ohne Wine und ohne Python-Abhängigkeit.",
+      "Lokale Survey-Einstellungen mit getrennten Downloads für Windows, Linux/macOS und Python-Fallback.",
+      "Hilfe und Handbuch erklären alle Varianten inklusive systemd-user, LaunchAgent und Beispielen.",
+      "GitHub-Pages-Testworkflow auf Node-24-kompatible Actions aktualisiert."
     ],
     "en": [
-      "The Local Survey Server separates the control window/tray from the web-server logic. The tray menu and Exit action remain usable after the browser interface is closed.",
-      "Exit stops the local survey server and the internal configuration service completely and releases the EXE for replacement or deletion.",
-      "Start/stop server and open interface actions no longer block the Windows UI thread.",
-      "The separate server package remains version 1.0 and includes the updated README with start, tray, stop, exit, autostart and console-mode notes."
+      "Additional native Linux/macOS package for local HiPS surveys without Wine and without a Python dependency.",
+      "Local survey settings now have separate downloads for Windows, Linux/macOS and Python fallback.",
+      "Help and manual explain all variants including systemd user service, LaunchAgent and examples.",
+      "GitHub Pages test workflow updated to Node 24 compatible actions."
     ]
   }
 }
