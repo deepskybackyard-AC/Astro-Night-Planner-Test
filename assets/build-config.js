@@ -3,22 +3,22 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.1-test.1',
-  release: '1.4.1-test.1',
+  appVersion: '1.4.1-test.2',
+  release: '1.4.1-test.2',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.1-test.1',
+  documentTitle: 'Astro Night Planner 1.4.1-test.2',
   releaseNotes: {
     de: [
       'Die Windows-Lösung des ANP Local Survey Server bleibt erhalten und wird weiterhin für Windows empfohlen.',
       'Zusätzlich steht ein natives Linux/macOS-Serverpaket mit Browser-Konfigurationsoberfläche, Survey-Dateiserver und systemd-/LaunchAgent-Beispielen bereit.',
-      'Die lokalen Survey-Einstellungen zeigen getrennte Downloads und Hinweise für Windows, Linux/macOS und den Python-Fallback.',
+      'Die lokalen Survey-Einstellungen zeigen getrennte Downloads, Hinweise und HTML-Anleitungen für Windows, Linux/macOS und den Python-Fallback.',
       'Der GitHub-Pages-Testworkflow wurde auf Node-24-kompatible Actions aktualisiert.'
     ],
     en: [
       'The Windows edition of ANP Local Survey Server remains available and is still recommended for Windows.',
       'A native Linux/macOS server package with browser configuration interface, survey file server and systemd/LaunchAgent examples is now included.',
-      'The local survey settings show separate downloads and guidance for Windows, Linux/macOS and the Python fallback.',
+      'The local survey settings show separate downloads, guidance and HTML documentation for Windows, Linux/macOS and the Python fallback.',
       'The GitHub Pages test workflow has been updated to Node 24 compatible actions.'
     ]
   },
@@ -29,7 +29,7 @@ window.ANP_BUILD = Object.freeze({
         'Browserbasierte Konfigurationsoberfläche des Linux/macOS-Servers mit Status, Pfadprüfung, Start/Stop und Programm beenden.',
         'systemd-user-Beispiel für Linux und LaunchAgent-Beispiel für macOS.',
         'Getrennte Download-Links und Hinweise in den lokalen Survey-Einstellungen: Windows, Linux/macOS und Python-Fallback.',
-        'Hilfe und Handbuch beschreiben die Windows-, Linux-, macOS- und Python-Variante mit Beispielen.',
+        'Hilfe und Handbuch verlinken ausführliche HTML-Anleitungen für Windows, Linux/macOS, Linux-Autostart, macOS-Autostart und Python-Fallback.',
         'GitHub-Pages-Testworkflow auf Node-24-kompatible Actions aktualisiert.'
       ]},
       version140: { title: 'Version 1.4.0 gegenüber 1.3.0', items: [
@@ -48,7 +48,7 @@ window.ANP_BUILD = Object.freeze({
         'Browser-based configuration interface of the Linux/macOS server with status, path checks, start/stop and shutdown.',
         'systemd user-service example for Linux and LaunchAgent example for macOS.',
         'Separate download links and guidance in local survey settings: Windows, Linux/macOS and Python fallback.',
-        'Help and manual describe the Windows, Linux, macOS and Python variants with examples.',
+        'Help and manual link detailed HTML guides for Windows, Linux/macOS, Linux autostart, macOS autostart and Python fallback.',
         'GitHub Pages test workflow updated to Node 24 compatible actions.'
       ]},
       version140: { title: 'Version 1.4.0 compared with 1.3.0', items: [

@@ -1,17 +1,19 @@
 {
-  "version": "1.4.1-test.1",
-  "release": "1.4.1-test.1",
+  "version": "1.4.1-test.2",
+  "release": "1.4.1-test.2",
   "environment": "test",
-  "builtAt": "2026-07-06T17:18:22Z",
-  "notes": "Testversion 1.4.1: zusaetzlicher nativer Linux/macOS Local Survey Server, getrennte Downloads und Node-24-Workflow.",
+  "builtAt": "2026-07-06T18:05:00Z",
+  "notes": "Testversion 1.4.1: HTML-Anleitungen für alle Local-Survey-Server-Varianten ergänzt.",
   "changes": {
     "de": [
+      "README-Inhalte der Local-Survey-Server-Pakete als ausführliche HTML-Anleitungen in der App-Hilfe verlinkt.",
       "Zusätzliches natives Linux/macOS-Paket für lokale HiPS-Surveys ohne Wine und ohne Python-Abhängigkeit.",
       "Lokale Survey-Einstellungen mit getrennten Downloads für Windows, Linux/macOS und Python-Fallback.",
       "Hilfe und Handbuch erklären alle Varianten inklusive systemd-user, LaunchAgent und Beispielen.",
       "GitHub-Pages-Testworkflow auf Node-24-kompatible Actions aktualisiert."
     ],
     "en": [
+      "README content of the Local Survey Server packages is now available as detailed HTML guides linked from the app help.",
       "Additional native Linux/macOS package for local HiPS surveys without Wine and without a Python dependency.",
       "Local survey settings now have separate downloads for Windows, Linux/macOS and Python fallback.",
       "Help and manual explain all variants including systemd user service, LaunchAgent and examples.",
