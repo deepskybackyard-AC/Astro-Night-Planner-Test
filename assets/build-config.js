@@ -3,27 +3,37 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.1-test.2',
-  release: '1.4.1-test.2',
+  appVersion: '1.4.2-test.1',
+  release: '1.4.2-test.1',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.1-test.2',
+  documentTitle: 'Astro Night Planner 1.4.2-test.1',
   releaseNotes: {
     de: [
-      'Die Windows-Lösung des ANP Local Survey Server bleibt erhalten und wird weiterhin für Windows empfohlen.',
-      'Zusätzlich steht ein natives Linux/macOS-Serverpaket mit Browser-Konfigurationsoberfläche, Survey-Dateiserver und systemd-/LaunchAgent-Beispielen bereit.',
-      'Die lokalen Survey-Einstellungen zeigen getrennte Downloads, Hinweise und HTML-Anleitungen für Windows, Linux/macOS und den Python-Fallback.',
-      'Der GitHub-Pages-Testworkflow wurde auf Node-24-kompatible Actions aktualisiert.'
+      'Local Survey Server 1.1 bietet eine integrierte Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
+      'Survey-Hauptordner und Downloadziele können über Betriebssystem-Ordnerdialoge gewählt werden.',
+      'Relative Survey-Pfade lassen sich im Planner aus erkannten lokalen HiPS-Ordnern auswählen.',
+      'Der Sammelschalter für lokale Quellen setzt jetzt alle einzelnen Survey-Häkchen gemeinsam.',
+      'Hilfe und Handbuch wurden für Downloads, Ordnerauswahl und Fallback-Logik erweitert.'
     ],
     en: [
-      'The Windows edition of ANP Local Survey Server remains available and is still recommended for Windows.',
-      'A native Linux/macOS server package with browser configuration interface, survey file server and systemd/LaunchAgent examples is now included.',
-      'The local survey settings show separate downloads, guidance and HTML documentation for Windows, Linux/macOS and the Python fallback.',
-      'The GitHub Pages test workflow has been updated to Node 24 compatible actions.'
+      'Local Survey Server 1.1 adds integrated download management for known NSNS HiPS surveys.',
+      'Survey root and download targets can be selected with operating-system folder dialogs.',
+      'Relative survey paths can be selected in Planner from detected local HiPS folders.',
+      'The local-source bulk switch now sets all per-survey checkboxes together.',
+      'Help and manual were expanded for downloads, folder selection and fallback logic.'
     ]
   },
   versionHistory: {
     de: {
+      version142: { title: 'Version 1.4.2 gegenüber 1.4.1', items: [
+        'Local Survey Server 1.1 mit integrierter Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
+        'Download starten, pausieren, fortsetzen, abbrechen und vorhandene Daten prüfen.',
+        'Betriebssystem-Ordnerdialoge für Survey-Hauptordner und Downloadziel.',
+        'Auswahl relativer Survey-Pfade aus den vom laufenden Server erkannten HiPS-Ordnern.',
+        'Sammelschalter setzt alle einzelnen lokalen Survey-Häkchen und erlaubt anschließend Einzelabweichungen.',
+        'Erweiterte Hilfe und HTML-Anleitungen in Deutsch und Englisch.'
+      ]},
       version141: { title: 'Version 1.4.1 gegenüber 1.4.0', items: [
         'Zusätzliches natives Linux/macOS-Paket für lokale HiPS-Surveys ohne Wine und ohne Python-Abhängigkeit.',
         'Browserbasierte Konfigurationsoberfläche des Linux/macOS-Servers mit Status, Pfadprüfung, Start/Stop und Programm beenden.',
@@ -43,6 +53,14 @@ window.ANP_BUILD = Object.freeze({
       ]}
     },
     en: {
+      version142: { title: 'Version 1.4.2 compared with 1.4.1', items: [
+        'Local Survey Server 1.1 with integrated download management for known NSNS HiPS surveys.',
+        'Start, pause, resume and cancel downloads and validate existing data.',
+        'Operating-system folder dialogs for survey root and download target.',
+        'Select relative survey paths from HiPS folders detected by the running server.',
+        'Bulk switch sets all local survey checkboxes while allowing individual overrides afterwards.',
+        'Expanded help and HTML guides in German and English.'
+      ]},
       version141: { title: 'Version 1.4.1 compared with 1.4.0', items: [
         'Additional native Linux/macOS package for local HiPS surveys without Wine and without a Python dependency.',
         'Browser-based configuration interface of the Linux/macOS server with status, path checks, start/stop and shutdown.',

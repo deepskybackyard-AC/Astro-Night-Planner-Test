@@ -735,3 +735,8 @@ body{padding-bottom:0}
 
 .temporary-equipment-notice{margin:-4px 0 12px}
 .planning-night-selector{margin-top:2px!important}
+
+/* 1.4.2 local survey folder selection and download management */
+.input-button-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;margin-top:5px}
+.input-button-row button{white-space:normal;min-width:190px}
+@media(max-width:760px){.input-button-row{grid-template-columns:1fr}.input-button-row button{min-width:0}}
