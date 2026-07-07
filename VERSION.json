@@ -1,23 +1,27 @@
 {
-  "version": "1.4.2",
-  "release": "1.4.2",
-  "environment": "prod",
-  "builtAt": "2026-07-07T21:52:05Z",
-  "notes": "🟨 WICHTIG: ANP-Local-Survey-Server.exe durch die Version aus dem Paket ANP Local Survey Server 1.1 ersetzen.",
+  "version": "1.4.2-test.4",
+  "release": "1.4.2-test.4",
+  "environment": "test",
+  "builtAt": "2026-07-07T22:30:00Z",
+  "notes": "Testversion 1.4.2: vollständige Survey-Liste, zuverlässige Ordnerauswahl, Pfaddialog und reparierte Tray-Steuerung.",
   "changes": {
     "de": [
-      "🟨 WICHTIG: ANP-Local-Survey-Server.exe vollständig beenden und durch die Datei aus dem Paket ANP Local Survey Server 1.1 ersetzen. Der Dateiname bleibt unverändert."
+      "ANP Local Survey Server 1.1.3 listet alle in der App eingebauten Surveys mit vorbelegten HiPS-Quelladressen sowie benutzerdefinierte Quellen.",
+      "Die Windows-Ordnerauswahl wird auf dem UI-Thread geöffnet und benötigt weder PowerShell noch einen PATH-Eintrag.",
+      "Das Tray-Kontextmenü kann die Oberfläche öffnen, den Survey-Server starten und stoppen sowie das Programm vollständig beenden.",
+      "Relative Survey-Pfade werden im Planner über einen verständlichen Auswahldialog mit Ordnernamen und Hauptpfad übernommen.",
+      "Downloadverwaltung, Konfigurationsmigration, Speichern-Feedback und Sammelschalter aus den vorherigen Tests bleiben enthalten.",
+      "Hilfe und Handbuch wurden auf Deutsch und Englisch aktualisiert.",
+      "Der GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
     ],
     "en": [
-      "🟨 IMPORTANT: Fully exit ANP-Local-Survey-Server.exe and replace it with the file from the ANP Local Survey Server 1.1 package. The executable name remains unchanged."
+      "ANP Local Survey Server 1.1.3 lists every survey built into the app with a default HiPS source URL, plus custom sources.",
+      "The Windows folder picker is opened on the UI thread and requires neither PowerShell nor a PATH entry.",
+      "The tray context menu can open the interface, start and stop the survey server, and exit the program completely.",
+      "Relative survey paths are selected in Planner through a clear dialog showing folder names and the server root.",
+      "Download management, configuration migration, save feedback and the bulk local-source switch from earlier tests remain included.",
+      "Help and manual were updated in German and English.",
+      "The GitHub Pages test workflow uses Node 24 compatible actions."
     ]
-  },
-  "criticalUpdate": {
-    "de": "ANP-Local-Survey-Server.exe vollständig beenden und durch die EXE aus ANP Local Survey Server 1.1 ersetzen.",
-    "en": "Fully exit ANP-Local-Survey-Server.exe and replace it with the executable from ANP Local Survey Server 1.1."
-  },
-  "detailsUrl": {
-    "de": "docs/NEUERUNGEN_DE.html",
-    "en": "docs/NEUERUNGEN_EN.html"
   }
 }
