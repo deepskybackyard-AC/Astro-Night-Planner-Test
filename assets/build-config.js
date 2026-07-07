@@ -3,35 +3,36 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.2-test.2',
-  release: '1.4.2-test.2',
+  appVersion: '1.4.2-test.3',
+  release: '1.4.2-test.3',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.2-test.2',
+  documentTitle: 'Astro Night Planner 1.4.2-test.3',
   releaseNotes: {
     de: [
-      'Unter Windows öffnet Local Survey Server 1.1.1 beim Doppelklick wieder automatisch die Browseroberfläche; das Tray bleibt für Start, Stop und Beenden verfügbar.',
-      'Local Survey Server 1.1.1 bietet eine integrierte Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
-      'Survey-Hauptordner und Downloadziele können über Betriebssystem-Ordnerdialoge gewählt werden.',
-      'Relative Survey-Pfade lassen sich im Planner aus erkannten lokalen HiPS-Ordnern auswählen.',
-      'Der Sammelschalter für lokale Quellen setzt jetzt alle einzelnen Survey-Häkchen gemeinsam.',
-      'Hilfe und Handbuch wurden für Downloads, Ordnerauswahl und Fallback-Logik erweitert.'
+      'Local Survey Server 1.1.2 verwendet unter Windows einen nativen Ordnerdialog ohne PowerShell-Abhängigkeit.',
+      'Eine vorhandene Konfiguration aus Server 1.0 wird beim ersten Start automatisch gesucht und übernommen.',
+      'Zusätzlich zu den bekannten NSNS-Surveys können weitere kompatible HiPS-Surveys über eine eigene Quelladresse und einen relativen Zielpfad heruntergeladen werden.',
+      'Der Speichern-Button bestätigt das Speichern jetzt kurz durch Farbe und Text; das Erfolgs-Popup entfällt.',
+      'Hilfe und Handbuch wurden für benutzerdefinierte Downloads, Konfigurationsübernahme und Ordnerauswahl erweitert.'
     ],
     en: [
-      'On Windows, Local Survey Server 1.1.1 again opens the browser interface automatically when double-clicked; the tray remains available for start, stop and exit.',
-      'Local Survey Server 1.1.1 adds integrated download management for known NSNS HiPS surveys.',
-      'Survey root and download targets can be selected with operating-system folder dialogs.',
-      'Relative survey paths can be selected in Planner from detected local HiPS folders.',
-      'The local-source bulk switch now sets all per-survey checkboxes together.',
-      'Help and manual were expanded for downloads, folder selection and fallback logic.'
+      'On Windows, Local Survey Server 1.1.2 uses a native folder picker without a PowerShell dependency.',
+      'An existing server 1.0 configuration is searched for and migrated automatically on first start.',
+      'In addition to the known NSNS surveys, other compatible HiPS surveys can be downloaded from a custom source URL into a relative target path.',
+      'The Save button now confirms saving briefly through colour and text; the success popup has been removed.',
+      'Help and manual were expanded for custom downloads, configuration migration and folder selection.'
     ]
   },
   versionHistory: {
     de: {
       version142: { title: 'Version 1.4.2 gegenüber 1.4.1', items: [
-        'Local Survey Server 1.1.1 mit integrierter Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
+        'Local Survey Server 1.1.2 mit Downloadverwaltung für bekannte NSNS- und weitere kompatible HiPS-Surveys.',
+        'Freie Quelladresse und relativer Zielpfad für benutzerdefinierte Survey-Downloads.',
         'Download starten, pausieren, fortsetzen, abbrechen und vorhandene Daten prüfen.',
-        'Betriebssystem-Ordnerdialoge für Survey-Hauptordner und Downloadziel.',
+        'Native Ordnerauswahl unter Windows ohne PowerShell; Ordnerdialoge auch unter Linux und macOS.',
+        'Automatische Übernahme einer vorhandenen Windows-Konfiguration aus Server 1.0.',
+        'Speichern-Bestätigung direkt am Button statt Erfolgs-Popup.',
         'Auswahl relativer Survey-Pfade aus den vom laufenden Server erkannten HiPS-Ordnern.',
         'Sammelschalter setzt alle einzelnen lokalen Survey-Häkchen und erlaubt anschließend Einzelabweichungen.',
         'Erweiterte Hilfe und HTML-Anleitungen in Deutsch und Englisch.'
@@ -56,9 +57,12 @@ window.ANP_BUILD = Object.freeze({
     },
     en: {
       version142: { title: 'Version 1.4.2 compared with 1.4.1', items: [
-        'Local Survey Server 1.1.1 with integrated download management for known NSNS HiPS surveys.',
+        'Local Survey Server 1.1.2 with download management for known NSNS and other compatible HiPS surveys.',
+        'Custom source URL and relative target path for user-defined survey downloads.',
         'Start, pause, resume and cancel downloads and validate existing data.',
-        'Operating-system folder dialogs for survey root and download target.',
+        'Native Windows folder picker without PowerShell, with folder dialogs also on Linux and macOS.',
+        'Automatic migration of an existing Windows server 1.0 configuration.',
+        'Save confirmation directly on the button instead of a success popup.',
         'Select relative survey paths from HiPS folders detected by the running server.',
         'Bulk switch sets all local survey checkboxes while allowing individual overrides afterwards.',
         'Expanded help and HTML guides in German and English.'

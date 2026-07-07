@@ -1,28 +1,32 @@
 {
-  "version": "1.4.2-test.2",
-  "release": "1.4.2-test.2",
+  "version": "1.4.2-test.3",
+  "release": "1.4.2-test.3",
   "environment": "test",
-  "builtAt": "2026-07-07T20:30:00Z",
-  "notes": "Testversion 1.4.2: Survey-Downloads, Ordnerauswahl, lokale Quellensteuerung und korrigierter Windows-Browserstart.",
+  "builtAt": "2026-07-07T20:55:00Z",
+  "notes": "Testversion 1.4.2: benutzerdefinierte Survey-Downloads, native Windows-Ordnerauswahl, Konfigurationsübernahme und Speichern-Feedback.",
   "changes": {
     "de": [
-      "ANP Local Survey Server 1.1.1 öffnet unter Windows wieder automatisch die Browseroberfläche; die Bedienung im Hintergrund erfolgt über das Tray.",
-      "ANP Local Survey Server 1.1.1 lädt bekannte NSNS-HiPS-Surveys in den konfigurierten Hauptordner herunter.",
+      "ANP Local Survey Server 1.1.2 öffnet unter Windows automatisch die Browseroberfläche und bleibt über das Tray bedienbar.",
+      "Native Windows-Ordnerauswahl ohne PowerShell-Abhängigkeit für Survey-Hauptordner und Downloadziel.",
+      "Eine vorhandene Konfiguration aus Server 1.0 wird automatisch gesucht und in die neue Konfiguration übernommen.",
+      "Bekannte NSNS-Surveys sowie weitere kompatible HiPS-Surveys können über eine freie Quelladresse und einen relativen Zielpfad heruntergeladen werden.",
       "Downloadverwaltung mit Start, Pause, Fortsetzen, Abbruch, Wiederaufnahme und Prüfung vorhandener Daten.",
-      "Betriebssystem-Ordnerdialoge für Survey-Hauptordner und Downloadziel unter Windows, Linux und macOS.",
+      "Der Speichern-Button bestätigt erfolgreiche Änderungen kurz durch Farbe und Text; das Erfolgs-Popup entfällt.",
       "Relative Survey-Pfade können im Planner aus den vom laufenden Server erkannten HiPS-Ordnern ausgewählt werden.",
-      "Der Sammelschalter für lokale Quellen setzt jetzt sichtbar alle einzelnen Survey-Häkchen; einzelne Abweichungen bleiben möglich.",
-      "Hilfe und Handbuch erklären Download, Ordnerauswahl und lokale Bevorzugungslogik vollständig auf Deutsch und Englisch.",
-      "GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
+      "Der Sammelschalter für lokale Quellen setzt sichtbar alle einzelnen Survey-Häkchen; einzelne Abweichungen bleiben möglich.",
+      "Hilfe und Handbuch erklären alle neuen Funktionen auf Deutsch und Englisch.",
+      "Der GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
     ],
     "en": [
-      "ANP Local Survey Server 1.1.1 again opens the browser interface automatically on Windows; background control is provided through the tray icon.",
-      "ANP Local Survey Server 1.1.1 downloads known NSNS HiPS surveys into the configured root folder.",
+      "ANP Local Survey Server 1.1.2 automatically opens the browser interface on Windows and remains controllable through the tray icon.",
+      "Native Windows folder selection without a PowerShell dependency for survey root and download target.",
+      "An existing server 1.0 configuration is searched for and migrated automatically.",
+      "Known NSNS surveys and other compatible HiPS surveys can be downloaded from a custom source URL into a relative target path.",
       "Download management with start, pause, resume, cancel, continuation and validation of existing data.",
-      "Operating-system folder dialogs for the survey root and download target on Windows, Linux and macOS.",
+      "The Save button briefly confirms successful changes through colour and text; the success popup has been removed.",
       "Relative survey paths can be selected in Planner from HiPS folders detected by the running server.",
-      "The local-source bulk switch now visibly sets all per-survey checkboxes while individual overrides remain possible.",
-      "Help and manual fully explain downloads, folder selection and local-source preference in German and English.",
+      "The local-source bulk switch visibly sets all per-survey checkboxes while individual overrides remain possible.",
+      "Help and manual explain all new functions in German and English.",
       "The GitHub Pages test workflow uses Node 24 compatible actions."
     ]
   }
