@@ -3,21 +3,23 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.2-test.1',
-  release: '1.4.2-test.1',
+  appVersion: '1.4.2-test.2',
+  release: '1.4.2-test.2',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.2-test.1',
+  documentTitle: 'Astro Night Planner 1.4.2-test.2',
   releaseNotes: {
     de: [
-      'Local Survey Server 1.1 bietet eine integrierte Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
+      'Unter Windows öffnet Local Survey Server 1.1.1 beim Doppelklick wieder automatisch die Browseroberfläche; das Tray bleibt für Start, Stop und Beenden verfügbar.',
+      'Local Survey Server 1.1.1 bietet eine integrierte Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
       'Survey-Hauptordner und Downloadziele können über Betriebssystem-Ordnerdialoge gewählt werden.',
       'Relative Survey-Pfade lassen sich im Planner aus erkannten lokalen HiPS-Ordnern auswählen.',
       'Der Sammelschalter für lokale Quellen setzt jetzt alle einzelnen Survey-Häkchen gemeinsam.',
       'Hilfe und Handbuch wurden für Downloads, Ordnerauswahl und Fallback-Logik erweitert.'
     ],
     en: [
-      'Local Survey Server 1.1 adds integrated download management for known NSNS HiPS surveys.',
+      'On Windows, Local Survey Server 1.1.1 again opens the browser interface automatically when double-clicked; the tray remains available for start, stop and exit.',
+      'Local Survey Server 1.1.1 adds integrated download management for known NSNS HiPS surveys.',
       'Survey root and download targets can be selected with operating-system folder dialogs.',
       'Relative survey paths can be selected in Planner from detected local HiPS folders.',
       'The local-source bulk switch now sets all per-survey checkboxes together.',
@@ -27,7 +29,7 @@ window.ANP_BUILD = Object.freeze({
   versionHistory: {
     de: {
       version142: { title: 'Version 1.4.2 gegenüber 1.4.1', items: [
-        'Local Survey Server 1.1 mit integrierter Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
+        'Local Survey Server 1.1.1 mit integrierter Downloadverwaltung für bekannte NSNS-HiPS-Surveys.',
         'Download starten, pausieren, fortsetzen, abbrechen und vorhandene Daten prüfen.',
         'Betriebssystem-Ordnerdialoge für Survey-Hauptordner und Downloadziel.',
         'Auswahl relativer Survey-Pfade aus den vom laufenden Server erkannten HiPS-Ordnern.',
@@ -54,7 +56,7 @@ window.ANP_BUILD = Object.freeze({
     },
     en: {
       version142: { title: 'Version 1.4.2 compared with 1.4.1', items: [
-        'Local Survey Server 1.1 with integrated download management for known NSNS HiPS surveys.',
+        'Local Survey Server 1.1.1 with integrated download management for known NSNS HiPS surveys.',
         'Start, pause, resume and cancel downloads and validate existing data.',
         'Operating-system folder dialogs for survey root and download target.',
         'Select relative survey paths from HiPS folders detected by the running server.',

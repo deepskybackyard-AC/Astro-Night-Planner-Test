@@ -1,12 +1,13 @@
 {
-  "version": "1.4.2-test.1",
-  "release": "1.4.2-test.1",
+  "version": "1.4.2-test.2",
+  "release": "1.4.2-test.2",
   "environment": "test",
-  "builtAt": "2026-07-07T19:35:00Z",
-  "notes": "Testversion 1.4.2: Survey-Downloads, Ordnerauswahl und eindeutige lokale Quellensteuerung.",
+  "builtAt": "2026-07-07T20:30:00Z",
+  "notes": "Testversion 1.4.2: Survey-Downloads, Ordnerauswahl, lokale Quellensteuerung und korrigierter Windows-Browserstart.",
   "changes": {
     "de": [
-      "ANP Local Survey Server 1.1 lädt bekannte NSNS-HiPS-Surveys in den konfigurierten Hauptordner herunter.",
+      "ANP Local Survey Server 1.1.1 öffnet unter Windows wieder automatisch die Browseroberfläche; die Bedienung im Hintergrund erfolgt über das Tray.",
+      "ANP Local Survey Server 1.1.1 lädt bekannte NSNS-HiPS-Surveys in den konfigurierten Hauptordner herunter.",
       "Downloadverwaltung mit Start, Pause, Fortsetzen, Abbruch, Wiederaufnahme und Prüfung vorhandener Daten.",
       "Betriebssystem-Ordnerdialoge für Survey-Hauptordner und Downloadziel unter Windows, Linux und macOS.",
       "Relative Survey-Pfade können im Planner aus den vom laufenden Server erkannten HiPS-Ordnern ausgewählt werden.",
@@ -15,7 +16,8 @@
       "GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
     ],
     "en": [
-      "ANP Local Survey Server 1.1 downloads known NSNS HiPS surveys into the configured root folder.",
+      "ANP Local Survey Server 1.1.1 again opens the browser interface automatically on Windows; background control is provided through the tray icon.",
+      "ANP Local Survey Server 1.1.1 downloads known NSNS HiPS surveys into the configured root folder.",
       "Download management with start, pause, resume, cancel, continuation and validation of existing data.",
       "Operating-system folder dialogs for the survey root and download target on Windows, Linux and macOS.",
       "Relative survey paths can be selected in Planner from HiPS folders detected by the running server.",
