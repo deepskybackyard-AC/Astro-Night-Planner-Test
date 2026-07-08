@@ -1,25 +1,27 @@
 {
-  "version": "1.4.2-test.5",
-  "release": "1.4.2-test.5",
+  "version": "1.4.3-test.1",
+  "release": "1.4.3-test.1",
   "environment": "test",
-  "builtAt": "2026-07-08T20:30:00Z",
-  "notes": "Testversion 1.4.2: geprüfte Survey-Dienstadressen, MOC-basierter Download und gespeicherte Zielpfade.",
+  "builtAt": "2026-07-08T23:45:00Z",
+  "notes": "Testversion 1.4.3: robustere Survey-Downloads und stabilere Windows-Tray-Steuerung.",
   "changes": {
     "de": [
-      "ANP Local Survey Server 1.1 (Build 1.1.4) verwendet für alle 15 eingebauten Surveys geprüfte Dienstadressen.",
-      "Der Download prüft properties und Moc.fits und ermittelt die benötigten Kacheln aus der MOC-Abdeckung; ein Verzeichnislisting ist nicht erforderlich.",
-      "Quelle und Zielpfad können pro Survey gespeichert werden; der vollständig aufgelöste lokale Zielpfad wird angezeigt.",
-      "Windows-, Linux- und macOS-Pakete enthalten dieselbe Downloadlogik, Pause/Fortsetzen und .part-Wiederaufnahme.",
-      "Hilfe und Handbuch wurden auf Deutsch und Englisch aktualisiert.",
-      "Der GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
+      "ANP Local Survey Server 1.1 (Build 1.1.5) wiederholt temporär unterbrochene Datei-Downloads automatisch mit zunehmender Wartezeit.",
+      "Ein einzelner Verbindungsfehler beendet nicht mehr den gesamten Survey-Download; fehlende Dateien werden nach dem Hauptlauf nochmals automatisch versucht.",
+      "Downloads von www.simg.de verwenden zwei parallele Verbindungen, andere Quellen standardmäßig vier.",
+      "Der Downloadstatus zeigt Wiederholungsversuch, Wartezeit, fehlgeschlagene Dateien und Anzahl paralleler Verbindungen an.",
+      "Das Windows-Tray-Menü wurde stabilisiert und nach einem Neustart des Windows-Explorers automatisch wiederhergestellt.",
+      "Beenden besitzt eine Sicherheitsabschaltung, damit die EXE ohne Task-Manager freigegeben werden kann.",
+      "Hilfe und Handbuch wurden auf Deutsch und Englisch aktualisiert."
     ],
     "en": [
-      "ANP Local Survey Server 1.1 (Build 1.1.4) uses verified service URLs for all 15 built-in surveys.",
-      "Downloads validate properties and Moc.fits and derive required tiles from the MOC coverage map; no directory listing is required.",
-      "Source and target path can be saved per survey; the resolved local target path is shown.",
-      "Windows, Linux and macOS packages use the same download logic, pause/resume and .part recovery.",
-      "Help and manual were updated in German and English.",
-      "The GitHub Pages test workflow uses Node 24 compatible actions."
+      "ANP Local Survey Server 1.1 (build 1.1.5) automatically retries temporarily interrupted file downloads with increasing delays.",
+      "A single connection error no longer stops the complete survey download; missing files are retried automatically after the main pass.",
+      "Downloads from www.simg.de use two parallel connections; other sources use four by default.",
+      "Download status shows retry attempt, wait time, failed files and parallel connection count.",
+      "The Windows tray menu was stabilised and is restored automatically after Windows Explorer restarts.",
+      "Exit includes a safety fallback so the EXE can be replaced without Task Manager.",
+      "Help and manual were updated in German and English."
     ]
   }
 }

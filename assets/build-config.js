@@ -3,35 +3,41 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.2-test.5',
-  release: '1.4.2-test.5',
+  appVersion: '1.4.3-test.1',
+  release: '1.4.3-test.1',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.2-test.5',
+  documentTitle: 'Astro Night Planner 1.4.3-test.1',
   releaseNotes: {
     de: [
-      'Local Survey Server 1.1 (Build 1.1.4) verwendet für alle 15 eingebauten Surveys geprüfte Dienstadressen und einen MOC-basierten Downloader.',
-      'Alle Standard-Downloadadressen wurden gegen die offiziellen HiPS-Dienstadressen korrigiert und geprüft.',
-      'Der Downloader liest properties und Moc.fits und benötigt kein Web-Verzeichnislisting.',
-      'Quelle und Zielpfad können pro Survey gespeichert werden; der vollständige lokale Zielpfad wird angezeigt.',
-      'Windows-Ordnerdialoge werden zuverlässig auf dem UI-Thread geöffnet und benötigen weder PowerShell noch einen PATH-Eintrag.',
-      'Das Tray-Kontextmenü öffnet die Oberfläche und kann den Survey-Server wieder zuverlässig starten, stoppen und das Programm beenden.',
-      'Relative Survey-Pfade werden im Planner in einem verständlichen Auswahldialog statt über eine Nummerneingabe ausgewählt.',
-      'Hilfe und Handbuch wurden für Survey-Liste, Ordnerauswahl, Pfaddialog und Tray-Steuerung aktualisiert.'
+      'Local Survey Server 1.1 (Build 1.1.5) wiederholt temporäre Netzwerkfehler automatisch und setzt .part-Dateien fort.',
+      'Ein einzelner Verbindungsabbruch beendet nicht mehr den gesamten Survey-Download.',
+      'Nach dem Hauptlauf werden fehlgeschlagene Dateien automatisch in einem weiteren Durchlauf erneut versucht.',
+      'Downloads von www.simg.de verwenden zwei parallele Verbindungen; andere Quellen standardmäßig vier.',
+      'Der Downloadstatus zeigt Wiederholungsversuch, Wartezeit, fehlgeschlagene Dateien und parallele Verbindungen.',
+      'Das Windows-Tray-Menü wurde stabilisiert, nach Explorer-Neustarts wiederhergestellt und erhält eine sichere Beenden-Funktion.',
+      'Hilfe und Handbuch wurden auf Deutsch und Englisch aktualisiert.'
     ],
     en: [
-      'Local Survey Server 1.1 (Build 1.1.4) uses verified service URLs for all 15 built-in surveys and a MOC-based downloader.',
-      'All default download URLs were corrected and checked against the official HiPS service URLs.',
-      'The downloader reads properties and Moc.fits and does not require a web directory listing.',
-      'Source and target path can be saved per survey; the resolved local target path is shown.',
-      'Windows folder pickers are opened reliably on the UI thread and require neither PowerShell nor a PATH entry.',
-      'The tray context menu can again reliably open the interface, start or stop the survey server, and exit the program.',
-      'Relative survey paths are selected in Planner through a clear selection dialog instead of a numeric prompt.',
-      'Help and manual were updated for the survey list, folder picker, path dialog and tray controls.'
+      'Local Survey Server 1.1 (build 1.1.5) automatically retries temporary network failures and resumes .part files.',
+      'A single interrupted connection no longer stops the complete survey download.',
+      'After the main pass, failed files are retried automatically in an additional recovery pass.',
+      'Downloads from www.simg.de use two parallel connections; other sources use four by default.',
+      'Download status shows retry attempt, wait time, failed files and parallel connections.',
+      'The Windows tray menu was stabilised, restored after Explorer restarts and given a safe exit fallback.',
+      'Help and manual were updated in German and English.'
     ]
   },
   versionHistory: {
     de: {
+      version143: { title: 'Version 1.4.3 gegenüber 1.4.2', items: [
+        'Local Survey Server 1.1 (Build 1.1.5) mit automatischen Wiederholungen bei temporären Netzwerkfehlern, Timeouts sowie HTTP 429/5xx.',
+        'Einzelne fehlerhafte Kacheln stoppen den Gesamtdownload nicht mehr; nach dem Hauptlauf folgt ein automatischer Wiederholungsdurchlauf.',
+        'Downloads von www.simg.de verwenden zur Schonung der Quelle zwei parallele Verbindungen; andere Quellen standardmäßig vier.',
+        'Downloadstatus mit Wiederholungsversuch, Wartezeit, fehlgeschlagenen Dateien und Anzahl paralleler Verbindungen.',
+        'Stabileres Windows-Tray-Menü mit festem UI-Thread, Unterstützung aktueller Tray-Ereignisse, Wiederherstellung nach Explorer-Neustart und sicherer Beenden-Funktion.',
+        'Aktualisierte Hilfe und Dokumentation für Windows, Linux und macOS.'
+      ]},
       version142: { title: 'Version 1.4.2 gegenüber 1.4.1', items: [
         'Local Survey Server 1.1 (Build 1.1.4) mit Downloadverwaltung für alle in der App eingebauten Surveys sowie benutzerdefinierte HiPS-Quellen.',
         'Freie Quelladresse und relativer Zielpfad für benutzerdefinierte Survey-Downloads.',
@@ -62,6 +68,14 @@ window.ANP_BUILD = Object.freeze({
       ]}
     },
     en: {
+      version143: { title: 'Version 1.4.3 compared with 1.4.2', items: [
+        'Local Survey Server 1.1 (build 1.1.5) automatically retries temporary network errors, timeouts and HTTP 429/5xx.',
+        'Individual failed tiles no longer stop the complete download; an automatic recovery pass follows the main pass.',
+        'Downloads from www.simg.de use two parallel connections to reduce server load; other sources use four by default.',
+        'Download status shows retry attempt, wait time, failed files and parallel connection count.',
+        'More reliable Windows tray menu with a dedicated UI thread, current tray event support, recovery after Explorer restarts and safe exit fallback.',
+        'Updated help and documentation for Windows, Linux and macOS.'
+      ]},
       version142: { title: 'Version 1.4.2 compared with 1.4.1', items: [
         'Local Survey Server 1.1 (Build 1.1.4) with download management for every survey built into the app and for custom HiPS sources.',
         'Custom source URL and relative target path for user-defined survey downloads.',
