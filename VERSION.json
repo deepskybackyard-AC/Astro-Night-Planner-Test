@@ -1,25 +1,23 @@
 {
-  "version": "1.4.2-test.4",
-  "release": "1.4.2-test.4",
+  "version": "1.4.2-test.5",
+  "release": "1.4.2-test.5",
   "environment": "test",
-  "builtAt": "2026-07-07T22:30:00Z",
-  "notes": "Testversion 1.4.2: vollständige Survey-Liste, zuverlässige Ordnerauswahl, Pfaddialog und reparierte Tray-Steuerung.",
+  "builtAt": "2026-07-08T20:30:00Z",
+  "notes": "Testversion 1.4.2: geprüfte Survey-Dienstadressen, MOC-basierter Download und gespeicherte Zielpfade.",
   "changes": {
     "de": [
-      "ANP Local Survey Server 1.1.3 listet alle in der App eingebauten Surveys mit vorbelegten HiPS-Quelladressen sowie benutzerdefinierte Quellen.",
-      "Die Windows-Ordnerauswahl wird auf dem UI-Thread geöffnet und benötigt weder PowerShell noch einen PATH-Eintrag.",
-      "Das Tray-Kontextmenü kann die Oberfläche öffnen, den Survey-Server starten und stoppen sowie das Programm vollständig beenden.",
-      "Relative Survey-Pfade werden im Planner über einen verständlichen Auswahldialog mit Ordnernamen und Hauptpfad übernommen.",
-      "Downloadverwaltung, Konfigurationsmigration, Speichern-Feedback und Sammelschalter aus den vorherigen Tests bleiben enthalten.",
+      "ANP Local Survey Server 1.1 (Build 1.1.4) verwendet für alle 15 eingebauten Surveys geprüfte Dienstadressen.",
+      "Der Download prüft properties und Moc.fits und ermittelt die benötigten Kacheln aus der MOC-Abdeckung; ein Verzeichnislisting ist nicht erforderlich.",
+      "Quelle und Zielpfad können pro Survey gespeichert werden; der vollständig aufgelöste lokale Zielpfad wird angezeigt.",
+      "Windows-, Linux- und macOS-Pakete enthalten dieselbe Downloadlogik, Pause/Fortsetzen und .part-Wiederaufnahme.",
       "Hilfe und Handbuch wurden auf Deutsch und Englisch aktualisiert.",
       "Der GitHub-Pages-Testworkflow verwendet Node-24-kompatible Actions."
     ],
     "en": [
-      "ANP Local Survey Server 1.1.3 lists every survey built into the app with a default HiPS source URL, plus custom sources.",
-      "The Windows folder picker is opened on the UI thread and requires neither PowerShell nor a PATH entry.",
-      "The tray context menu can open the interface, start and stop the survey server, and exit the program completely.",
-      "Relative survey paths are selected in Planner through a clear dialog showing folder names and the server root.",
-      "Download management, configuration migration, save feedback and the bulk local-source switch from earlier tests remain included.",
+      "ANP Local Survey Server 1.1 (Build 1.1.4) uses verified service URLs for all 15 built-in surveys.",
+      "Downloads validate properties and Moc.fits and derive required tiles from the MOC coverage map; no directory listing is required.",
+      "Source and target path can be saved per survey; the resolved local target path is shown.",
+      "Windows, Linux and macOS packages use the same download logic, pause/resume and .part recovery.",
       "Help and manual were updated in German and English.",
       "The GitHub Pages test workflow uses Node 24 compatible actions."
     ]

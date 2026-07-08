@@ -3,21 +3,27 @@
 window.ANP_BUILD = Object.freeze({
   environment: 'test',
   repositoryRole: 'test',
-  appVersion: '1.4.2-test.4',
-  release: '1.4.2-test.4',
+  appVersion: '1.4.2-test.5',
+  release: '1.4.2-test.5',
   databaseName: 'astro-night-planner-test-v1',
   badgeText: 'TESTVERSION',
-  documentTitle: 'Astro Night Planner 1.4.2-test.4',
+  documentTitle: 'Astro Night Planner 1.4.2-test.5',
   releaseNotes: {
     de: [
-      'Local Survey Server 1.1.3 listet alle in der App eingebauten Surveys mit vorbelegten HiPS-Quelladressen sowie benutzerdefinierte Quellen.',
+      'Local Survey Server 1.1 (Build 1.1.4) verwendet für alle 15 eingebauten Surveys geprüfte Dienstadressen und einen MOC-basierten Downloader.',
+      'Alle Standard-Downloadadressen wurden gegen die offiziellen HiPS-Dienstadressen korrigiert und geprüft.',
+      'Der Downloader liest properties und Moc.fits und benötigt kein Web-Verzeichnislisting.',
+      'Quelle und Zielpfad können pro Survey gespeichert werden; der vollständige lokale Zielpfad wird angezeigt.',
       'Windows-Ordnerdialoge werden zuverlässig auf dem UI-Thread geöffnet und benötigen weder PowerShell noch einen PATH-Eintrag.',
       'Das Tray-Kontextmenü öffnet die Oberfläche und kann den Survey-Server wieder zuverlässig starten, stoppen und das Programm beenden.',
       'Relative Survey-Pfade werden im Planner in einem verständlichen Auswahldialog statt über eine Nummerneingabe ausgewählt.',
       'Hilfe und Handbuch wurden für Survey-Liste, Ordnerauswahl, Pfaddialog und Tray-Steuerung aktualisiert.'
     ],
     en: [
-      'Local Survey Server 1.1.3 lists every survey built into the app with a default HiPS source URL, plus custom sources.',
+      'Local Survey Server 1.1 (Build 1.1.4) uses verified service URLs for all 15 built-in surveys and a MOC-based downloader.',
+      'All default download URLs were corrected and checked against the official HiPS service URLs.',
+      'The downloader reads properties and Moc.fits and does not require a web directory listing.',
+      'Source and target path can be saved per survey; the resolved local target path is shown.',
       'Windows folder pickers are opened reliably on the UI thread and require neither PowerShell nor a PATH entry.',
       'The tray context menu can again reliably open the interface, start or stop the survey server, and exit the program.',
       'Relative survey paths are selected in Planner through a clear selection dialog instead of a numeric prompt.',
@@ -27,7 +33,7 @@ window.ANP_BUILD = Object.freeze({
   versionHistory: {
     de: {
       version142: { title: 'Version 1.4.2 gegenüber 1.4.1', items: [
-        'Local Survey Server 1.1.3 mit Downloadverwaltung für alle in der App eingebauten Surveys sowie benutzerdefinierte HiPS-Quellen.',
+        'Local Survey Server 1.1 (Build 1.1.4) mit Downloadverwaltung für alle in der App eingebauten Surveys sowie benutzerdefinierte HiPS-Quellen.',
         'Freie Quelladresse und relativer Zielpfad für benutzerdefinierte Survey-Downloads.',
         'Download starten, pausieren, fortsetzen, abbrechen und vorhandene Daten prüfen.',
         'Zuverlässige native Ordnerauswahl unter Windows auf dem UI-Thread; Ordnerdialoge auch unter Linux und macOS.',
@@ -57,7 +63,7 @@ window.ANP_BUILD = Object.freeze({
     },
     en: {
       version142: { title: 'Version 1.4.2 compared with 1.4.1', items: [
-        'Local Survey Server 1.1.3 with download management for every survey built into the app and for custom HiPS sources.',
+        'Local Survey Server 1.1 (Build 1.1.4) with download management for every survey built into the app and for custom HiPS sources.',
         'Custom source URL and relative target path for user-defined survey downloads.',
         'Start, pause, resume and cancel downloads and validate existing data.',
         'Reliable native Windows folder picker on the UI thread, with folder dialogs also on Linux and macOS.',
